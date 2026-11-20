@@ -3,112 +3,92 @@
 How to make two training or inference runs agree bit for bit, and how to find
 the first place where they stop agreeing.
 
-## The three workflows
+**[Read the handbook](https://training-alignment.github.io/training-alignment-handbook/)** ·
+**[中文版](https://training-alignment.github.io/training-alignment-handbook/zh/)** ·
+[Agent skills](#use-it-with-an-agent) ·
+[OpGuard](https://github.com/ziming-zh/OpGuard)
 
-The handbook teaches three workflows. Two of them start from a symptom. In
-the first, two pre-training runs that should agree do not (part 1). In the
-second, the rollout engine and the trainer give different log-probabilities
-for the same tokens (part 2). Both can end at an operator whose result depends
-on the other rows in its batch. When that happens, they hand the operator to
-the third workflow, which makes it batch-invariant (part 3).
-[Part 0](handbook/0-foundations/README.md) teaches the ideas that all three
-rest on.
+[![site](https://github.com/training-alignment/training-alignment-handbook/actions/workflows/pages.yml/badge.svg)](https://github.com/training-alignment/training-alignment-handbook/actions/workflows/pages.yml)
 
-- **Part 1, [pre-training](handbook/1-pretraining/README.md), finds where two runs stop agreeing.**
-  Determinism and preflight → Data alignment → *Localize with OpGuard* →
-  Training step → Data parallel → Compiled code → SDC.
-- **Part 2, [RL train–inference](handbook/2-rl/README.md), makes the rollout engine and the trainer agree.**
-  *Whole model* → Parallelism → Sampling → LoRA → *Engine parity* → RL loop.
-- **Part 3, [batch-invariant kernels](handbook/3-kernels/README.md), makes one operator batch-invariant.**
-  GEMM → Attention → MLA and sparse attention → Linear attention → MoE →
-  Collectives.
+## What it is for
 
-The steps in *italics* hand the operator they find to part 3. Part 0 comes
-before all three, and [part 4](handbook/4-operations/README.md) checks the
-results again after a stack change or on new hardware.
+- **Pre-training.** Two runs that should agree do not: after an upgrade, a
+  config change, a resume, or on a suspect machine. Find the first operator
+  where they part, then the cause.
+- **RL train–inference.** The rollout engine and the trainer give different
+  log-probabilities for the same tokens. Make them agree, or measure exactly
+  how much of the gap is staleness and how much is numeric error.
+- **One operator.** A kernel's result depends on what else is in its batch.
+  Make it batch-invariant and prove it.
 
-Not sure where to start? The [alignment-pipeline skill](skills/alignment-pipeline/SKILL.md)
-asks you a few questions and sends you to the right workflow. The terms used
-throughout the handbook are defined in the [glossary](handbook/glossary.md).
+Each part is a workflow written for engineers, and the same workflow is
+packaged as an agent skill. Every claim links to the experiment that
+measured it.
 
-## Part 1: when two pre-training runs stop agreeing
+## Contents
 
-Start with the [overview](handbook/1-pretraining/README.md). The agent skill
-for this part is [pretraining-alignment](skills/pretraining-alignment/SKILL.md).
+**[0. Foundations](handbook/0-foundations/README.md)**: why the order of a
+sum changes its bits, the five levels of invariance, and how to compare two
+runs bitwise.
 
-1. [Determinism and preflight](handbook/1-pretraining/determinism-and-preflight.md):
-   turn on the settings that make a run repeatable, and check that both runs
-   really use them.
-2. [Data alignment](handbook/1-pretraining/data-alignment.md): check that every
-   rank of both runs gets the same batches at every step.
-3. [Localize with OpGuard](handbook/1-pretraining/localize-with-opguard.md):
-   capture both runs, find the first operator where they differ, and trace
-   back from it to the cause. Then fix the cause and confirm the fix.
+**[1. Pre-training alignment](handbook/1-pretraining/README.md)**: from a
+symptom to the first divergence, its cause and a regression check.
+- [Determinism and preflight](handbook/1-pretraining/determinism-and-preflight.md): turn on and verify the settings that make a run repeatable
+- [Data alignment](handbook/1-pretraining/data-alignment.md): every rank gets the same batches at every step
+- [Localize with OpGuard](handbook/1-pretraining/localize-with-opguard.md): capture both runs and find the first operator that differs
+- [Training step](handbook/1-pretraining/training-step.md): backward, loss, optimizer and resume that repeat bit for bit
+- [Data parallelism and FSDP](handbook/1-pretraining/data-parallel.md): gradients that stay equal when ranks sum or shard them
+- [Compiled code and CUDA graphs](handbook/1-pretraining/capture-compiled-code.md): fingerprints where an eager capture cannot see
+- [Silent data corruption](handbook/1-pretraining/sdc.md): find GPUs that return wrong values
 
-After that, read the page for the place the first divergence points to:
+**[2. Train–inference alignment in RL](handbook/2-rl/README.md)**: make each
+side invariant, make both sides agree, then watch the running loop.
+- [Whole-model invariance](handbook/2-rl/whole-model.md): one sequence, the same logits alone, in a batch and in every serving mode
+- [Any tensor-parallel degree](handbook/2-rl/parallelism.md): the same result at different TP sizes and with prefill and decode split
+- [Replayable sampling](handbook/2-rl/sampling.md): sampled tokens that can be reproduced from the logits and a seed
+- [LoRA](handbook/2-rl/lora.md): one adapter in training, many mixed in one serving batch
+- [Matching vLLM](handbook/2-rl/engine-parity-vllm.md): a trainer and a real engine that agree bit for bit
+- [Monitoring the RL loop](handbook/2-rl/rl-loop.md): records, the staleness split and offline localization
 
-- [Training step](handbook/1-pretraining/training-step.md) shows how to make
-  the backward pass, the optimizer, the loss and a resume from a checkpoint
-  repeat bit for bit.
-- [Data parallel](handbook/1-pretraining/data-parallel.md) shows how to keep
-  gradients equal when ranks sum them together or shard them.
-- [Compiled code and CUDA graphs](handbook/1-pretraining/capture-compiled-code.md)
-  shows how to take fingerprints inside `torch.compile` and CUDA graphs, where
-  an eager capture cannot see.
-- [SDC](handbook/1-pretraining/sdc.md) shows how to find hardware that silently
-  returns wrong values.
+**[3. Batch-invariant kernels](handbook/3-kernels/README.md)**: the standard
+an invariant operator must meet, then one page per operator class.
+- [GEMM and quantized GEMM](handbook/3-kernels/gemm-and-quantized.md) ·
+  [Softmax attention](handbook/3-kernels/attention.md) ·
+  [MLA and sparse attention](handbook/3-kernels/mla-and-sparse.md) ·
+  [Linear attention](handbook/3-kernels/linear-attention.md) ·
+  [MoE](handbook/3-kernels/moe.md) ·
+  [Collectives](handbook/3-kernels/collectives.md)
 
-## Part 2: when the rollout engine and the trainer disagree
+**[4. Operations](handbook/4-operations/README.md)**: keep the results true on
+your machines.
+- [Regression checks](handbook/4-operations/regression.md) after an upgrade or on new hardware ·
+  [Hardware coverage](handbook/4-operations/hardware.md)
 
-Start with the [overview](handbook/2-rl/README.md). The agent skills for this
-part are [engine-parity](skills/engine-parity/SKILL.md) and OpGuard's
-`rl-alignment`.
+**[5. Other alignment scenarios](handbook/5-scenarios/README.md)**: the same
+method for other pairs of runs.
+- [Framework migration](handbook/5-scenarios/framework-migration.md) ·
+  [Checkpoint conversion](handbook/5-scenarios/checkpoint-conversion.md) ·
+  [Offline post-training](handbook/5-scenarios/offline-post-training.md)
 
-1. [Whole model](handbook/2-rl/whole-model.md): make one side give a sequence
-   the same logits whether it runs alone, in a batch or in any serving mode.
-2. [Parallelism](handbook/2-rl/parallelism.md): keep that true with tensor
-   parallelism, and when prefill and decode run on separate servers.
-3. [Sampling](handbook/2-rl/sampling.md): make sure the sampled tokens can be
-   reproduced from the logits and a seed.
-4. [LoRA](handbook/2-rl/lora.md): keep each adapter's result unchanged when one
-   batch mixes several adapters.
-5. [Engine parity](handbook/2-rl/engine-parity-vllm.md): make a real inference
-   engine round at the same points as the trainer, so that the two sides agree.
-6. [RL loop](handbook/2-rl/rl-loop.md): record each rollout, tell staleness
-   apart from a real mismatch, and localize any gap offline.
+Reference: [Glossary](handbook/glossary.md) · [Open items](handbook/open-items.md) ·
+[References](handbook/references.md) · [Audit](AUDIT.md)
 
-## Part 3: making one operator batch-invariant
+## Use it with an agent
 
-Start with [the standard](handbook/3-kernels/README.md) that every invariant
-operator must meet. The agent skill for this part is
-[batch-invariant-kernel](skills/batch-invariant-kernel/SKILL.md).
+Each workflow is also a skill: a folder with a `SKILL.md` that tells an agent
+which steps to take, which tool runs each step and what evidence to keep.
+Start from `alignment-pipeline`, which routes a question to the others.
 
-1. [GEMM and quantized GEMM](handbook/3-kernels/gemm-and-quantized.md): use the
-   same tile and the same reduction order at every batch size.
-2. [Attention](handbook/3-kernels/attention.md): split the keys the same way in
-   prefill, in decode and in the backward pass.
-3. [MLA and sparse attention](handbook/3-kernels/mla-and-sparse.md): do the
-   same when the keys are compressed or picked by top-k selection.
-4. [Linear attention](handbook/3-kernels/linear-attention.md): update the
-   recurrent state in the same chunk order every time.
-5. [MoE](handbook/3-kernels/moe.md): make routing, the expert GEMMs and the
-   combine independent of which tokens share a batch.
-6. [Collectives](handbook/3-kernels/collectives.md): add up the partial results
-   of all GPUs in one fixed order.
+| Skill | Use it when |
+|---|---|
+| [alignment-pipeline](skills/alignment-pipeline/SKILL.md) | You are not sure which workflow applies |
+| [pretraining-alignment](skills/pretraining-alignment/SKILL.md) | Two training runs should agree and do not |
+| [engine-parity](skills/engine-parity/SKILL.md) | A trainer and an inference engine must give the same log-probabilities |
+| [batch-invariant-kernel](skills/batch-invariant-kernel/SKILL.md) | An operator has no batch-invariant implementation |
+| [handbook-writing](skills/handbook-writing/SKILL.md) | You are adding a page to this handbook |
+| `investigate-first-diff`, `trace-upstream`, `validate-hypothesis`, `rl-alignment` | Localizing with OpGuard; these live in [OpGuard](https://github.com/ziming-zh/OpGuard)'s `harness/skills/` |
 
-## Using the skills with an agent
-
-Each skill is a plain folder that holds a `SKILL.md` and a `references/`
-folder. Two sets of skills work together:
-
-| Set | Where | Skills |
-|---|---|---|
-| This handbook | [skills/](skills/) | alignment-pipeline, pretraining-alignment, engine-parity, batch-invariant-kernel, handbook-writing |
-| OpGuard | `harness/skills/` in [OpGuard](https://github.com/ziming-zh/OpGuard) | investigate-first-diff, trace-upstream, validate-hypothesis, rl-alignment |
-
-To use them with Claude Code, copy or link both sets into `~/.claude/skills/`
-(for all your projects) or into `.claude/skills/` (for one project), with each
-skill in its own folder:
+For Claude Code, link both sets of skills into `~/.claude/skills/`:
 
 ```bash
 git clone https://github.com/training-alignment/training-alignment-handbook
@@ -117,41 +97,44 @@ mkdir -p ~/.claude/skills
 for d in training-alignment-handbook/skills/*/ OpGuard/harness/skills/*/; do ln -s "$(realpath "$d")" ~/.claude/skills/; done
 ```
 
-Keep the repository checked out, because the skills link to its tools,
-examples and pages. Start from `alignment-pipeline`, which sends each question
-to the right skill. The RL steps need OpGuard's harness actions (`rl.*`,
-`vectors.*`). They live in [this OpGuard repository](https://github.com/ziming-zh/OpGuard);
-the upstream OpGuard does not have them yet.
+Keep both repositories checked out: the skills call the tools below and
+OpGuard's harness. The RL steps need OpGuard's `rl.*` and `vectors.*`
+actions, which are in this OpGuard repository and not yet upstream.
 
-## Skills, tools and operations
+## Tools
 
-- **Skills** live in [skills/](skills/): [alignment-pipeline](skills/alignment-pipeline/SKILL.md),
-  [pretraining-alignment](skills/pretraining-alignment/SKILL.md),
-  [engine-parity](skills/engine-parity/SKILL.md),
-  [batch-invariant-kernel](skills/batch-invariant-kernel/SKILL.md) and
-  [handbook-writing](skills/handbook-writing/SKILL.md). OpGuard adds
-  `rl-alignment` in its `harness/skills/` folder.
-- **Tools** live in [tools/](tools/):
-  - [bi_check.py](tools/bi_check.py) checks bitwise invariance. `--demo` runs the checks on stock PyTorch ops, and [a recorded run](tools/demo-a40.json) shows the output;
-  - [bi_kernels.py](tools/bi_kernels.py) holds batch-invariant reference kernels for GEMM and attention, written in Triton;
-  - [bi_sampling.py](tools/bi_sampling.py) is a reference sampler whose choices can be replayed;
-  - [bi_audit.py](tools/bi_audit.py) lists a model's operators and gives each module an L2 verdict;
-  - [bi_report.py](tools/bi_report.py) and [bi_suite.py](tools/bi_suite.py) write `bi-results-v1` files and run the regression suite in [suite/](suite/);
-  - [determinism_preflight.py](tools/determinism_preflight.py) reads back the determinism settings from inside a running job and diffs the reports of two runs;
-  - [opguard_bridge.py](tools/opguard_bridge.py) speaks OpGuard's formats, protocol and harness, and offers leads through `suggest()`;
-  - [graph_probe.py](tools/graph_probe.py) takes fingerprints inside compiled code and CUDA graphs;
-  - [data_fingerprint.py](tools/data_fingerprint.py) fingerprints each batch where it leaves the data loader, and its compare command classifies the first difference;
-  - [ckpt_compare.py](tools/ckpt_compare.py) compares two checkpoints with different layouts, row by row;
-  - [sdc_scan.py](tools/sdc_scan.py) scans GPUs for silent data corruption.
-- **Other scenarios** are in [part 5](handbook/5-scenarios/README.md): framework migration, checkpoint conversion, offline post-training, serving and mixed hardware.
-- **Operations** are in [part 4](handbook/4-operations/README.md):
-  [regression checks](handbook/4-operations/regression.md) after an upgrade or
-  on new hardware, and [hardware coverage](handbook/4-operations/hardware.md).
-- **Evidence**: each example under [examples/](examples/) has a `REPORT.md`
-  with its setup and measurements, and the suite's baselines are in
-  [suite/](suite/).
-- Reference pages: [Open items](handbook/open-items.md) · [References](handbook/references.md) ·
-  [Glossary](handbook/glossary.md) · [Audit](AUDIT.md)
+| Tool | What it does |
+|---|---|
+| [bi_check.py](tools/bi_check.py) | Bitwise invariance checks for one operator; `--demo` runs them on stock PyTorch ops |
+| [bi_kernels.py](tools/bi_kernels.py) | Batch-invariant reference kernels for GEMM and attention, in Triton |
+| [bi_audit.py](tools/bi_audit.py) | Lists a model's operators and says which modules are batch-variant |
+| [bi_sampling.py](tools/bi_sampling.py) | A reference sampler whose tokens can be replayed |
+| [determinism_preflight.py](tools/determinism_preflight.py) | Reads back a job's determinism settings and diffs two runs |
+| [data_fingerprint.py](tools/data_fingerprint.py) | Fingerprints every batch at the data loader and classifies the first difference |
+| [opguard_bridge.py](tools/opguard_bridge.py) | OpGuard's fingerprint formats, protocol and harness from the handbook's code |
+| [graph_probe.py](tools/graph_probe.py) | Fingerprints inside `torch.compile` code and CUDA graphs |
+| [ckpt_compare.py](tools/ckpt_compare.py) | Compares two checkpoints with different layouts, row by row |
+| [sdc_scan.py](tools/sdc_scan.py) | Scans GPUs for silent data corruption |
+| [bi_report.py](tools/bi_report.py), [bi_suite.py](tools/bi_suite.py) | The result format and the regression suite that re-runs every example |
 
-The handbook is also a bilingual website built from `handbook/`
-([how to build it](handbook/4-operations/README.md#building-the-site)).
+## Repository layout
+
+```text
+handbook/   the book: one folder per part, English .md and Chinese .zh.md
+skills/     agent skills for each workflow
+tools/      the tools above
+examples/   one folder per experiment: code, results-*.json and REPORT.md
+suite/      regression manifest, baselines and measured coverage
+scripts/    site build hooks and checks
+```
+
+To build the site locally: `pip install mkdocs-material mkdocs-static-i18n jieba`,
+then `mkdocs serve` ([details](handbook/4-operations/README.md#building-the-site)).
+
+## Status and license
+
+This is a working draft. Numbers quoted from other reports cite their source;
+numbers measured here link to the report that measured them, and what is not
+yet shown is listed in [Open items](handbook/open-items.md).
+
+Licensed under the [Apache License 2.0](LICENSE).
