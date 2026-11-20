@@ -4,7 +4,10 @@ site_description: How to make two training or inference runs agree bit for bit, 
 docs_dir: handbook
 site_dir: site
 use_directory_urls: true
-# repo_url: https://github.com/ORG/training-alignment-handbook   # set once there is a remote
+site_url: https://training-alignment.github.io/training-alignment-handbook/
+repo_url: https://github.com/training-alignment/training-alignment-handbook
+repo_name: training-alignment/training-alignment-handbook
+edit_uri: ""
 extra:
   # Base URL for links to repository files (tools/, examples/, suite/, AUDIT.md).
   # Empty: the files are copied into the site under source/. Example value:
