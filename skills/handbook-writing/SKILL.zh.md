@@ -5,7 +5,7 @@ description: Write or rewrite a page of the Training Alignment Handbook as a tea
 
 # 怎样写一页 handbook
 
-handbook 教三条工作流程：找到两次预训练运行从哪里开始分开（第 1 部分），
+handbook 教三条工作流程：找到两次预训练从哪里开始分开（第 1 部分），
 让 rollout 引擎和 trainer 一致（第 2 部分），让一个算子满足不变性（第 3 部分）。
 第 0 部分讲三条流程共同依赖的概念。每一页是某条流程中的一步或一个概念。
 实验是证据，放在报告里，不放在正文里。
@@ -39,7 +39,7 @@ handbook 教三条工作流程：找到两次预训练运行从哪里开始分�
 
 代价按等级写，不写数字："免费"、"小（百分之几）"、"中等（不到 2 倍）"、
 "大（2 倍或更多）"，具体数字在报告里。
-可以写出什么成立（逐位相等、满足 L2 不变性），但要链接到证据，
+可以写出什么成立（逐 bit 一致、满足 L2 不变性），但要链接到证据，
 并用平实的话写明在什么条件下得到（"在一种 GPU 上得到"、"在两个节点、最多 16 个 GPU 上得到"）。
 
 ## 句子
@@ -49,9 +49,64 @@ handbook 教三条工作流程：找到两次预训练运行从哪里开始分�
 - 能用一张图（Mermaid）或一张小表说清楚结构，就不要写一大段文字。
 - 不用宣传性的词，不写"只需"，不要一连串的限定语。
 
+## 自然的语言
+
+像一位细心的工程师给同事讲解那样写，而不是把笔记压缩成摘要。每个标题和句子都读出声来；
+如果读者需要"解码"才能看懂，就重写。
+
+- **标题用平实的话说清这一页讲什么**，不要压缩成公式。
+  "LoRA: one adapter per training batch, many per serving batch" →
+  "LoRA: matching training and serving when one batch mixes many adapters"。
+  "Parallelism: same bits at every TP size (L5)" →
+  "Getting the same result at any tensor-parallel degree (L5)"。
+- **不写残句、不堆名词短语、不用一串冒号。** 用有主语、有动词的完整句子。
+- **说清楚谁做了什么。** 写"引擎把共用同一个适配器的 token 分成一组"，不要写"引擎的适配器分组"。
+- **一个概念只用一个词，并且只解释一次。** 同一个意思不要混用 "bits"、"位"、"比特"；用术语表里的词。
+- **通用的小节名保持朴素**（"我们在哪里""思路""步骤"），但小节里的内容要连成通顺的段落，
+  用"所以""因为""也就是说"这样的连接词。
+- **中文按中文来写**：自然的语序，不套英文句法，不要"位都相同""两侧相遇的位置""以相同方式舍入"
+  这类直译。改成"结果逐 bit 一致""在哪一步把两部分加起来""在同一个地方做舍入"。
+  保留术语表规定的英文术语（rollout、trainer、kernel、logprob……），但要在它们周围用中文讲清楚。
+
+### 中文术语：约定俗成的英文词不要硬译
+
+中文 ML 系统圈子里习惯直接说英文的词，一律保留英文，不要翻成生造的中文：
+
+| 保留英文 | 不要写成 |
+|---|---|
+| bit（"逐 bit 一致"） | 位、比特（"位都相同"） |
+| batch、token、kernel、GEMM、tile、split-K | 批次、令牌、内核、通用矩阵乘 |
+| prefill、decode、KV cache | 预填充、解码、键值缓存 |
+| TP、DP、EP、PP、SP，以及 rank、shard | 张量并行规模下、秩 |
+| rollout、trainer、logprob、staleness | 推演、训练器、对数概率、陈旧度 |
+| torch.compile、CUDA graph、eager | 编译代码、CUDA 图、急切模式 |
+| checkpoint、dtype、bf16、fp32 | 检查点、数据类型 |
+| all-reduce、reduce-scatter、all-to-all | 全规约、规约散射 |
+| LoRA、adapter、MoE、expert、top-k | 适配器、专家混合 |
+| fingerprint、harness、skill、agent、SDC | 指纹（可在首次出现时括注"指纹"） |
+
+这些词本身就是通用的中文表达：确定性、不变性、归约、舍入、算子、采样、前向、反向、梯度、
+优化器、精度、并行度、训练、推理、对齐。
+
+"job"不要写成"作业"，写"训练任务"或"任务"；"side"不要写成"侧/两侧"，写"rollout 端、trainer 端、两端"。
+
+全书已经统一的几个写法：capture 一律写"采集"，只有 CUDA graph 的 capture 写"录制"；
+probe、recipe、paged KV、capacity、speculative decoding 保留英文，不写"探针""配方""投机解码"；
+bit-equal 统一写"逐 bit 一致"；步骤里统一用"目标""做法""成功标准"，选项表的表头统一用
+"能得到什么""代价等级""什么时候选"。
+
+改写示例：
+
+| 机器翻译腔 | 通顺的中文 |
+|---|---|
+| 并行度：每个 TP 大小下位都相同（L5） | 换 TP 规模，结果仍逐 bit 一致（L5） |
+| 作业运行编译代码时 | 用了 torch.compile 或 CUDA graph 时怎样采集 |
+| LoRA：训练批次里一个适配器，服务批次里多个 | LoRA：训练时只有一个 adapter，推理时一个 batch 混着多个 adapter |
+| 让单侧不变：整个模型 | 先让一端自己不变：整个模型 |
+
 ## 诚实
 
-- 不要在措辞上削弱结果：逐位就是逐位；已知答案的演示就叫已知答案的演示；
+- 不要在措辞上削弱结果：逐 bit 一致就是逐 bit 一致；已知答案的演示就叫已知答案的演示；
   模拟出来的就说是模拟的。
 - 没测过的内容要留在明处：如果它会改变读者的做法，就在正文写一行简短的"尚未证明"，
   完整列表放在待办事项里。

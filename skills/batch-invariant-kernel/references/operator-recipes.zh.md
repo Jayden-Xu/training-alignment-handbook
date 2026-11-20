@@ -1,434 +1,399 @@
-# 算子配方
+# 各类算子的做法
 
-每个配方说明是什么让该算子变成批相关（batch-variant），以及如何修复。
-它达到的级别依据 [SKILL.md](../SKILL.md#levels-say-which-one-you-deliver)。
-每个配方最后都走同一套验证（[verification.md](verification.md)）；
-没有一个能只靠读代码来证明。
+每条做法都讲清两件事：是什么让一个算子的结果随 batch 变化（batch-variant），以及怎么修。
+一条做法能达到哪一级，用的是 [SKILL.md](../SKILL.md#levels-say-which-one-you-deliver)
+里定义的级别。每条做法最后都要走同一套验证（[verification.md](verification.md)），
+因为光读代码永远证明不了修复真的有效。
 
-## 每个配方背后的证据
+## 每条做法背后的证据
 
-测量：单 GPU 案例用一种 GPU 型号。多 GPU 案例（集合通信、专家并行、DP 梯度、
-TP 下的整个模型）在一到两个各有 8 个 GPU（另一种型号）的节点上运行：节点内 PCIe，
-节点之间 25 GbE 套接字，无 RDMA。全部使用 torch 2.5.1 和 Triton
-3.1。例外在对应行中注明（跨引擎一行使用 vLLM 自己的
-技术栈：torch 2.10.0、Triton 3.6.0）。每个案例的硬件和原始结果在它的
-`examples/<case>/REPORT.md` 中。案例研究：
+单 GPU 的案例都在同一种 GPU 型号上测量。多 GPU 的案例（集合通信、EP、DP 梯度、
+TP 下的整个模型）换了另一种 GPU 型号，在一到两个节点上运行，每个节点 8 块 GPU。
+节点内的 GPU 通过 PCIe 相连，节点之间走 25 GbE 的 socket，没有 RDMA。除非某一行
+另有说明，所有测量都用 torch 2.5.1 和 Triton 3.1（跨引擎那一行用的是 vLLM 自带的
+软件栈：torch 2.10.0、Triton 3.6.0）。每个案例的硬件和原始结果都在它自己的
+`examples/<case>/REPORT.md` 里。案例研究包括：
 - [MoE](../../../examples/moe_combine/REPORT.md#one-gpu)；
-- [专家并行下的 MoE](../../../examples/moe_ep/REPORT.md#under-expert-parallelism)；
-- [注意力、FP8、线性注意力](../../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3)；
-- [注意力反向](../../../examples/attention_backward/REPORT.md#backward-dq-dk-dv)；
-- [分页 KV、varlen、compile 和 CUDA graph](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs)；
+- [EP（expert 并行）下的 MoE](../../../examples/moe_ep/REPORT.md#under-expert-parallelism)；
+- [注意力、FP8 和线性注意力](../../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3)；
+- [注意力的反向](../../../examples/attention_backward/REPORT.md#backward-dq-dk-dv)；
+- [paged KV、varlen 打包、torch.compile 和 CUDA graph](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs)；
 - [MLA 和稀疏注意力](../../../handbook/3-kernels/mla-and-sparse.md)；
 - [线性注意力（GDN）](../../../handbook/3-kernels/linear-attention.md)；
 - [集合通信和 TP](../../../handbook/3-kernels/collectives.md)；
 - [整个模型](../../../handbook/2-rl/whole-model.md)和 [TP 下的整个模型](../../../handbook/2-rl/parallelism.md)；
-- [DP 和 FSDP 风格（模拟：扁平梯度、reduce-scatter、分片 AdamW）的梯度](../../../handbook/1-pretraining/data-parallel.md)；
+- [DP 和 FSDP 式分片下的梯度（模拟实现：扁平梯度、reduce-scatter、分片的 AdamW）](../../../handbook/1-pretraining/data-parallel.md)；
 - [采样](../../../handbook/2-rl/sampling.md)；
-- [LoRA 和多适配器批次](../../../handbook/2-rl/lora.md)；
-- [训练步](../../../handbook/1-pretraining/training-step.md)；
-- [trainer 对比 vLLM](../../../handbook/2-rl/engine-parity-vllm.md)。
+- [LoRA 和混有多个 adapter 的 batch](../../../handbook/2-rl/lora.md)；
+- [训练 step](../../../handbook/1-pretraining/training-step.md)；
+- [trainer 与 vLLM 的对比](../../../handbook/2-rl/engine-parity-vllm.md)。
 
-| # | 类别 | 状态 | 证据 | 仍未解决 |
+| # | 类别 | 状态 | 证据 | 还没覆盖的 |
 |---|---|---|---|---|
-| 1 | 行内归约 | 原生实现即观察到 | torch 算子 RMSNorm 和 fp32 log_softmax 在 hidden 4096、vocab 32000、batch 1–2048 下为 L2；fp32 的 torch mean/sum 会随行数改变其归约树（hidden 1024 从 8 行起，4096 从 2 行起），而 bf16 RMSNorm 的输出没有变化；固定树的 Triton 行求和在行数 1–2048、宽度 8–4096 下为 L2（整模型案例） | 少行拆分的情况未复现；LayerNorm、cross-entropy |
-| 2 | 稠密 GEMM | **已构建并验证** | 单配置 Triton GEMM 在 3 种形状上于 M=1–2048 为 L2；cuBLAS 在全部 3 种上都随批变化 | 调优、大形状、融合 epilogue、cuBLASLt 固定、Hopper |
-| 3 | 分组 GEMM，`bmm` 对比 `mm` | **已构建（循环）并验证** | 逐专家单配置 GEMM 在两种 GPU 型号上都为 L2（[单 GPU](../../../examples/moe_combine/REPORT.md)、[8 GPU](../../../examples/moe_ep/REPORT.md)）；cuBLAS 专家 GEMM 在两者上都随批变化；在固定行块上的 `bmm` 随批变化 | 单次启动的分组 kernel |
-| 4 | Softmax 注意力 | **已构建并验证**（前向、反向、分页、varlen） | 固定块 Triton 在 prefill、decode 和分块之间为 L2 和 L3；SDPA 不满足 L2（batch ≥ 3）和 L3。无原子操作的反向为 L1 和 L2，包括右填充，耗时为 SDPA flash 的 1.38x；SDPA flash 不满足 L1（dQ），在严格确定性模式下不满足 L2。当块按每个序列的绝对位置划分时，分页 KV（页大小 16–128）和 varlen 打包（前向和反向）保持比特不变；按页或按打包偏移划分的块则不行 | 固定大小的 split-KV、滑动窗口、分页反向 |
-| 5 | MLA absorbed 对比 explicit | **已构建并验证** | 两种形式在 65% 的元素上不同，精度相同；每个部分都不变的单一形式为 L2 和 L3；explicit prefill 配 absorbed decode 从第 2 层起不再与 trainer 一致；只有不变的核心还不够（解压 GEMM、输出 `bmm`） | FlashMLA、absorbed 形式的 split-KV、反向、对引擎的 L4 |
-| 6 | 稀疏注意力（top-k） | **已构建并验证** | 每次选择翻转都来自 cuBLAS 投影 GEMM（约四分之一的位置）；用单配置投影和稳定的 top-k，选中集合和输出为 L2 和 L3；`torch.topk` 在每次测试中都在并列时取最小索引，这是未写入文档的顺序 | DSA 规模（top-2048）、FP8 indexer、反向 |
-| 7 | 线性注意力 / SSM | **已构建并验证**（GDN 前向） | 循环 kernel 为 L1–L3；分块为 L1/L2，只有分块边界位于 C 的绝对倍数时才是 L3；bf16 分块矩阵乘与循环形式在 55.5% 的输出上不同，fp32 时为 0.03%；在 T ≤ 4096 时循环耗时为分块的 0.9–1.5x，在 8192 时为 2.5–3.6x | 反向、生产级分块 kernel（fla）、varlen |
-| 8 | MoE 路由与合并 | **已构建并验证**（1 GPU；在两个 8 GPU 节点上 EP 1–16，[报告](../../../examples/moe_ep/REPORT.md)） | 固定顺序的 fp32 合并加单配置 GEMM 为 L1 和 L2；在 EP 下，固定槽位合并在 EP 1、2、4、8 和 16 下给出相同比特，无论在一个节点上还是分在两个节点上（L5）；逐 rank 预归约为 L1/L2，从 top-3 起不满足 L5；原子合并破坏 L1（EP 案例中从 top-3 起）；容量丢弃不满足 L2 和 L5 | EP 下的反向、共享专家、DeepEP 风格 kernel、NVLink、RDMA、两个以上节点、对 trainer 的 L4 |
-| 9 | 量化 GEMM | 缩放已验证（模拟） | 逐张量动态缩放不满足 L2；逐 token 和 1x128 通过 | 真实 FP8 GEMM 的提升间隔（在有 FP8 张量核心的 GPU 上）、NVFP4（在有 FP4 张量核心的 GPU 上） |
-| 10 | 集合通信 | **已测量**（8 GPU 的节点，一个和两个节点；[报告](../../../examples/collectives_tp/REPORT.md)） | all-reduce 在默认设置下、以及固定 Ring 并配合每种协议时都不满足 L2；`NCCL_ALGO=Tree` 在一个节点上通过（1.0–1.3x，1 MB 时 5.3x），在两个节点上也通过（16 个 rank：先是每个节点的链，再是一次两操作数相加）；reduce-scatter 的顺序跟随所属 rank，因此带序列并行的 TP 不满足；all-to-all 加 fp32 按 rank 顺序求和在一个节点上以 1.04–1.20x 通过；跨节点时，两级固定顺序（1.06–1.8x）替代扁平的后备方案（2.1–8.8x）；逻辑 TP 大小给出 L5：8 在 TP 1–8 之间，16 在两个节点上的 TP 1–16 之间；在整个模型中，逻辑 TP（C = 16）加固定顺序的词表 log_softmax 在 TP 1–16 下、以及不同 TP 的 prefill/decode 之间给出同一结果。DP 梯度：在 Ring 下桶布局会改变比特（Tree 和有序 all-reduce 以 1.05–1.20x 修复）；逻辑分片（S=16，固定树）在一个或两个节点上、复制或分片、以及弹性恢复训练之间，于 DP 1–16 给出相同的梯度、范数和 10 步 AdamW 权重 | 三个或更多节点、NVLink/NVLS、RDMA、torch.distributed.fsdp 本身、激活梯度之外的 TP 反向 |
-| 11 | 闭源 kernel | 已测量 | cuBLAS 和 SDPA 的变化已摸清；固定分块的 cuBLAS 循环可作为参照（约慢 33x）；严格确定性模式下的 SDPA memory-efficient 反向在所测形状上通过 L1 和 L2（flash 的 4.4x） | cuDNN、FlashAttention 二进制 |
-| 12 | 部署包装层 | **已测量** | 编译后的块仍为 L2，但在 65% 的元素上与 eager 不同，直到每个舍入算子都成为不透明的自定义算子；直接调用的 Triton kernel 会按每个 batch 大小重新编译（18 个图；作为自定义算子为 2 个）；CUDA graph 分桶让不变的 kernel 保持不变，而 cuBLAS 在 7 个桶上给出 6 个结果；编译代码和图内部的探针（`tools/graph_probe.py`）在隔离时不改变编译后的比特 | 分页、varlen 和反向路径的 compile；`max-autotune` |
-| 13 | 采样 | **已构建并验证** | 逐请求生成器为 L2，但在重算、回滚、n>1 和推测分块时不满足；cumsum 不满足 L2（在 V=151,936 时也不满足 L1）；用 int64 权重、以计数器为键的采样器通过 L1–L3 和卡方检验，耗时为原生的 1.3x（B=256） | 融合噪声 kernel、min-p、compile/graph、真实引擎 |
-| 14 | LoRA / 多适配器 | **已构建并验证**（前向、反向） | 分组 cuBLAS 不满足 L2（486–506/723），基座不变时仍有 22–100/723；gather 后的 bmm 不满足；bf16 合并改变 ~50% 的比特，并在 update/output 1e-2–1e-3 时丢失 18–78% 的 ΔW；缩放位置改变 5–6%；我们的实现通过 L1、L2、prefill/decode、trainer 对比引擎、反向填充 | vLLM 本身、打包切片、TP、compile、QLoRA |
-| 15 | 训练步（反向算子、优化器、loss、恢复训练） | **已构建并验证**（1 GPU） | index_add_/scatter_add_/index_select 反向/带权 bincount/1-D cumsum 不满足 L1；先排序再升序 fp32 分段求和为 L1，并与 NumPy 循环逐位一致；严格模式在 cumsum、bincount(weights)、histc 上报错；AdamW fused/foreach/single 互不相同（foreach 与 single 只在偏差修正的除法上不同）；7 项状态给出逐位一致的恢复训练 | 融合优化器的精确顺序（0.15% 的 exp_avg 差 1 ulp）、多 GPU（见第 10 行）、compile |
-| 16 | 跨引擎舍入（L4） | **已测量**（vLLM 0.19.1，[报告](../../../examples/cross_engine/REPORT.md)） | 打包、bias 位置、norm 形式、RoPE 表、注意力 kernel、lm_head kernel 和 log_softmax kernel 各自都会破坏相等；RoPE 公式和 SiLU 本来就相等；trainer 调用 vLLM 的 kernel 得到 0/76,155 | 编译的 vLLM、反向、TP、其他模型 |
+| 1 | 按行归约 | 在原生 torch 中观察到 | 用 torch 算子拼出的 RMSNorm 和 fp32 的 log_softmax，在 hidden 4096、vocab 32000、batch 1–2048 下都满足 L2。torch 的 mean 和 sum 在 fp32 下会随行数换一棵归约树（hidden 1024 时从 8 行起，4096 时从 2 行起），但 bf16 RMSNorm 的输出并没有变。固定归约树的 Triton 行求和在 1–2048 行、宽度 8–4096 下满足 L2（整模型案例）。 | 行数少时把一行拆给多个 block 的情况还没有复现出来。LayerNorm 和 cross-entropy 也还没有覆盖。 |
+| 2 | 稠密 GEMM | **已实现并验证** | 单一配置的 Triton GEMM 在 3 种形状上、M=1–2048 时都满足 L2。cuBLAS 在这 3 种形状上都会随 batch 变化。 | 调优、大形状、融合的 epilogue、固定 cuBLASLt 的算法，以及 Hopper。 |
+| 3 | grouped GEMM，`bmm` 与 `mm` | **已实现（用循环）并验证** | 每个 expert 用一个单一配置的 GEMM，在两种 GPU 型号上都满足 L2（[单 GPU](../../../examples/moe_combine/REPORT.md)、[8 GPU](../../../examples/moe_ep/REPORT.md)）。cuBLAS 的 expert GEMM 在两种型号上都会随 batch 变化，在固定大小的行块上调用 `bmm` 也一样。 | 一次 launch 就完成的 grouped kernel。 |
+| 4 | softmax 注意力 | **已实现并验证**（前向、反向、paged、varlen） | 固定 block 的 Triton kernel 在 prefill、decode 和各个 chunk 之间满足 L2 和 L3，而 SDPA 既不满足 L2（batch ≥ 3），也不满足 L3。不用原子操作的反向满足 L1 和 L2，右 padding 的情况也包括在内，耗时是 SDPA flash 的 1.38x。SDPA flash 不满足 L1（问题出在 dQ），在严格确定性模式下不满足 L2。paged KV（页大小 16–128）和 varlen 打包（前向和反向）在 block 按每个序列的绝对位置划分时，结果逐 bit 一致；如果 block 跟着页或打包偏移走，就做不到。 | 固定切分大小的 split-KV、滑动窗口，以及 paged KV 的反向。 |
+| 5 | MLA 的吸收式与显式两种形式 | **已实现并验证** | 两种形式精度相当，却有 65% 的元素不同。只用一种形式、并且每个部件都不变时，满足 L2 和 L3。显式 prefill 搭配吸收式 decode，从第 2 层起就和 trainer 对不上了。光有不变的注意力核心还不够，解压 GEMM 和输出的 `bmm` 也必须不变。 | FlashMLA、吸收式的 split-KV、反向，以及对引擎的 L4。 |
+| 6 | 稀疏注意力（top-k） | **已实现并验证** | 每一次选择翻转（约四分之一的位置）都来自 cuBLAS 的投影 GEMM。投影换成单一配置、再用稳定的 top-k 之后，选中的集合和输出都满足 L2 和 L3。`torch.topk` 遇到并列时在每次测试里都取了最小的索引，但文档并没有写明这个顺序。 | 完整的 DSA 规模（top-2048）、FP8 indexer，以及反向。 |
+| 7 | 线性注意力 / SSM | **已实现并验证**（GDN 前向） | 递归 kernel 满足 L1–L3。分块 kernel 满足 L1/L2，只有 chunk 边界落在 C 的绝对倍数上时才满足 L3。用 bf16 做矩阵乘时，分块形式和递归形式有 55.5% 的输出不同；用 fp32 时只有 0.03%。递归形式的耗时在 T ≤ 4096 时是分块形式的 0.9–1.5x，在 8192 时是 2.5–3.6x。 | 反向、生产环境用的分块 kernel（fla），以及 varlen。 |
+| 8 | MoE 的路由和 combine | **已实现并验证**（单 GPU 上，以及两个 8 GPU 节点上的 EP 1–16；[报告](../../../examples/moe_ep/REPORT.md)） | 固定顺序的 fp32 combine 加上单一配置的 GEMM，满足 L1 和 L2。在 EP 下，固定槽位的 combine 在 EP 1、2、4、8 和 16 时结果逐 bit 一致，不管放在一个节点上还是拆到两个节点上（L5）。先在每个 rank 上做归约满足 L1/L2，但从 top-3 起不满足 L5。用原子操作做 combine 会破坏 L1（EP 案例中从 top-3 起）。按 capacity 上限丢 token 不满足 L2 和 L5。 | EP 下的反向、shared expert、DeepEP 风格的 kernel、NVLink、RDMA、两个以上的节点，以及对 trainer 的 L4。 |
+| 9 | 量化 GEMM | scale 已验证（模拟） | 动态的 per-tensor scale 不满足 L2；per-token scale 和 1x128 的 block scale 能通过。 | 真实 FP8 GEMM 的 promotion interval（需要有 FP8 tensor core 的 GPU），以及 NVFP4（需要有 FP4 tensor core 的 GPU）。 |
+| 10 | 集合通信 | **已测量**（一个和两个 8 GPU 节点；[报告](../../../examples/collectives_tp/REPORT.md)） | all-reduce 用默认设置不满足 L2，固定 Ring 并试遍所有协议也不满足。`NCCL_ALGO=Tree` 在一个节点上能通过（代价 1.0–1.3x，1 MB 时 5.3x），在两个节点上也能通过（16 个 rank：每个节点先沿自己的链求和，两个节点的和再相加一次）。reduce-scatter 的顺序取决于哪个 rank 拥有这一行，所以开了序列并行的 TP 不满足。all-to-all 之后在 fp32 下按 rank 顺序求和，在一个节点上能通过，代价 1.04–1.20x。跨节点时，两级的固定顺序（1.06–1.8x）可以替代扁平的回退方案（2.1–8.8x）。逻辑 TP 规模能给出 L5：取 8 时在 TP 1–8 之间一致，取 16 时在两个节点上的 TP 1–16 之间一致。在整个模型里，逻辑 TP（C = 16）加上固定顺序的词表 log_softmax，在 TP 1–16 下都给出同一个结果，prefill 和 decode 用不同的 TP 时也一样。DP 梯度方面，在 Ring 下桶的布局会让梯度变掉（换成 Tree，或者用一个有序的 all-reduce，代价 1.05–1.20x，就能修好）。逻辑 shard（S=16，固定的树）在 DP 1–16 下给出完全相同的梯度、范数和 10 步之后的 AdamW 权重，一个节点和两个节点、复制和分片、弹性恢复训练前后都一样。 | 三个或更多节点、NVLink/NVLS、RDMA、torch.distributed.fsdp 本身，以及激活梯度之外的 TP 反向。 |
+| 11 | 闭源 kernel | 已测量 | 已经摸清 cuBLAS 和 SDPA 在哪些情况下会变。在固定大小的块上循环调用 cuBLAS 可以当作参照（oracle），慢约 33x。严格确定性模式下，SDPA 的 memory-efficient 反向在测过的形状上通过了 L1 和 L2，耗时是 flash 的 4.4x。 | cuDNN 和 FlashAttention 的二进制包。 |
+| 12 | 部署时的包装 | **已测量** | 编译后的 block 仍然满足 L2，但和 eager 相比有 65% 的元素不同，直到把每个会舍入的算子都做成不透明的自定义算子为止。直接调用 Triton kernel 时，每换一个 batch size 就重新编译一次（18 个 graph；注册成自定义算子后只有 2 个）。CUDA graph 的分桶不会破坏本来就不变的 kernel，而 cuBLAS 在 7 个桶上给出了 6 种不同的结果。在编译后的代码和 graph 里插的 probe（`tools/graph_probe.py`）只要隔离好，就不会改变编译后的结果。 | 编译 paged、varlen 和反向路径，以及 `max-autotune`。 |
+| 13 | 采样 | **已实现并验证** | 每个请求各用一个生成器的做法满足 L2，但遇到重算、回滚、n>1 和 speculative decoding 的分块都会失败。cumsum 不满足 L2（V=151,936 时连 L1 也不满足）。用计数器作 key、权重用 int64 的采样器通过了 L1–L3 和卡方检验，耗时是原生采样器的 1.3x（B=256）。 | 融合的噪声 kernel、min-p、torch.compile 和 CUDA graph，以及真实的引擎。 |
+| 14 | 混用多个 adapter 的 LoRA | **已实现并验证**（前向、反向） | grouped cuBLAS 在 723 种同 batch 组合里有 486–506 种不满足 L2，即使 base GEMM 不变，也还有 22–100/723 种不满足。先 gather 再做 bmm 同样不满足。在 bf16 下 merge 会改变约 50% 的 bit，而且当增量只有输出的 1e-2–1e-3 时，会丢掉 18–78% 的 ΔW。改变 scale 乘上去的位置，会让 5–6% 的输出变化。我们的 kernel 通过了 L1、L2、prefill 对 decode、trainer 对引擎，以及带 padding 的反向。 | vLLM 本身、打包的切片、TP、torch.compile，以及 QLoRA。 |
+| 15 | 训练 step（反向算子、优化器、loss、恢复训练） | **已实现并验证**（单 GPU） | index_add_、scatter_add_、index_select 的反向、带权的 bincount 和 1-D cumsum 都不满足 L1。先按索引排序、再在 fp32 下按升序做分段求和，满足 L1，并且和 NumPy 循环逐 bit 一致。严格模式遇到 cumsum、bincount(weights) 和 histc 会直接报错。AdamW 的 fused、foreach 和 single-tensor 三条路径结果互不相同（foreach 和 single-tensor 只差在偏差修正的那一次除法上）。保存并恢复 7 项状态，恢复训练就能逐 bit 一致。 | 让 fused 优化器的顺序完全对上（目前 0.15% 的 exp_avg 差 1 ulp）、多 GPU（见第 10 行），以及 torch.compile。 |
+| 16 | 跨引擎舍入（L4） | **已测量**（vLLM 0.19.1，[报告](../../../examples/cross_engine/REPORT.md)） | 投影的打包方式、bias 的位置、norm 的写法、RoPE 表、注意力 kernel、lm_head kernel 和 log_softmax kernel，任何一项不同都会破坏相等。RoPE 公式和 SiLU 本来就一致。trainer 调用 vLLM 的 kernel 之后，不同的 token 数是 0/76,155。 | 编译后的 vLLM、反向、TP，以及其他模型。 |
 
-## 1. 行内归约：RMSNorm、LayerNorm、softmax、log_softmax、行求和、cross-entropy
+## 1. 按行归约（RMSNorm、LayerNorm、softmax、log_softmax、行求和、cross-entropy）
 
-变化来自：
-- 行数少时，为了填满 GPU，把一行拆给多个块；
-- 根据行数或指针对齐来选块大小或向量宽度；
-- 小 batch 的快速路径。
+按行归约的 kernel 在下面几种情况下会随 batch 变化：
+- 行数少时，为了把 GPU 填满，把一行拆给多个 block 去算；
+- 根据行数或指针对齐来选 block 大小或向量宽度；
+- 对小 batch 走一条单独的快速路径。
 
-修复：
-- 每个 program（块或 warp）处理一行，无论 batch 多大。
-- 沿行方向固定块大小；每个线程的累加方式固定，然后是固定的
-  块内归约树。
-- 如果一行对一个块来说太长，就把它切成若干段，段数只取决于
-  行长，并在第二遍中按固定顺序合并。
-  永远不要用原子操作。
-- 固定向量宽度。如果行起始地址的对齐随它在 batch 中的位置而变
-  （hidden 大小不是向量宽度的倍数），就在所有地方都走标量路径，
-  或者对行跨度做填充。
-- 保持参考的舍入点：例如归一化后的值是在乘以权重之前还是之后
-  转换为 bf16。
+修复方法：
+- 不管 batch 多大，每一行都由它自己的 program（一个 block 或一个 warp）处理。
+- 固定沿行方向的 block 大小和每个线程的累加方式，然后在 block 内用一棵固定的树把各线程的
+  结果合起来。
+- 如果一行太长、一个 block 放不下，就把它切成若干 chunk，chunk 的个数只取决于行长；
+  第二遍再按固定顺序把这些 chunk 合起来。任何时候都不要用原子操作。
+- 固定向量宽度。如果一行起始地址的对齐会随它在 batch 中的位置变化（hidden size 不是
+  向量宽度的倍数时就会这样），就全部走标量路径，或者把行的 stride padding 到对齐。
+- 保留参考实现的舍入点，比如归一化后的值是在乘权重之前还是之后转成 bf16。
 
-达到 L2。在一种 GPU 型号、torch 2.5.1、hidden 4096、vocab 32000 下观察到：
-torch 算子 RMSNorm 和 fp32 `log_softmax` 在 batch 大小
-1–2048 之间本来就是 L2。对其他形状、版本或 GPU 并无保证，所以要验证。
+这条做法能达到 L2。在一种 GPU 型号、torch 2.5.1、hidden 4096、vocab 32000 的条件下，
+用 torch 算子拼出的 RMSNorm 和 fp32 的 `log_softmax` 在 batch size 1–2048 之间本来就
+满足 L2。但换了形状、版本或 GPU 就没有这个保证，所以要在你自己的环境上验证。
 
 ## 2. 稠密 GEMM（bf16/fp16）
 
-变化来自：
-- 按 M 选择 tile、指令或 kernel；
-- split-K 或 stream-K；
-- 库的启发式规则。
+稠密 GEMM 在下面几种情况下会随 batch 变化：
+- 按 M 来选 tile、指令或 kernel；
+- 用了 split-K 或 stream-K；
+- 由库的启发式规则挑选 kernel。
 
-在一种 GPU 型号、torch 2.5.1 下观察到：`torch.mm`（cuBLAS）在 M=16 及以下为 L2，
-从 M=31 起随批变化。
+在一种 GPU 型号、torch 2.5.1 下，`torch.mm`（cuBLAS）在 M=16 及以下满足 L2，
+从 M=31 起就开始随 batch 变化。
 
-修复：
-- 对每个 M 都用同一个 tile 配置（block M/N/K、warp 数、stage 数、MMA 指令）。
-- 不用 split-K，不用 stream-K。K 循环按升序累加到 fp32
-  累加器，epilogue 相同。
-- 只有当第二个小 M kernel 复现相同的逐元素 K 分段和指令时，才允许使用它。
-  用逐位比较证明它与主 kernel 一致。
-- cuBLASLt 可以固定一个算法及其 split-K 设置。仍要在不同 M 上验证：
-  固定的算法并不是保证。
-- 关闭 TF32，除非两侧以完全相同的方式使用它。
+修复方法：
+- 对所有 M 都用同一套 tile 配置（block M/N/K、warp 数、stage 数、MMA 指令）。
+- 不用 split-K，也不用 stream-K。K 循环按升序累加到 fp32 累加器里，所有 M 都用
+  同一个 epilogue。
+- 可以另配一个专门处理小 M 的 kernel，但前提是它对每个元素的 K 切分方式和所用指令都和
+  主 kernel 一样，并且要逐 bit 证明它和主 kernel 的结果一致。
+- cuBLASLt 可以固定算法和它的 split-K 设置。即便如此也要在不同的 M 上验证，因为固定了
+  算法并不等于有保证。
+- 关掉 TF32，除非两端用 TF32 的方式完全一样。
 
-达到 L2。L4 需要两个引擎使用同一个 kernel。代价：小 M（decode）时
-利用率较低。
+这条做法能达到 L2。要达到 L4，两个引擎还必须跑同一个 kernel。代价是小 M 时（也就是
+decode 时）GPU 利用率较低。
 
-## 3. 批量与分组 GEMM：MoE 专家，`bmm` 对比 `mm`
+## 3. batched GEMM 和 grouped GEMM（MoE expert，`bmm` 与 `mm`）
 
-- 专家的 GEMM 看到的是 M_e，即路由到它的 token 数，而它会随
-  batch 里的其他内容变化。每个专家 GEMM 都必须对 M_e 不变
-  （配方 2）。分组 kernel 常按最大或总 M 选 tile 大小：把它们
-  固定下来。
-- 一侧对 3-D 张量调用 `bmm`，另一侧对 2-D 张量调用 `mm`，运行的是
-  不同的 kernel。一个已报告的案例是 MoE router：不同的门控分数
-  会把 token 路由到不同的专家，这是离散的分歧。让两侧都走
-  同一个不变的 GEMM。
+- 一个 expert 的 GEMM 看到的 M 是 M_e，也就是路由到这个 expert 的 token 数，而 M_e
+  会随 batch 里其他内容变化。所以每个 expert GEMM 都必须对 M_e 不变（见第 2 节）。
+  grouped kernel 常常按最大的 M 或总的 M 来定 tile 大小，要把 tile 大小固定下来。
+- 如果一端对 3-D 张量调用 `bmm`，另一端对 2-D 张量调用 `mm`，两端跑的就是不同的
+  kernel。有一个公开报告的例子出在 MoE router 上：gate 分数稍有不同，同一个 token 就
+  可能被路由到不同的 expert，这是离散的分歧。要让两端都走同一个不变的 GEMM。
 
-## 4. Softmax 注意力：prefill、decode、分块 prefill、分页 KV
+## 4. softmax 注意力（prefill、decode、chunked prefill、paged KV）
 
-在一种 GPU 型号、torch 2.5.1 SDPA 下观察到：
-- prefill 与逐 token decode 在约 10% 的输出元素上不同；
-- 带显式 mask 的分块 prefill 在 1 个元素上不同。带 mask 的调用
-  很可能走了与 `is_causal=True` 不同的后端。
+在一种 GPU 型号、torch 2.5.1 下，SDPA 有两处结果会变：
+- prefill 和逐 token 的 decode 相比，约 10% 的输出元素不同；
+- 带显式 mask 的 chunked prefill 有 1 个元素不同。带 mask 的调用很可能走了和
+  `is_causal=True` 不同的后端。
 
-修复，对位于位置 t 的查询：
-- **处处使用相同的 key 迭代。** KV 按固定大小 B 的块访问，
-  从 0 开始按绝对位置顺序，逐块应用 online-softmax 更新。
-  prefill、分块 prefill 和 decode 使用相同的 B 和相同的
-  顺序。
-- **不用 split-KV**（`num_splits=1`）。或者按固定的 token 数切分，并对齐
-  到绝对位置，永远不要按切分个数来切。然后在 prefill 中使用与 decode
-  相同的切分与合并。
-- **分页 KV：** 块边界跟随绝对位置（B 的倍数），
-  与页大小以及 prefill 分块从哪里开始无关。在 kernel 运行之前，把
-  当前分块的 K/V 写入 cache，使 kernel 读取
-  统一的单一来源。
-- **掩码：** 被掩掉的分数贡献恰好为零。部分被掩的块
-  在每种模式下都以相同方式计算滑动最大值和归一化因子。
-- 在每种模式下使用相同的指数路径（例如带 log2(e) 预缩放的 `exp2`）、相同的缩放
-  和相同的 GQA head 映射。
-- 变长打包（`cu_seqlens`）：一个序列的迭代不依赖于
-  打包中的相邻序列。
-- **反向：** 常见 kernel 用原子操作把来自 key 块 program 的 dQ 贡献
-  加起来，这会破坏 L1。改用两遍无原子操作的计算：
-  - dK/dV：每个 key 块一个 program，按固定顺序先遍历 GQA 组的查询 head，
-    再遍历查询块；
-  - dQ：每个查询块一个 program，从位置 0 开始遍历 key 块。
+修复的目标是让位置 t 上的 query 在每种模式下都按同样的方式计算：
+- **所有模式按同一种方式遍历 key。** 以固定大小 B 的 block 访问 KV，从位置 0 开始按
+  绝对位置的顺序，逐个 block 做 online softmax 更新。prefill、chunked prefill 和
+  decode 用同一个 B、同一个顺序。
+- **不用 split-KV**（`num_splits=1`）。如果一定要切，就按固定的 token 数来切，并对齐到
+  绝对位置，绝不按切分个数来切；而且 prefill 和 decode 要用同样的切分与合并方式。
+- **paged KV：** block 边界跟着绝对位置走（B 的倍数），与页大小无关，也与 prefill 的
+  chunk 从哪里开始无关。在 kernel 运行之前，先把当前 chunk 的 K/V 写进 cache，这样
+  kernel 只从一个统一的来源读数据。
+- **mask：** 被 mask 掉的分数，贡献必须恰好为零。部分被 mask 的 block，在每种模式下
+  都用同样的方式计算 running max 和归一化因子。
+- 每种模式都用同一条指数计算路径（例如先乘 log2(e) 再用 `exp2`）、同一个 scale 和
+  同一种 GQA head 映射。
+- 用 varlen 打包（`cu_seqlens`）时，一个序列的遍历方式不能依赖于和它打包在一起的
+  其他序列。
+- **反向：** 常见的 kernel 用原子操作把各个 key block 的 program 算出的 dQ 贡献加起来，
+  这会破坏 L1。改成两遍计算，都不用原子操作：
+  - dK/dV：每个 key block 一个 program，先遍历它所在 GQA 组的各个 query head，再遍历
+    各个 query block，顺序固定；
+  - dQ：每个 query block 一个 program，从位置 0 开始遍历各个 key block。
 
-  两者都在 fp32 寄存器中累加并只写一次。在 program 内以 fp32 对 GQA 组
-  求和。把前向的 log-sum-exp 存为一个变体，其输出要与普通前向
-  逐位比对。在
-  [注意力反向案例](../../../examples/attention_backward/REPORT.md#backward-dq-dk-dv)中测得：
-  - L1 和 L2，包括带掩码 loss 的右填充；
-  - 前向+反向为 SDPA flash 的 1.38x。
+  两遍都在 fp32 寄存器里累加，只写一次。GQA 组内的求和在 program 内部用 fp32 完成。
+  前向的 log-sum-exp 由前向的一个变体顺带存下来，并逐 bit 检查这个变体的输出和普通
+  前向一致。在[注意力反向案例](../../../examples/attention_backward/REPORT.md#backward-dq-dk-dv)
+  中测得：
+  - L1 和 L2 都成立，用带 mask 的 loss 做右填充时也成立；
+  - 前向加反向的耗时是 SDPA flash 的 1.38x。
 
-  厂商的确定性反向需要 `warn_only=False`，并且不会比其前向
-  提供更多不变性：flash 这样运行时不满足 L2。
+  厂商提供的确定性反向需要 `warn_only=False`，而且它的不变性不会比对应的前向更好：
+  flash 在这种模式下仍然不满足 L2。
 
-达到 L2 和 L3。代价：去掉 split-KV 会拖慢序列很少时的长上下文
-decode。
+这条做法能达到 L2 和 L3。代价是没有了 split-KV，序列很少时的长上下文 decode 会变慢。
 
-在一种 GPU 型号上测得（[分页、varlen 和 compile 案例](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs)）：
-- **分页 KV。** 在页大小 16–128、页随机放置时，连续存储的
-  结果在每种模式下都逐位复现。改为按页大小分块计算，
-  则每种页大小都给出不同的结果。每个结果在各模式之间与
-  自身一致，所以要测试多个页大小。比块还小的页需要 gather；
-  在 `num_stages=1` 时它多花 +4%。
-- **变长打包。** 当块从每个序列的起点开始时，前向和反向在单独运行和打包运行时
-  完全相同。与打包偏移对齐的网格在偏移不是块大小的倍数时
-  都会失败。
+在一种 GPU 型号上测得（[paged、varlen 和 compile 案例](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs)）：
+- **paged KV。** 页大小取 16–128、页随机摆放时，每种模式都逐 bit 复现了连续存储时的
+  结果。如果改成按页大小来划分 block，每种页大小都会得到一个不同的结果。这些结果各自在
+  不同模式之间又是一致的，所以只测一种页大小发现不了问题，要多测几种。页比 block
+  小时需要一次 gather，在 `num_stages=1` 下多花 +4%。
+- **varlen 打包。** 当 block 从每个序列自己的起点开始划分时，单独运行和打包运行的
+  前向、反向结果完全相同。如果网格按打包偏移对齐，只要偏移不是 block 大小的倍数就会
+  失败。
 
-## 5. MLA（潜在注意力）
+## 5. MLA（latent attention）
 
-实现常对 decode 使用 absorbed 形式（权重折叠进
-query/output 投影），对 prefill 使用显式 K/V 形式。两者在精确算术下
-相等，但舍入不同。这是算法上的差异：
-在每种模式下都使用同一种形式，并在 trainer 中也这样做以达到 L4。然后对注意力核心应用
-配方 4。说明所选形式的吞吐代价。
+很多实现在 decode 时用吸收式（把权重折进 query 和 output 投影），在 prefill
+时用显式，也就是把 K/V 展开。两种形式在精确算术下相等，但舍入不同。这是算法上的
+差异，所以要选定一种形式，在所有模式下都用它；要达到 L4，trainer 也得用同一种。然后对
+注意力核心套用第 4 节的做法，并说明所选形式的吞吐代价。
 
-在一种 GPU 型号上测得（[MLA 和稀疏案例](../../../handbook/3-kernels/mla-and-sparse.md)）：
-- **两种形式不同。** 它们在 65% 的输出元素上不一致，相对 fp64 的
-  精度相同。
-- **单一形式是不变的。** 当每个 GEMM、norm 和注意力核心都
-  不变时，每种形式单独使用都是 L2 和 L3。
-- **混用形式会破坏与 trainer 的一致。** explicit prefill 配 absorbed decode
-  从第二层起就不再与 trainer 一致，无论 trainer 用哪种形式。
-  只有一层时可能碰巧一致，因为潜在
-  cache 不取决于形式。
-- **只有核心还不够。** 不变的注意力核心配 cuBLAS
-  投影仍然失败。explicit 形式的解压（其 M 是
-  缓存的 token 数）和逐 head 的输出 `bmm` 也必须不变。
+在一种 GPU 型号上测得（[MLA 和稀疏注意力案例](../../../handbook/3-kernels/mla-and-sparse.md)）：
+- **两种形式的结果不同。** 它们有 65% 的输出元素不一致，但相对 fp64 的精度一样。
+- **单用一种形式可以做到不变。** 当每个 GEMM、norm 和注意力核心都不变时，任一形式
+  单独使用都满足 L2 和 L3。
+- **混用两种形式会和 trainer 对不上。** 显式 prefill 搭配吸收式 decode，从第二层
+  起就和 trainer 不一致了，不管 trainer 用哪种形式。只有一层的模型可能碰巧一致，因为
+  latent cache 与形式无关。
+- **只让注意力核心不变还不够。** 不变的注意力核心配上 cuBLAS 的投影，仍然会失败。
+  显式里的解压 GEMM（它的 M 是 cache 中的 token 数）和每个 head 输出的 `bmm`
+  也必须不变。
 - **代价。**
-  - absorbed prefill：explicit 的 1.77x（B=4，T=1024）。
-  - 每步重新解压 K/V 的 explicit decode：在 B=16–64 时为 absorbed 的
-    6.9–27x。
-  - 带逐 head K/V cache 的 explicit decode：1.17–3.0x，但每个 token 的 cache
-    占用 7.2x 的内存。
+  - 用吸收式做 prefill，耗时是显式 prefill 的 1.77x（B=4，T=1024）。
+  - 用显式做 decode、每一步都重新解压 K/V 时，耗时是吸收式 decode 的
+    6.9–27x（B=16–64）。
+  - 用显式做 decode、每个 head 单独缓存 K/V 时，耗时是 1.17–3.0x，但每个
+    token 的 cache 要占 7.2x 的显存。
 
-## 6. 带选择的稀疏注意力（indexer 加 top-k）
+## 6. 先选 key 再计算的稀疏注意力（indexer 加 top-k）
 
-随批变化的分数会变成离散翻转：选中的 key 集合不同，
-这是很大的分歧。
+在这类算子里，分数一旦随 batch 变化，就会变成离散的翻转：kernel 选中的 key 集合变了，
+输出也就差得很远。
 
-- 用配方 1–2 让 indexer 的分数不变。
-- 采用确定性并列处理的 top-k：先比分数，再比索引。
-- 用配方 4 按排序后的索引顺序在选中的 key 上累加。
-- 先检查不同 batch 下选中的集合完全相同，再检查
-  数值。
+- 用第 1–2 节的做法让 indexer 的分数不变。
+- top-k 遇到并列时要有确定的规则：先比分数，再比索引。
+- 按排好序的索引顺序在选中的 key 上累加，具体按第 4 节来做。
+- 先确认不同 batch 下选中的集合完全一样，再去比较数值。
 
-在一种 GPU 型号上测得（[MLA 和稀疏案例](../../../handbook/3-kernels/mla-and-sparse.md)）：
-- **翻转来自投影 GEMM。** 在分块 prefill 和批量 decode 下，约
-  四分之一位置上的每一次选择翻转都来自
-  cuBLAS 投影 GEMM。单独用稳定的 top-k 或不变的 indexer 一个也
-  消除不了。用单配置投影后全部通过。
-- **仍然保留稳定排序。** `torch.topk` 在每次测试中都在并列时选了最小索引，
-  但这个顺序没有写入文档。稳定排序在 T=2048 时额外花费
-  0.87 ms。
-- **先比较集合，再比较数值。** 大多数基线数值不一致出现在
-  集合没有变化的位置上。
+在一种 GPU 型号上测得（[MLA 和稀疏注意力案例](../../../handbook/3-kernels/mla-and-sparse.md)）：
+- **翻转都来自投影 GEMM。** 在 chunked prefill 和 batched decode 下，约四分之一的
+  位置发生了选择翻转，而每一次翻转都来自 cuBLAS 的投影 GEMM。只换成稳定的 top-k，
+  或者只让 indexer 不变，一个翻转都消除不了。投影换成单一配置之后，全部通过。
+- **稳定排序还是要保留。** `torch.topk` 遇到并列时在每次测试中都选了最小的索引，但文档
+  并没有保证这个顺序。稳定排序在 T=2048 时多花 0.87 ms。
+- **先比集合，再比数值。** 基线里大部分数值不一致，都出现在选中集合并没有变化的位置上。
 
-## 7. 线性注意力与 SSM（GDN、Mamba 风格）
+## 7. 线性注意力和 SSM（GDN、Mamba 类）
 
-分块形式（训练、prefill）和循环形式（decode）是
-归约顺序不同的不同算法。逐序列的循环
-kernel 天然是 batch-invariant（批不变）的：它没有跨序列的归约。
+分块形式（用于训练和 prefill）和递归形式（用于 decode）是两种不同的算法，
+归约顺序也不同。一次只处理一个序列的递归 kernel 天然就是 batch-invariant 的，
+因为它从不跨序列做归约。
 
-选项：
-- 处处使用循环前向，只在反向中使用分块。据
-  报告这样相对 vLLM 达到 logprob 差为 0，trainer
-  吞吐代价为 2–3x；
-- 或者接受这个差异，并把它报告为一种选择而不是故障。
+有两种选择：
+- 所有地方都用递归形式做前向，分块形式只用于反向。有报告说这样做与 vLLM
+  的 logprob 差异为 0，代价是 trainer 吞吐差 2–3x；
+- 或者接受这个差异，并把它作为一种选择来报告，而不是当成故障。
 
-当分块大小和块内顺序固定时，分块 kernel 为 L2。
+只要 chunk 大小和 chunk 内部的顺序是固定的，分块 kernel 就满足 L2。
 
 在一种 GPU 型号上用 gated-delta-rule 层测得（[线性注意力案例](../../../handbook/3-kernels/linear-attention.md)）：
-- **循环。** 循环 Triton kernel（每个序列、head 和
-  value tile 一个 program）无需额外工作就是 L1、L2 和 L3。
-- **分块。** 分块 kernel 为 L1 和 L2。只有当每次调用的
-  分块都位于 C 的绝对倍数上时才是 L3。decode 可以从最后一个边界状态重算
-  未闭合的分块，并与完整 prefill 逐位一致，代价为
-  循环 decode 一步的 3.4–3.7x。
-- **精度比算法更重要。** 用 fp32 矩阵乘操作数时，
-  分块与循环在 0.03% 的 bf16 输出上不同。用 bf16 操作数时（
-  常见分块 kernel 就这样用），在 55.5% 上不同。
-- **循环的代价随 T 增长。** 相对一个未调优的分块 kernel，
-  循环前向在 T ≤ 4096 时耗时 0.9–1.5x，在 T = 8192 时为 2.5–3.6x。
-- **配置也会不同。** 两种循环 tile 配置彼此
-  不同，所以 trainer 和引擎必须共用一种。
+- **递归形式。** 递归形式的 Triton kernel（每个序列、head 和 value tile 各一个
+  program）不需要额外处理就满足 L1、L2 和 L3。
+- **分块形式。** 分块 kernel 满足 L1 和 L2。只有每次调用都把 chunk 放在 C 的绝对
+  倍数上，才满足 L3。decode 可以从上一个 chunk 边界的状态出发，重算还没填满的那个
+  chunk，这样能与完整的 prefill 逐 bit 一致，耗时是递归 decode 一步的 3.4–3.7x。
+- **精度比算法影响更大。** 矩阵乘的操作数用 fp32 时，分块和递归在 bf16 输出
+  上只有 0.03% 不同；操作数用 bf16 时（常见的分块 kernel 就是这样），有 55.5% 不同。
+- **递归形式的代价随 T 增长。** 和一个没有调优的分块 kernel 相比，递归前向在
+  T ≤ 4096 时耗时 0.9–1.5x，在 T = 8192 时是 2.5–3.6x。
+- **配置不同，结果也不同。** 两种递归 tile 配置的结果彼此不同，所以 trainer 和
+  引擎必须用同一种。
 
-## 8. MoE 路由、分发与合并
+## 8. MoE 的路由、dispatch 和 combine
 
-- **Router：** 不变的 GEMM（配方 2–3）、行内 softmax 或 sigmoid
-  （配方 1）、稳定的 top-k（先分数，再专家 id）。路由权重保持参考的
-  dtype：一个已报告的不一致仅仅来自把它们转换为
-  bf16。
-- **不按 batch 丢弃。** 容量上限让一个 token 的去留取决于
-  它的相邻 token。使用无丢弃路由，或者不依赖其他 token 的
-  容量规则。
-- **分发**只搬运数据，所以是精确的。专家分段中的填充行
-  不能改变真实行；当专家 GEMM 不变时它们不会改变。
-- **合并：** 对每个 token，在每个 token 一个 program 内，按固定顺序（按
-  top-k 名次或专家 id）、以固定精度对它的 top-k 专家输出求和。
-  永远不要 scatter-add 或原子 index-add 到输出中。在专家
-  并行下，求和之前先把返回的行放进固定槽位，使到达
-  顺序无关紧要。把共享专家加在该求和中的固定位置。
-- **测得**（[MoE 案例研究](../../../examples/moe_combine/REPORT.md#one-gpu)，一种 GPU 型号）：
-  - cuBLAS 专家 GEMM 从 2 个 token 起破坏 L2；
-  - 确定性模式只修复了 L1；
-  - 即使 GEMM 不变，原子合并也破坏 L1；
-  - 单配置 Triton GEMM 配逐 token 固定顺序的 fp32 合并通过 L1
-    和 L2，比同样的 GEMM 配原子合并多约 +11%；
-  - 在固定大小分块上的批量矩阵乘不是不变的。
-- **专家并行下测得**（[EP 案例](../../../examples/moe_ep/REPORT.md#under-expert-parallelism)，
-  一个和两个各有 8 个 GPU 的节点）：
-  - 固定槽位合并在 EP 1、2、4、8 和 16 下给出相同比特，在一个
-    节点上和跨两个节点都是如此，与 GPU 放置无关（L5）。不需要任何 NCCL 设置，
-    因为 all-to-all 不包含归约；
-  - 返回之前按 rank 先求和为 L1 和 L2，但从 top-3 起不满足 L5：
-    分组跟随哪些专家共享同一个 rank。其不一致取决于
-    EP 度数，而不取决于 rank 位于何处；
-  - 在 top-2 时任何顺序都给出相同比特，所以要用 top-k ≥ 3 测试；
-  - 容量丢弃使哪些 token 留下随相邻 token、EP
-    度数或本地顺序而变。
+- **router：** 用不变的 GEMM（第 2–3 节）、按行的 softmax 或 sigmoid（第 1 节），以及
+  稳定的 top-k（先按分数，再按 expert id）。routing 权重要保持参考实现的 dtype：有一个
+  公开报告的不一致，原因仅仅是把这些权重转成了 bf16。
+- **不要按 batch 丢 token。** capacity 上限会让一个 token 是否被丢弃取决于它的邻居。
+  要用不丢 token 的路由（dropless），或者用不依赖其他 token 的 capacity 规则。
+- **dispatch** 只搬数据，所以是精确的。expert 分段里的 padding 行不能改变真实的行；
+  只要 expert GEMM 不变，它们就不会改变。
+- **combine：** 对每个 token，用一个 program 把它的 top-k 个 expert 输出按固定顺序
+  （按 top-k 名次或按 expert id）、以固定精度加起来。绝不要用 scatter-add 或原子的
+  index-add 往输出里累加。在 EP 下，先把各 rank 返回的行放进固定的槽位再求和，这样
+  它们到达的先后就无关紧要。shared expert 也要加在这个求和里的固定位置上。
+- **测量结果**（[MoE 案例研究](../../../examples/moe_combine/REPORT.md#one-gpu)，一种 GPU 型号）：
+  - cuBLAS 的 expert GEMM 从 2 个 token 起就破坏了 L2；
+  - 确定性模式只修好了 L1；
+  - 即使 GEMM 都不变，用原子操作做 combine 也会破坏 L1；
+  - 单一配置的 Triton GEMM 加上每个 token 固定顺序的 fp32 combine，通过了 L1 和 L2，
+    耗时比同样的 GEMM 配原子 combine 多约 +11%；
+  - 在固定大小的块上做 batched matmul，结果并不是不变的。
+- **EP 下的测量结果**（[EP 案例](../../../examples/moe_ep/REPORT.md#under-expert-parallelism)，
+  一个和两个 8 GPU 节点）：
+  - 固定槽位的 combine 在 EP 1、2、4、8 和 16 下结果逐 bit 一致，一个节点和跨两个节点
+    都是如此，与 GPU 怎么摆放无关（L5）。不需要任何 NCCL 设置，因为 all-to-all 里
+    没有归约；
+  - 在每个 rank 上先求和再返回，满足 L1 和 L2，但从 top-3 起不满足 L5，因为分组方式
+    取决于哪些 expert 落在同一个 rank 上。它的不一致取决于 EP 规模，而不取决于 rank
+    摆在哪里；
+  - top-2 时任何顺序的结果都逐 bit 一致，所以要用 top-k ≥ 3 来测；
+  - 有 capacity 丢弃时，哪些 token 能留下来会随邻居、EP 规模或本地顺序而变。
 
-## 9. 量化 GEMM（FP8 分块缩放、MXFP8、NVFP4）
+## 9. 量化 GEMM（FP8 block scaling、MXFP8、NVFP4）
 
-- **激活缩放不能把行耦合起来。** 使用逐 token、逐 token 块
-  （例如 1x128）或静态缩放，永远不要用在整个 batch 上计算的逐张量 amax。
-  NVFP4 的第二级缩放同样如此：逐 token 或静态。
-- 量化 kernel 本身就是一个行内归约（amax）：配方 1。
-- GEMM 遵循配方 2，外加固定的提升间隔：在加入 fp32 累加器之前，
-  有多少个 MMA 步骤以 tensor core 精度累加。
-  在固定的位置、按固定顺序应用缩放。不用 split-K。
-- 在检查 GEMM 输出之前，先验证量化值本身（数据和缩放）在不同 batch 之间
-  逐行完全相同。
+- **激活的 scale 不能把各行耦合在一起。** 用 per-token、per-token-block（例如 1x128）
+  或静态 scale，绝不要用在整个 batch 上算出的 per-tensor amax。NVFP4 的第二级 scale 也
+  一样，要么 per-token，要么静态。
+- 量化 kernel 本身就是一个按行归约（求 amax），所以按第 1 节处理。
+- GEMM 按第 2 节处理，另外还要固定 promotion interval，也就是在 tensor core 精度下
+  累加多少个 MMA 步之后，把部分结果加进 fp32 累加器。scale 要在固定的位置、按固定的
+  顺序乘上去，并且不用 split-K。
+- 在检查 GEMM 输出之前，先验证量化后的值本身（数据和 scale）在不同 batch 中逐行完全
+  相同。
 
 ## 10. 集合通信（TP / EP / SP）
 
-在 8 个 GPU 上测得（一个 PCIe 节点，NCCL 2.21.5，[集合通信案例](../../../handbook/3-kernels/collectives.md)）：
+在 8 块 GPU 上测得（一个 PCIe 节点，NCCL 2.21.5，[集合通信案例](../../../handbook/3-kernels/collectives.md)）：
 
-- **固定算法和协议还不够。** 在每种协议下固定 Ring 时，
-  一段固定的行在不同大小的消息中仍然得到不同的归约顺序。
-  每个元素的起始 rank 跟随分块边界，而这些边界随消息大小和偏移移动。
-  行并行 TP 4 和 8 从 M = 2 起不满足 L2。
-- **单一顺序的算法在一个节点上有效。** 在该节点上，
-  `NCCL_ALGO=Tree` 对每种大小下的每个元素都给出同一个顺序，并通过
-  L2。代价是 all-reduce 的 1.0–1.3x，1 MB 时为 5.3x。
-- **跨两个节点也成立。** 在 25 GbE 上用 16 个 rank，固定 Tree
-  仍然通过。每个元素先是每个节点内的链，再把两个
-  节点的和相加一次，而两操作数相加满足交换律。三个或更多节点很可能破坏
-  这一点（未测试）：要在你的拓扑上验证。
-- **reduce-scatter 每个输出分块只有一个顺序，这还不够。** 这个
-  顺序取决于哪个 rank 拥有该行。在序列并行下，这又
-  取决于位置和 batch，带 SP 的 TP 在每种设置下都失败。
-- **后备方案。** 交换部分和（all-to-all 或 all-gather），并在本地
-  按 rank 顺序以 fp32 求和。这在构造上就是不变的。
-  all-to-all 形式从 1 MB 起代价为 all-reduce 的 1.04–1.20x。它改变了
-  算术，所以要达到 L4，两个引擎都必须使用它。
-- **跨节点时，用两级。** 扁平的后备方案在那里代价为 all-reduce 的 2.1–8.8x。
-  两级固定顺序同样不变，代价为 1.06–1.8x：先在
-  每个节点内按 rank 顺序求和，再在节点之间做一次 fp32 交换。
-- **两个 rank 与顺序无关**，因为两操作数的和满足交换律。用 3
-  个或更多 rank 测试。
-- **不同的并行度就是不同的归约树。** 在 TP 2–8 时，行并行与
-  不分片在 37.5–59% 的元素上不同。逻辑 TP 大小可达到
-  L5：
-  - 把 K 切成固定数量的分块（这里是 8）；
-  - 用同一个 kernel 计算每个分块的部分和；
-  - 收集部分和，并按分块顺序求和。
+- **只固定算法和协议还不够。** 固定 Ring、试遍所有协议之后，同一段固定的行在不同
+  大小的消息里仍然按不同的顺序归约。每个元素从哪个 rank 开始累加取决于 chunk 边界，
+  而 chunk 边界会随消息大小和偏移移动。行并行的 TP 4 和 8 从 M = 2 起就不满足 L2。
+- **在一个节点上，只有一种顺序的算法是可行的。** 在这个节点上，`NCCL_ALGO=Tree` 对
+  任意大小下的每个元素都用同一个顺序归约，通过了 L2，代价是 all-reduce 的 1.0–1.3x，
+  1 MB 时是 5.3x。
+- **跨两个节点也成立。** 在 25 GbE 上用 16 个 rank，固定 Tree 仍然通过。每个元素先在
+  各节点内沿链求和，再把两个节点的和相加一次，而两个操作数的加法满足交换律。三个或
+  更多节点很可能会破坏这一点（尚未测试），所以要在你自己的拓扑上验证。
+- **reduce-scatter 对每个输出 chunk 只有一种顺序，但这还不够。** 这个顺序取决于哪个
+  rank 拥有这一行。开了序列并行之后，归属又取决于位置和 batch，所以 TP 加 SP 在任何
+  设置下都失败了。
+- **回退方案。** 交换部分和（用 all-to-all 或 all-gather），然后在本地按 rank 顺序用
+  fp32 相加。这种做法从构造上就是不变的。all-to-all 版本从 1 MB 起的代价是 all-reduce
+  的 1.04–1.20x。它改变了运算本身，所以要达到 L4，两个引擎都得用它。
+- **跨节点时用两级。** 跨节点时，扁平的回退方案代价是 all-reduce 的 2.1–8.8x。两级的
+  固定顺序同样不变，代价只有 1.06–1.8x：先在每个节点内按 rank 顺序求和，再在节点之间
+  做一次 fp32 交换。
+- **只有两个 rank 时顺序无所谓**，因为两个操作数的和满足交换律。要用 3 个或更多 rank
+  来测。
+- **并行度不同，归约树就不同。** 在 TP 2–8 下，行并行和不切分相比有 37.5–59% 的元素
+  不同。用一个逻辑 TP 规模可以达到 L5：
+  - 把 K 切成固定数量的 chunk（这里是 8 个）；
+  - 用同一个 kernel 计算每个 chunk 的部分和；
+  - 收集所有部分和，按 chunk 顺序相加。
 
-  这样 TP 1、2、4 和 8 逐位一致，在 TP 8 时以树形式耗时为行并行的
-  1.6–1.9x。用 16 个分块时，TP 1、2、4、8 和 16 在两个节点之间一致。
-- **处处固定分块数。** 逻辑 TP 8 和 16 彼此
-  不同。逻辑 TP 8 只有通过切分每个分块的输出
-  列才能与 TP 16 一致。改为切分 K 则会改变结果。
-- **整个模型**（案例 whole-model-tp）：每个行并行层都用逻辑 TP
-  （C = 16），再加上分块和固定的词表并行 log_softmax，在
-  TP 1、2、4、8 和 16 下，以及以 TP a 做 prefill、以 TP b 做 decode 时都给出同一个
-  结果。反向中列并行的输入梯度也是跨 rank 求和：
-  用同样的方式归约它们（NCCL all-reduce 在检查的全部 9 个点上都破坏了 L5）。
-  代价：在通过 PCIe 连接的 8 个 GPU 上 TP 2–8 时，prefill 为 1.4–1.6x，decode 为 1.6–1.9x。逻辑 TP
-  与单 GPU 是不同的算术（TP 1 时 84.7% 的 logits 不同），所以
-  trainer 和引擎都必须使用它。
-- **数据并行梯度**（案例 training-dp-fsdp，两个 8 GPU 节点）：在 Ring 下，
-  桶布局会改变比特，而 torch DDP 在第一次迭代
-  （以及每次重启）时用单个桶归约。Tree 或有序 all-reduce 可修复
-  打包问题（1.05–1.20x）。reduce-scatter 的顺序跟随所属 rank。要在不同
-  DP 度数之间达到 L5，把 batch 切成固定数量的逻辑分片（这里是 16），
-  单独计算每个分片的梯度，并用一棵固定的树求和，
-  这棵树要包含跨 rank 求和；把这个求和交给 NCCL 从 3 个 rank 起就失败，
-  即使在 Tree 下也是如此。
+  这样 TP 1、2、4 和 8 就逐 bit 一致了；用树形式实现时，TP 8 下的耗时是行并行的
+  1.6–1.9x。用 16 个 chunk 时，TP 1、2、4、8 和 16 在两个节点上也一致。
+- **所有地方都用同一个 chunk 数。** 逻辑 TP 8 和逻辑 TP 16 的结果不同。逻辑 TP 8 要在
+  TP 16 上运行，只能把每个 chunk 的输出列再切开；如果改切 K，结果就变了。
+- **整个模型**（whole-model-tp 案例）：每个行并行层都用逻辑 TP（C = 16），再加上按固定
+  chunk 求和的词表并行 log_softmax，在 TP 1、2、4、8 和 16 下都给出同一个结果，prefill
+  用 TP a、decode 用 TP b 时也一样。反向里列并行层的输入梯度也是跨 rank 的求和，所以
+  也要用同样的方式归约（NCCL all-reduce 在检查过的全部 9 个点上都破坏了 L5）。代价是：
+  在通过 PCIe 互联的 8 块 GPU 上，TP 2–8 时 prefill 为 1.4–1.6x，decode 为 1.6–1.9x。
+  逻辑 TP 和单 GPU 的运算不同（TP 1 时有 84.7% 的 logits 不同），所以 trainer 和引擎
+  都必须用它。
+- **数据并行的梯度**（training-dp-fsdp 案例，两个 8 GPU 节点）：在 Ring 下，桶的
+  布局会让梯度变掉，而 torch DDP 的第一次迭代（以及每次重启）会把所有梯度放进一个
+  桶来归约。改用 Tree 或有序的 all-reduce 就能修好这个打包问题（1.05–1.20x）。
+  reduce-scatter 的顺序跟着拥有该行的 rank 走。要在不同的 DP 规模之间达到 L5，就把 batch
+  切成固定数量的逻辑 shard（这里是 16 个），每个 shard 单独算梯度，再用一棵固定的树把
+  它们加起来，而且这棵树要包含跨 rank 的那一步求和。把这一步交给 NCCL 去做，从 3 个
+  rank 起就失败了，即使用 Tree 也一样。
 
-## 11. 闭源或预编译 kernel
+## 11. 闭源或预编译的 kernel
 
-- 用 `check_batch` 在多种大小上摸清不变区域。填充到
-  固定的 M 只有在每次调用真的都以该 M 运行时才有帮助：CUDA graph 分桶
-  会在桶之间破坏这一点。
-- 如果没有任何开关或区域成立，就替换该 kernel。否则保留一个逐行的
-  包装作为调试参照，并把该算子排除在一致性声明之外。
+- 用 `check_batch` 扫很多种大小，摸清 kernel 在哪个范围内不变。padding 到固定的 M 只有在
+  每次调用真的都以这个 M 运行时才有用。CUDA graph 的分桶会打破这一点，因为每个
+  桶都按自己的 M 运行。
+- 如果没有哪个开关管用，不变的范围也覆盖不了你要用的大小，就替换这个 kernel。如果替换
+  不了，就保留一个逐行运行的包装作为调试用的参照（oracle），并把这个算子排除在一致性
+  结论之外。
 
-## 12. 部署包装层：`torch.compile` 和 CUDA graph
+## 12. `torch.compile` 和 CUDA graph 这类部署时的包装
 
-在一种 GPU 型号上测得（[分页、varlen 和 compile 案例](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs)）：
-- **把不变的 kernel 注册为不透明的自定义算子。** 直接调用时，
-  Triton kernel 会让 Dynamo 在每个 batch 大小上重新编译：18 个图，即使用了
-  `dynamic=True`。作为自定义算子：2 个。
-- **编译可以保持 L2，但仍然改变比特。** Inductor 融合了 RMSNorm、
-  残差相加和 SiLU·up，编译后的块在 65% 的
-  元素上与 eager 不同。让每个会舍入的算子都不透明后，得到 compiled = eager。
-  必须与 eager trainer 一致的引擎需要这样做。
-- **CUDA graph 只有配合不变的 kernel 才保持不变性。** 填充到
-  桶时，cuBLAS 对同一个序列在 7 个桶上给出 6 个不同的结果。
-  在相同形状下，graph 重放本身给出 eager 的比特。
-- **自定义算子有主机端开销：** 这里在小 batch 时每次调用约 0.65 ms，
-  除非放进 graph。
-- **编译代码内部的 fingerprint（指纹）**（[compile-graph-capture 案例](../../../handbook/1-pretraining/capture-compiled-code.md)）：
-  `tools/graph_probe.py` 从编译代码和 graph 重放中记录 OpGuard 格式的
-  fingerprint。给探针一个精确的逐点复制（`isolate=True`）：
-  非逐点的使用者可能让 Inductor 切换到 `addmm` 并改变比特。在编译之前
-  于 eager 中构建惰性 cache（RoPE 表）。
+在一种 GPU 型号上测得（[paged、varlen 和 compile 案例](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs)）：
+- **把不变的 kernel 注册成不透明的自定义算子。** 直接调用这些 Triton kernel 时，
+  Dynamo 每换一个 batch size 就重新编译一次，一共 18 个 graph，即使加了 `dynamic=True`
+  也一样；注册成自定义算子之后只需要 2 个。
+- **编译可以保住 L2，结果却仍然会变。** Inductor 把 RMSNorm、残差加法和 SiLU·up 融合在
+  一起之后，编译后的 block 和 eager 相比有 65% 的元素不同。把每个会舍入的算子都做成
+  不透明的之后，compiled = eager。一个必须和 eager trainer 一致的引擎就需要这样做。
+- **只有 kernel 本身不变，CUDA graph 才能保持不变性。** padding 到桶的尺寸之后，cuBLAS
+  对同一个序列在 7 个桶上给出了 6 种不同的结果。graph replay 本身在同一个形状下
+  和 eager 逐 bit 一致。
+- **自定义算子有 host 端开销：** 这里在小 batch 下每次调用约 0.65 ms，除非把它放进
+  graph 里运行。
+- **在编译后的代码里采集 fingerprint**（[compile-graph-capture 案例](../../../handbook/1-pretraining/capture-compiled-code.md)）：
+  `tools/graph_probe.py` 可以从编译后的代码和 graph replay 中记录 OpGuard 格式的
+  fingerprint。要给 probe 一份精确的逐元素拷贝（`isolate=True`），因为如果读取这个张量的
+  是一个非逐元素的算子，Inductor 可能改用 `addmm`，结果也就变了。会惰性构建的 cache
+  （比如 RoPE 表）要在编译之前先用 eager 建好。
 
 ## 13. 采样
 
-用基于计数器的生成器，以 (seed, absolute position, purpose, sample index) 为键生成噪声，
-永远不要依赖生成器的运行状态。让
-分布精确：整数权重 floor(exp(z−max)·2^S)，使求和与 cumsum
-与顺序无关。并列按 (value desc, index asc) 用稳定排序排序；greedy
-选最小索引。如果 token 必须与无草稿解码一致，就通过与
-目标模型自身样本相等来验证推测解码。在一种 GPU 型号上测得
-（[采样案例](../../../handbook/2-rl/sampling.md)；参考采样器
-[tools/bi_sampling.py](../../../tools/bi_sampling.py)）。
+噪声要用基于计数器的生成器来产生，以 (seed, absolute position, purpose, sample index)
+作为 key，绝不依赖生成器的运行状态。分布要做成精确的：用整数权重
+floor(exp(z−max)·2^S)，这样求和与 cumsum 就和顺序无关。遇到并列时用稳定排序按
+(value desc, index asc) 排列，这样 greedy decoding 会选到最小的索引。如果要求 token 与
+不用草稿模型时 decode 的结果一致，验证草稿 token 时就要检查它是否等于目标
+模型自己采样出的 token。以上在一种 GPU 型号上测得（[采样案例](../../../handbook/2-rl/sampling.md)；
+参考采样器是 [tools/bi_sampling.py](../../../tools/bi_sampling.py)）。
 
-## 14. LoRA 和多适配器批次
+## 14. LoRA 与混有多个 adapter 的 batch
 
-在 kernel 内为每一行选择它的适配器；永远不要为了
-归约而重新分组行。基座 GEMM 用一个配置运行，shrink 和 expand 按固定的
-rank 和 K 顺序进行，update 保持 fp32，并在一次 fp32 FMA 中与基座结果相加，
-之后只做一次类型转换。trainer（一个适配器）和
-引擎（混合适配器）使用同一个 kernel；固定缩放进入的位置；在 fp32
-累加内部对 rank 做零填充；trainer 计算 log-probs 时关闭 dropout；当
-引擎必须与未合并的 trainer 一致时，不要在 bf16 中合并。反向：dX 用同一个 kernel，
-dA/dB 按每个适配器在其非零梯度行上按升序计算，不用
-原子操作。在一种 GPU 型号上测得（[LoRA 案例](../../../handbook/2-rl/lora.md)）。
+在 kernel 内部为每一行选出它自己的 adapter；绝不为了做归约而按 adapter 重新给行分组。
+base GEMM 用单一配置运行。shrink 和 expand 两步都按固定的 rank 顺序和 K 顺序进行，LoRA
+的增量保持 fp32，再用一次 fp32 FMA 加到 base 的结果上，最后只做一次类型转换。
 
-## 15. 训练步：反向 scatter、优化器、loss、恢复训练
+trainer（只有一个 adapter）和引擎（一个 batch 里混着多个 adapter）必须用同一个 kernel。
+scale 在哪一步乘上去要固定下来。rank 较小的 adapter 在 fp32 累加里补零。trainer 计算
+logprob 时要关掉 dropout。如果引擎必须和一个不把 adapter merge 进权重的 trainer 一致，
+就不要在 bf16 下做 merge。
 
-- 把 `index_add_`、`scatter_add_`、embedding 反向和带权
-  `bincount` 替换为写明的顺序：按索引排序，然后做升序 fp32
-  分段求和。只开严格模式不算写明的顺序：它的 scatter 和
-  embedding 反向会随行宽或索引数改变顺序。
-- 固定优化器路径（fused、foreach 或 single-tensor）和 loss
-  归约方式。mean 不是布局不变的。
-- 保存并恢复一步会读取的每一项状态；该案例列出了 7 项。
-- 在一种 GPU 型号上测得（[训练步案例](../../../handbook/1-pretraining/training-step.md)）；
-  多 GPU 梯度见配方 10。
+反向时，dX 用同一个 kernel 计算；dA/dB 按 adapter 分别计算，只遍历梯度非零的行，按升序
+进行，不用原子操作。以上在一种 GPU 型号上测得（[LoRA 案例](../../../handbook/2-rl/lora.md)）。
 
-## 16. 跨引擎舍入（L4）
+## 15. 训练 step（反向里的 scatter、优化器、loss、恢复训练）
 
-每侧各自的 L2 和 L3 不能带来 L4。写下两侧的舍入序列
-（打包、bias 位置、norm 形式、RoPE 表、注意力、lm_head 和
-log_softmax kernel），先检查引擎自身的 L1 和 L2，然后一次对齐一个
-舍入点。工作流程见
-[engine-parity skill](../../engine-parity/SKILL.md)。在一种 GPU 型号上用 vLLM 0.19.1
-测得（[trainer 对比 vLLM 案例](../../../handbook/2-rl/engine-parity-vllm.md)）：
-要达到相等，trainer 需要调用 vLLM 自己的 kernel。
+- 把 `index_add_`、`scatter_add_`、embedding 的反向和带权的 `bincount` 换成你自己写定的
+  顺序：先按索引排序，再在 fp32 下按升序做分段求和。只开严格模式并不能给出写定的顺序，
+  因为它的 scatter 和 embedding 反向会随行宽或索引个数改变顺序。
+- 固定优化器的实现路径（fused、foreach 或 single-tensor）和 loss 的归约方式。mean 不是
+  布局不变的。
+- 保存并恢复一个训练 step 会读到的每一项状态；这个案例列出了 7 项。
+- 在一种 GPU 型号上测得（[训练 step 案例](../../../handbook/1-pretraining/training-step.md)）；
+  多 GPU 下的梯度见第 10 节。
 
-## 已报告数值的来源
+## 16. 跨引擎的舍入差异（L4）
 
-- Thinking Machines，"Defeating Nondeterminism in LLM Inference"（2025）：
-  把批不变性作为推理非确定性的根因；不变的 RMSNorm、
-  矩阵乘和注意力。
+即使两端各自都满足 L2 和 L3，它们也不一定彼此一致，所以 L4 要单独去做。把两端的舍入
+序列都写下来（投影的打包方式、bias 的位置、norm 的写法、RoPE 表，以及注意力、lm_head
+和 log_softmax 的 kernel）。先检查引擎自己的 L1 和 L2，然后一次对齐一个舍入点。具体
+流程见 [engine-parity skill](../../engine-parity/SKILL.md)。在
+[trainer 与 vLLM 的案例](../../../handbook/2-rl/engine-parity-vllm.md)中（vLLM 0.19.1，
+一种 GPU 型号），只有让 trainer 调用 vLLM 自己的 kernel，才做到了相等。
+
+## 文中引用数字的出处
+
+- Thinking Machines，"Defeating Nondeterminism in LLM Inference"（2025）。文章指出，
+  推理中的非确定性根源在于缺少 batch invariance，并给出了不变的 RMSNorm、矩阵乘和注意力。
 - Yichuan Wang，"Closing the Training–Inference Mismatch for Linear Attention in
-  RL"：GDN 循环前向、用于 MoE router 的 batch-invariant `bmm`、2–3x
-  trainer 代价。
-- verl-omni issue #637：vLLM 逐算子与 HF 数值对齐（norm 转换顺序、
-  残差相加精度、RoPE 公式、router 权重转换）；rollout
-  吞吐约为 37%。
-- IsoExec（SkyRL，vLLM 博客）：跨框架执行契约和
-  并行不变的 kernel。
+  RL"。文中前向用递归形式的 GDN，MoE router 用 batch-invariant 的 `bmm`，
+  trainer 的代价是 2–3x。
+- verl-omni issue #637。它让 vLLM 逐个算子对齐 HF 的数值（norm 的类型转换顺序、残差
+  加法的精度、RoPE 公式、router 权重的类型转换）；报告的 rollout 吞吐约为 37%。
+- IsoExec（SkyRL，vLLM 博客）。它提出了一份跨框架共享的执行约定，以及并行不变的
+  kernel。
 
-链接在手册的[参考文献](../../../handbook/references.md)中。上面的
-观察来自 `tools/bi_check.py --demo`（结果在
-`tools/` 下的 demo JSON 中）以及各案例研究，每个案例的脚本和
-结果 JSON 都在 `examples/` 下。
+这些链接都在 handbook 的[参考文献](../../../handbook/references.md)页面里。本页的观察
+结果来自 `tools/bi_check.py --demo`（结果存在 `tools/` 下的一个 demo JSON 里），以及
+各个案例研究；每个案例的脚本和结果 JSON 都放在 `examples/` 下。

@@ -1,437 +1,468 @@
 # Operator recipes
 
-Each recipe states what makes the operator batch-variant and what fixes it. The
-level it reaches is from [SKILL.md](../SKILL.md#levels-say-which-one-you-deliver).
-Every recipe ends in the same verification ([verification.md](verification.md));
-none is proven by reading the code alone.
+Each recipe explains what makes an operator batch-variant and how to fix it.
+The level a recipe reaches uses the scale defined in
+[SKILL.md](../SKILL.md#levels-say-which-one-you-deliver). Every recipe ends with
+the same verification ([verification.md](verification.md)), because reading the
+code alone never proves that a fix works.
 
 ## Evidence behind each recipe
 
-Measurements: one GPU type for single-GPU cases. Multi-GPU cases (collectives,
-expert parallelism, DP gradients, the whole model under TP) ran on one or two
-nodes of 8 GPUs each, of a second type: PCIe inside a node, 25 GbE
-sockets between nodes, no RDMA. All with torch 2.5.1 and Triton
-3.1. Exceptions are named in the row (the cross-engine row ran vLLM's own
-stack: torch 2.10.0, Triton 3.6.0). The hardware and raw results of each case
-are in its `examples/<case>/REPORT.md`. Case studies:
+The single-GPU cases were measured on one GPU type. The multi-GPU cases
+(collectives, expert parallelism, DP gradients, the whole model under TP) ran
+on a second GPU type, on one or two nodes of 8 GPUs each. Inside a node the
+GPUs are connected by PCIe, and the nodes talk over 25 GbE sockets without
+RDMA. Everything ran with torch 2.5.1 and Triton 3.1, except where a row says
+otherwise (the cross-engine row ran on vLLM's own stack: torch 2.10.0, Triton
+3.6.0). Each case keeps its hardware and raw results in its
+`examples/<case>/REPORT.md`. The case studies are:
 - [MoE](../../../examples/moe_combine/REPORT.md#one-gpu);
 - [MoE under expert parallelism](../../../examples/moe_ep/REPORT.md#under-expert-parallelism);
-- [attention, FP8, linear attention](../../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3);
-- [attention backward](../../../examples/attention_backward/REPORT.md#backward-dq-dk-dv);
-- [paged KV, varlen, compile and CUDA graphs](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs);
+- [attention, FP8 and linear attention](../../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3);
+- [the attention backward](../../../examples/attention_backward/REPORT.md#backward-dq-dk-dv);
+- [paged KV, varlen packing, compile and CUDA graphs](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs);
 - [MLA and sparse attention](../../../handbook/3-kernels/mla-and-sparse.md);
 - [linear attention (GDN)](../../../handbook/3-kernels/linear-attention.md);
 - [collectives and TP](../../../handbook/3-kernels/collectives.md);
-- [whole model](../../../handbook/2-rl/whole-model.md) and [under TP](../../../handbook/2-rl/parallelism.md);
-- [DP and FSDP-style (emulated: flat gradient, reduce-scatter, sharded AdamW) gradients](../../../handbook/1-pretraining/data-parallel.md);
+- [the whole model](../../../handbook/2-rl/whole-model.md) and [the whole model under TP](../../../handbook/2-rl/parallelism.md);
+- [gradients under DP and FSDP-style sharding (emulated: flat gradient, reduce-scatter, sharded AdamW)](../../../handbook/1-pretraining/data-parallel.md);
 - [sampling](../../../handbook/2-rl/sampling.md);
-- [LoRA and multi-adapter batches](../../../handbook/2-rl/lora.md);
-- [training step](../../../handbook/1-pretraining/training-step.md);
-- [trainer vs vLLM](../../../handbook/2-rl/engine-parity-vllm.md).
+- [LoRA and batches that mix adapters](../../../handbook/2-rl/lora.md);
+- [the training step](../../../handbook/1-pretraining/training-step.md);
+- [the trainer against vLLM](../../../handbook/2-rl/engine-parity-vllm.md).
 
 | # | Class | Status | Evidence | Still open |
 |---|---|---|---|---|
-| 1 | Row-wise reductions | stock observed | torch-op RMSNorm and fp32 log_softmax are L2 at hidden 4096 and vocab 32000, batch 1–2048; torch mean/sum in fp32 changes its tree with the row count (hidden 1024 from 8 rows, 4096 from 2) while bf16 RMSNorm output did not change; a fixed-tree Triton row sum is L2 at rows 1–2048 and widths 8–4096 (whole-model case) | the few-rows split case not reproduced; LayerNorm, cross-entropy |
-| 2 | Dense GEMM | **built and verified** | one-config Triton GEMM is L2 at M=1–2048 on 3 shapes; cuBLAS is variant on all 3 | tuning, large shapes, fused epilogues, cuBLASLt pinning, Hopper |
-| 3 | Grouped GEMM, `bmm` vs `mm` | **built (loop) and verified** | per-expert one-config GEMM is L2 on both GPU types ([one GPU](../../../examples/moe_combine/REPORT.md), [8 GPUs](../../../examples/moe_ep/REPORT.md)); cuBLAS expert GEMMs are variant on both; `bmm` over fixed row pieces is variant | a single-launch grouped kernel |
-| 4 | Softmax attention | **built and verified** (forward, backward, paged, varlen) | fixed-block Triton is L2 and L3 across prefill, decode and chunks; SDPA fails L2 (batch ≥ 3) and L3. Atomic-free backward is L1 and L2, right padding included, at 1.38x SDPA flash; SDPA flash fails L1 (dQ) and, in strict deterministic mode, L2. Paged KV (pages 16–128) and varlen packing (forward and backward) keep the bits when blocks follow each sequence's absolute positions; blocks that follow the page or the pack offset do not | fixed-size split-KV, sliding window, paged backward |
-| 5 | MLA absorbed vs explicit | **built and verified** | the forms differ in 65% of elements at equal accuracy; one form with every piece invariant is L2 and L3; explicit prefill with absorbed decode no longer matches a trainer from layer 2; an invariant core alone is not enough (decompression GEMM, output `bmm`) | FlashMLA, split-KV for the absorbed form, backward, L4 against an engine |
-| 6 | Sparse attention (top-k) | **built and verified** | every selection flip came from the cuBLAS projection GEMM (about a quarter of positions); with a one-config projection and a stable top-k, the selected sets and outputs are L2 and L3; `torch.topk` took the lowest index among ties in every test, an undocumented order | DSA scale (top-2048), FP8 indexer, backward |
-| 7 | Linear attention / SSM | **built and verified** (GDN forward) | recurrent kernel is L1–L3; chunked is L1/L2, and L3 only with chunk boundaries at absolute multiples of C; bf16 chunked matmuls differ from recurrent in 55.5% of outputs, fp32 ones in 0.03%; recurrent costs 0.9–1.5x chunked at T ≤ 4096, 2.5–3.6x at 8192 | backward, production chunked kernels (fla), varlen |
-| 8 | MoE routing and combine | **built and verified** (1 GPU; EP 1–16 on two nodes of 8 GPUs, [report](../../../examples/moe_ep/REPORT.md)) | fixed-order fp32 combine with one-config GEMMs is L1 and L2; under EP a fixed-slot combine gives the same bits at EP 1, 2, 4, 8 and 16, on one node or split across two (L5); a per-rank pre-reduce is L1/L2 and fails L5 from top-3; atomic combine breaks L1 (from top-3 in the EP case); capacity dropping fails L2 and L5 | backward under EP, shared expert, DeepEP-style kernels, NVLink, RDMA, more than two nodes, L4 against a trainer |
-| 9 | Quantized GEMM | scales verified (emulated) | per-tensor dynamic scales fail L2; per-token and 1x128 pass | real FP8 GEMM promotion interval (on GPUs with FP8 tensor cores), NVFP4 (on GPUs with FP4 tensor cores) |
-| 10 | Collectives | **measured** (nodes of 8 GPUs, one and two nodes; [report](../../../examples/collectives_tp/REPORT.md)) | all-reduce fails L2 with defaults and with Ring pinned under every protocol; `NCCL_ALGO=Tree` passes on one node (1.0–1.3x, 5.3x at 1 MB) and on two (16 ranks: each node's chain, then one two-operand add); reduce-scatter's order follows the owning rank, so TP with sequence parallelism fails; all-to-all plus an fp32 rank-order sum passes at 1.04–1.20x on one node; across nodes a two-level fixed order (1.06–1.8x) replaces flat fallbacks (2.1–8.8x); a logical TP size gives L5: 8 across TP 1–8, 16 across TP 1–16 over two nodes; in a whole model, logical TP (C = 16) plus a fixed-order vocab log_softmax gives one result at TP 1–16 and across prefill/decode at different TP. DP gradients: bucket layout changes bits under Ring (Tree and an ordered all-reduce at 1.05–1.20x fix it); logical shards (S=16, fixed tree) give identical gradients, norms and 10-step AdamW weights at DP 1–16 on one or two nodes, replicated or sharded, and across elastic resume | three or more nodes, NVLink/NVLS, RDMA, torch.distributed.fsdp itself, TP backward beyond activation gradients |
-| 11 | Closed kernels | measured | cuBLAS and SDPA variance mapped; a fixed-piece cuBLAS loop works as an oracle (about 33x slower); SDPA memory-efficient backward in strict deterministic mode passed L1 and L2 at the shapes tested (4.4x flash) | cuDNN, FlashAttention binaries |
-| 12 | Deployment wrappers | **measured** | a compiled block stayed L2 but differed from eager in 65% of elements until every rounding op was an opaque custom op; Triton kernels called directly recompiled per batch size (18 graphs; 2 as custom ops); CUDA-graph buckets keep invariant kernels invariant, while cuBLAS gave 6 results over 7 buckets; probes inside compiled code and graphs (`tools/graph_probe.py`) leave the compiled bits unchanged when isolated | compile of the paged, varlen and backward paths; `max-autotune` |
-| 13 | Sampling | **built and verified** | per-request generators are L2 but fail recompute, rollback, n>1 and speculative chunks; cumsum fails L2 (and L1 at V=151,936); a counter-keyed sampler with int64 weights passes L1–L3 and chi-square at 1.3x stock (B=256) | fused noise kernel, min-p, compile/graphs, real engines |
-| 14 | LoRA / multi-adapter | **built and verified** (forward, backward) | grouped cuBLAS fails L2 (486–506/723), with an invariant base still 22–100/723; gathered bmm fails; bf16 merge changes ~50% of bits and drops 18–78% of ΔW at update/output 1e-2–1e-3; scale placement changes 5–6%; ours passes L1, L2, prefill/decode, trainer vs engine, backward padding | vLLM itself, packed slices, TP, compile, QLoRA |
-| 15 | Training step (backward ops, optimizer, loss, resume) | **built and verified** (1 GPU) | index_add_/scatter_add_/index_select bwd/weighted bincount/1-D cumsum fail L1; a sort-plus-ascending fp32 segmented sum is L1 and matches a NumPy loop bitwise; strict mode raises on cumsum, bincount(weights), histc; AdamW fused/foreach/single differ (foreach vs single only in the bias-correction division); 7 pieces of state give a bitwise resume | fused optimizer order exact (1 ulp in 0.15% of exp_avg), multi-GPU (see row 10), compile |
-| 16 | Cross-engine rounding (L4) | **measured** (vLLM 0.19.1, [report](../../../examples/cross_engine/REPORT.md)) | packing, bias placement, norm form, RoPE table, attention kernel, lm_head kernel and log_softmax kernel each break equality; RoPE formula and SiLU already equal; trainer calling vLLM's kernels gives 0/76,155 | compiled vLLM, backward, TP, other models |
+| 1 | Row-wise reductions | observed in stock torch | An RMSNorm built from torch ops and an fp32 log_softmax are L2 at hidden 4096 and vocab 32000 for batches of 1–2048. In fp32, torch's mean and sum change their reduction tree with the row count (from 8 rows at hidden 1024, from 2 rows at 4096), yet the bf16 RMSNorm output did not change. A Triton row sum with a fixed tree is L2 for 1–2048 rows and widths 8–4096 (whole-model case). | The split of one row across blocks that happens with few rows has not been reproduced. LayerNorm and cross-entropy are not covered yet. |
+| 2 | Dense GEMM | **built and verified** | A Triton GEMM with one configuration is L2 at M=1–2048 on 3 shapes. cuBLAS is batch-variant on all 3. | Tuning, large shapes, fused epilogues, pinning cuBLASLt, and Hopper. |
+| 3 | Grouped GEMM, `bmm` vs `mm` | **built (as a loop) and verified** | A one-config GEMM per expert is L2 on both GPU types ([one GPU](../../../examples/moe_combine/REPORT.md), [8 GPUs](../../../examples/moe_ep/REPORT.md)). The cuBLAS expert GEMMs are batch-variant on both, and so is `bmm` over fixed pieces of rows. | A grouped kernel that runs in a single launch. |
+| 4 | Softmax attention | **built and verified** (forward, backward, paged, varlen) | A fixed-block Triton kernel is L2 and L3 across prefill, decode and chunks, while SDPA fails L2 (batch ≥ 3) and L3. The atomic-free backward is L1 and L2, right padding included, and costs 1.38x SDPA flash. SDPA flash fails L1 (in dQ), and in strict deterministic mode it fails L2. Paged KV (pages of 16–128) and varlen packing (forward and backward) keep the result bit for bit when blocks follow each sequence's absolute positions, but not when blocks follow the page or the pack offset. | Split-KV with a fixed split size, sliding windows, and the paged backward. |
+| 5 | MLA, absorbed vs explicit | **built and verified** | The two forms differ in 65% of elements while being equally accurate. One form with every piece invariant is L2 and L3. Explicit prefill combined with absorbed decode stops matching a trainer from layer 2 on. An invariant attention core alone is not enough: the decompression GEMM and the output `bmm` must be invariant too. | FlashMLA, split-KV for the absorbed form, the backward, and L4 against an engine. |
+| 6 | Sparse attention (top-k) | **built and verified** | Every selection flip (at about a quarter of positions) came from the cuBLAS projection GEMM. With a one-config projection and a stable top-k, the selected sets and the outputs are L2 and L3. `torch.topk` took the lowest index among ties in every test, but that order is not documented. | DSA at full scale (top-2048), an FP8 indexer, and the backward. |
+| 7 | Linear attention / SSM | **built and verified** (GDN forward) | The recurrent kernel is L1–L3. The chunked kernel is L1/L2, and it is L3 only when chunk boundaries sit at absolute multiples of C. With bf16 matmuls the chunked form differs from the recurrent one in 55.5% of outputs; with fp32 matmuls, in 0.03%. The recurrent form costs 0.9–1.5x the chunked one at T ≤ 4096 and 2.5–3.6x at 8192. | The backward, production chunked kernels (fla), and varlen. |
+| 8 | MoE routing and combine | **built and verified** (on 1 GPU, and at EP 1–16 on two nodes of 8 GPUs; [report](../../../examples/moe_ep/REPORT.md)) | A fixed-order fp32 combine with one-config GEMMs is L1 and L2. Under EP, a fixed-slot combine gives bit-identical results at EP 1, 2, 4, 8 and 16, whether on one node or split across two (L5). Pre-reducing on each rank is L1/L2 but fails L5 from top-3. An atomic combine breaks L1 (from top-3 in the EP case). Dropping tokens at a capacity limit fails L2 and L5. | The backward under EP, a shared expert, DeepEP-style kernels, NVLink, RDMA, more than two nodes, and L4 against a trainer. |
+| 9 | Quantized GEMM | scales verified (emulated) | Dynamic per-tensor scales fail L2; per-token scales and 1x128 block scales pass. | The promotion interval of a real FP8 GEMM (on GPUs with FP8 tensor cores), and NVFP4 (on GPUs with FP4 tensor cores). |
+| 10 | Collectives | **measured** (on one and two nodes of 8 GPUs; [report](../../../examples/collectives_tp/REPORT.md)) | All-reduce fails L2 with the defaults, and also with Ring pinned under every protocol. `NCCL_ALGO=Tree` passes on one node (at 1.0–1.3x, and 5.3x at 1 MB) and on two nodes (16 ranks: each node sums along its chain, then the two node sums are added once). Reduce-scatter's order follows the rank that owns the row, so TP with sequence parallelism fails. An all-to-all followed by an fp32 sum in rank order passes at 1.04–1.20x on one node. Across nodes, a two-level fixed order (1.06–1.8x) replaces the flat fallbacks (2.1–8.8x). A logical TP size gives L5: a size of 8 holds across TP 1–8, and 16 holds across TP 1–16 over two nodes. In a whole model, logical TP (C = 16) plus a fixed-order vocab log_softmax gives one result at TP 1–16, and also when prefill and decode run at different TP. For DP gradients, the bucket layout changes the bits under Ring (Tree, or an ordered all-reduce at 1.05–1.20x, fixes it). Logical shards (S=16, fixed tree) give identical gradients, norms and AdamW weights after 10 steps at DP 1–16, on one or two nodes, replicated or sharded, and across an elastic resume. | Three or more nodes, NVLink/NVLS, RDMA, torch.distributed.fsdp itself, and the TP backward beyond activation gradients. |
+| 11 | Closed kernels | measured | Where cuBLAS and SDPA vary has been mapped. A cuBLAS loop over fixed pieces works as an oracle, about 33x slower. SDPA's memory-efficient backward in strict deterministic mode passed L1 and L2 at the shapes tested, at 4.4x the cost of flash. | cuDNN and the FlashAttention binaries. |
+| 12 | Deployment wrappers | **measured** | A compiled block stayed L2 but differed from eager in 65% of elements until every op that rounds was made an opaque custom op. Triton kernels called directly were recompiled for every batch size (18 graphs, against 2 when registered as custom ops). CUDA-graph buckets keep invariant kernels invariant, while cuBLAS gave 6 different results over 7 buckets. Probes inside compiled code and graphs (`tools/graph_probe.py`) leave the compiled bits unchanged when they are isolated. | Compiling the paged, varlen and backward paths, and `max-autotune`. |
+| 13 | Sampling | **built and verified** | Per-request generators are L2 but fail under recompute, rollback, n>1 and speculative chunks. cumsum fails L2 (and L1 at V=151,936). A sampler keyed by a counter, with int64 weights, passes L1–L3 and a chi-square test at 1.3x the stock sampler's cost (B=256). | A fused noise kernel, min-p, compile and CUDA graphs, and real engines. |
+| 14 | LoRA with many adapters | **built and verified** (forward, backward) | Grouped cuBLAS fails L2 in 486–506/723 co-batching cases, and still in 22–100/723 with an invariant base GEMM. A gathered bmm fails as well. Merging in bf16 changes ~50% of the bits and loses 18–78% of ΔW when the update is 1e-2–1e-3 of the output. Moving the point where the scale is applied changes 5–6% of the outputs. Our kernel passes L1, L2, prefill against decode, trainer against engine, and the backward with padding. | vLLM itself, packed slices, TP, compile, and QLoRA. |
+| 15 | Training step (backward ops, optimizer, loss, resume) | **built and verified** (1 GPU) | index_add_, scatter_add_, the index_select backward, weighted bincount and 1-D cumsum fail L1. Sorting by index and then taking an ascending fp32 segmented sum is L1 and matches a NumPy loop bit for bit. Strict mode raises an error on cumsum, bincount(weights) and histc. The fused, foreach and single-tensor AdamW paths differ from each other (foreach and single-tensor only in the bias-correction division). Saving and restoring 7 pieces of state gives a bitwise resume. | Matching the fused optimizer's order exactly (it is off by 1 ulp in 0.15% of exp_avg), multi-GPU (see row 10), and compile. |
+| 16 | Cross-engine rounding (L4) | **measured** (vLLM 0.19.1, [report](../../../examples/cross_engine/REPORT.md)) | Packing, bias placement, the norm form, the RoPE table, the attention kernel, the lm_head kernel and the log_softmax kernel each break equality on their own. The RoPE formula and SiLU were already equal. A trainer that calls vLLM's kernels gives 0/76,155 differing tokens. | Compiled vLLM, the backward, TP, and other models. |
 
 ## 1. Row-wise reductions: RMSNorm, LayerNorm, softmax, log_softmax, row sums, cross-entropy
 
-Variance comes from:
-- splitting one row across blocks when there are few rows, to fill the GPU;
-- block size or vector width chosen from the row count or from pointer alignment;
-- a fast path for small batches.
+A row-wise reduction becomes batch-variant when the kernel:
+- splits one row across several blocks when there are few rows, to fill the GPU;
+- chooses the block size or the vector width from the row count or from
+  pointer alignment;
+- takes a fast path for small batches.
 
-Fix:
-- One row per program (block or warp), whatever the batch size.
-- Fixed block size along the row; fixed per-thread accumulation, then a fixed
-  in-block tree.
+To fix it:
+- Give each row its own program (a block or a warp), whatever the batch size.
+- Fix the block size along the row and the way each thread accumulates, then
+  combine the threads with a fixed tree inside the block.
 - If a row is too long for one block, split it into chunks whose number depends
-  only on the row length, and combine them in a fixed order in a second pass.
-  Never use atomics.
-- Fixed vector width. If the row's start address alignment varies with its
-  position in the batch (hidden size not a multiple of the vector width), use the
-  scalar path everywhere, or pad the row stride.
-- Keep the reference rounding points: e.g. whether the normalized value is cast
-  to bf16 before or after multiplying by the weight.
+  only on the row length, and combine the chunks in a fixed order in a second
+  pass. Never use atomics.
+- Fix the vector width. If the alignment of a row's start address varies with
+  its position in the batch (because the hidden size is not a multiple of the
+  vector width), use the scalar path everywhere, or pad the row stride.
+- Keep the reference's rounding points: for example, whether the normalized
+  value is cast to bf16 before or after it is multiplied by the weight.
 
-Reaches L2. Observed on one GPU type with torch 2.5.1, hidden 4096 and vocab 32000: a
-torch-op RMSNorm and an fp32 `log_softmax` were already L2 across batch sizes
-1–2048. That is not guaranteed for other shapes, versions or GPUs, so verify.
+This recipe reaches L2. On one GPU type with torch 2.5.1, at hidden 4096 and
+vocab 32000, an RMSNorm built from torch ops and an fp32 `log_softmax` were
+already L2 across batch sizes 1–2048. Nothing guarantees this for other shapes,
+versions or GPUs, so verify it on yours.
 
 ## 2. Dense GEMM (bf16/fp16)
 
-Variance comes from:
-- tile, instruction or kernel chosen from M;
-- split-K or stream-K;
-- library heuristics.
+A dense GEMM becomes batch-variant when:
+- the tile, the instruction or the kernel is chosen from M;
+- it uses split-K or stream-K;
+- a library heuristic picks the kernel.
 
-Observed on one GPU type with torch 2.5.1: `torch.mm` (cuBLAS) was L2 up to M=16 and
-variant from M=31 on.
+On one GPU type with torch 2.5.1, `torch.mm` (cuBLAS) was L2 up to M=16 and
+batch-variant from M=31 on.
 
-Fix:
-- One tile configuration (block M/N/K, warps, stages, MMA instruction) for every
-  M.
-- No split-K, no stream-K. The K loop runs in ascending order into an fp32
-  accumulator, with the same epilogue.
-- A second, small-M kernel is allowed only if it reproduces the same per-element
-  K chunking and instruction. Prove it bitwise against the main kernel.
-- cuBLASLt can pin an algorithm and its split-K setting. Still verify across M:
-  a pinned algorithm is not a guarantee.
-- TF32 off, unless both sides use it identically.
+To fix it:
+- Use one tile configuration (block M/N/K, warps, stages, MMA instruction) for
+  every M.
+- Use no split-K and no stream-K. The K loop runs in ascending order into an
+  fp32 accumulator, and every M uses the same epilogue.
+- A second kernel for small M is allowed only if it reproduces the same
+  per-element K chunking and the same instruction. Prove bit for bit that it
+  matches the main kernel.
+- cuBLASLt can pin an algorithm and its split-K setting. Verify across M
+  anyway, because a pinned algorithm is not a guarantee.
+- Turn TF32 off, unless both sides use it in exactly the same way.
 
-Reaches L2. L4 needs both engines on the same kernel. Cost: lower utilization at
-small M (decode).
+This recipe reaches L2. For L4, both engines must also run the same kernel. The
+cost is lower utilization at small M, that is, in decode.
 
 ## 3. Batched and grouped GEMM: MoE experts, `bmm` vs `mm`
 
-- An expert's GEMM sees M_e, the number of tokens routed to it, and that changes
-  with what else is in the batch. Each expert GEMM must be invariant in M_e
-  (recipe 2). Grouped kernels often size tiles from the largest or total M: pin
-  them.
-- One side calling `bmm` on a 3-D tensor and the other calling `mm` on 2-D runs
-  different kernels. One reported case is the MoE router: different gate scores
-  can route a token to different experts, a discrete divergence. Route both
-  through the same invariant GEMM.
+- An expert's GEMM sees M_e, the number of tokens routed to that expert, and
+  M_e changes with whatever else is in the batch. So each expert GEMM must be
+  invariant in M_e (recipe 2). Grouped kernels often size their tiles from the
+  largest or the total M; pin the tile size instead.
+- When one side calls `bmm` on a 3-D tensor and the other calls `mm` on a 2-D
+  tensor, the two sides run different kernels. One reported case is the MoE
+  router: different gate scores can send a token to different experts, which is
+  a discrete divergence. Route both sides through the same invariant GEMM.
 
 ## 4. Softmax attention: prefill, decode, chunked prefill, paged KV
 
-Observed on one GPU type with torch 2.5.1 SDPA:
-- prefill against per-token decode differed in about 10% of output elements;
+On one GPU type with torch 2.5.1, SDPA varied in two ways:
+- prefill and per-token decode differed in about 10% of output elements;
 - chunked prefill with an explicit mask differed in 1 element. The masked call
-  likely took a different backend from `is_causal=True`.
+  probably took a different backend from `is_causal=True`.
 
-Fix, for a query at position t:
-- **Same key iteration everywhere.** KV is visited in blocks of a fixed size B,
-  in absolute position order from 0, with the online-softmax update applied
-  block by block. Prefill, chunked prefill and decode use the same B and the same
-  order.
-- **No split-KV** (`num_splits=1`). Or split by a fixed size in tokens, aligned
-  to absolute positions, never by a number of splits. Then use the same split
-  and merge in prefill as in decode.
+To fix it, a query at position t must be computed the same way in every mode:
+- **Same key iteration everywhere.** Visit KV in blocks of a fixed size B, in
+  absolute position order starting from 0, and apply the online-softmax update
+  block by block. Prefill, chunked prefill and decode use the same B and the
+  same order.
+- **No split-KV** (`num_splits=1`). If you must split, split by a fixed number
+  of tokens aligned to absolute positions, never by a number of splits, and use
+  the same split and merge in prefill as in decode.
 - **Paged KV:** block boundaries follow absolute positions (multiples of B),
-  independent of page size and of where a prefill chunk starts. Write the
-  current chunk's K/V into the cache before the kernel runs, so the kernel reads
-  one uniform source.
+  whatever the page size and wherever a prefill chunk starts. Write the current
+  chunk's K/V into the cache before the kernel runs, so that the kernel reads
+  everything from one uniform source.
 - **Masking:** masked scores contribute exactly zero. Partially masked blocks
-  compute the running max and normalizer the same way in every mode.
-- The same exponent path (e.g. `exp2` with a log2(e) prescale), the same scale,
-  and the same GQA head mapping in every mode.
-- Variable-length packing (`cu_seqlens`): a sequence's iteration does not depend
-  on its neighbours in the pack.
-- **Backward:** common kernels add dQ contributions from key-block programs with
-  atomics, which breaks L1. Use two atomic-free passes:
-  - dK/dV: one program per key block walks the GQA group's query heads, then
-    the query blocks, in a fixed order;
-  - dQ: one program per query block walks key blocks from position 0.
+  compute the running max and the normalizer in the same way in every mode.
+- Every mode uses the same exponent path (for example `exp2` with a log2(e)
+  prescale), the same scale and the same GQA head mapping.
+- With variable-length packing (`cu_seqlens`), a sequence's iteration must not
+  depend on its neighbours in the pack.
+- **Backward:** common kernels add up the dQ contributions from the key-block
+  programs with atomics, which breaks L1. Use two passes without atomics
+  instead:
+  - dK/dV: one program per key block walks the query heads of its GQA group,
+    then the query blocks, in a fixed order;
+  - dQ: one program per query block walks the key blocks from position 0.
 
-  Both accumulate in fp32 registers and write once. Sum the GQA group inside the
-  program in fp32. Store the forward's log-sum-exp as a variant whose output is
-  checked bitwise against the plain forward. Measured in the
+  Both passes accumulate in fp32 registers and write once. Sum over the GQA
+  group inside the program, in fp32. Store the forward's log-sum-exp from a
+  variant of the forward, and check bitwise that this variant's output equals
+  the plain forward's. Measured in the
   [attention backward case](../../../examples/attention_backward/REPORT.md#backward-dq-dk-dv):
-  - L1 and L2, including right padding with a masked loss;
-  - 1.38x SDPA flash forward+backward.
+  - L1 and L2 hold, including right padding with a masked loss;
+  - forward plus backward costs 1.38x SDPA flash.
 
-  A vendor deterministic backward needs `warn_only=False`, and gives no more
-  invariance than its forward: flash failed L2 that way.
+  A vendor's deterministic backward needs `warn_only=False`, and it is no more
+  invariant than its forward: flash still failed L2 in that mode.
 
-Reaches L2 and L3. Cost: losing split-KV hurts long-context decode with few
-sequences.
+This recipe reaches L2 and L3. The cost is that, without split-KV, long-context
+decode with few sequences runs slower.
 
 Measured on one GPU type ([paged, varlen and compile case](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs)):
-- **Paged KV.** At page sizes 16–128 with random page placement, the contiguous
-  result came back bitwise in every mode. Computing in blocks of the page size
-  instead gave a different result for every page size. Each result agreed with
-  itself across modes, so test several page sizes. A page smaller than the
-  block needs a gather; at `num_stages=1` it cost +4%.
-- **Varlen packing.** Forward and backward were identical alone and packed when
-  blocks start at each sequence. A grid aligned to the pack offset failed
-  whenever the offset was not a multiple of the block.
+- **Paged KV.** At page sizes 16–128 with pages placed at random, every mode
+  reproduced the contiguous result bit for bit. Computing in blocks of the page
+  size instead gave a different result for each page size. Each of those
+  results agreed with itself across modes, so a test with a single page size
+  cannot catch this: test several. A page smaller than the block needs a
+  gather, which cost +4% at `num_stages=1`.
+- **Varlen packing.** When blocks start at each sequence's own start, forward
+  and backward gave identical results alone and packed. A grid aligned to the
+  pack offset failed whenever the offset was not a multiple of the block size.
 
 ## 5. MLA (latent attention)
 
-Implementations often use an absorbed form for decode (weights folded into the
-query/output projections) and an explicit K/V form for prefill. They are equal
-in exact arithmetic and round differently. That is an algorithmic difference:
-use one form in every mode, and do the same in the trainer for L4. Then apply
-recipe 4 to the attention core. State the throughput cost of the form chosen.
+Implementations often use an absorbed form for decode, with the weights folded
+into the query and output projections, and an explicit K/V form for prefill.
+The two forms are equal in exact arithmetic but round differently. This is an
+algorithmic difference, so choose one form and use it in every mode; for L4,
+use it in the trainer too. Then apply recipe 4 to the attention core, and state
+the throughput cost of the form you chose.
 
 Measured on one GPU type ([MLA and sparse case](../../../handbook/3-kernels/mla-and-sparse.md)):
-- **The forms differ.** They disagree in 65% of output elements, with the same
-  accuracy against fp64.
-- **One form is invariant.** With every GEMM, the norm and the attention core
-  invariant, each form alone is L2 and L3.
-- **Mixed forms break trainer agreement.** Explicit prefill with absorbed decode
-  no longer matched a trainer from the second layer on, whichever form the
-  trainer used. With one layer it can match by accident, because the latent
-  cache does not depend on the form.
+- **The forms differ.** They disagree in 65% of output elements, and both are
+  equally accurate against fp64.
+- **One form is invariant.** When every GEMM, the norm and the attention core
+  are invariant, each form on its own is L2 and L3.
+- **Mixing forms breaks agreement with the trainer.** Explicit prefill with
+  absorbed decode stopped matching a trainer from the second layer on,
+  whichever form the trainer used. A model with one layer can match by
+  accident, because the latent cache does not depend on the form.
 - **The core alone is not enough.** An invariant attention core with cuBLAS
   projections still failed. The explicit form's decompression, whose M is the
   number of cached tokens, and the per-head output `bmm` must be invariant too.
 - **Costs.**
-  - Absorbed prefill: 1.77x explicit (B=4, T=1024).
-  - Explicit decode that re-decompresses K/V every step: 6.9–27x absorbed at
-    B=16–64.
-  - Explicit decode with a per-head K/V cache: 1.17–3.0x, but the cache holds
-    7.2x the memory per token.
+  - Absorbed prefill costs 1.77x explicit prefill (B=4, T=1024).
+  - Explicit decode that decompresses K/V again at every step costs 6.9–27x
+    absorbed decode at B=16–64.
+  - Explicit decode with a per-head K/V cache costs 1.17–3.0x, but the cache
+    takes 7.2x the memory per token.
 
 ## 6. Sparse attention with selection (indexer plus top-k)
 
-A batch-variant score turns into a discrete flip: a different selected key set,
-which is a large divergence.
+In this operator a batch-variant score becomes a discrete flip: the kernel
+selects a different set of keys, and the output diverges by a large amount.
 
 - Make the indexer's scores invariant with recipes 1–2.
-- Top-k with a deterministic tie-break: score first, then index.
-- Accumulate over the selected keys in sorted index order with recipe 4.
-- Check that the selected sets are identical across batches before checking
+- Use a top-k with a deterministic tie-break: order by score first, then by
+  index.
+- Accumulate over the selected keys in sorted index order, following recipe 4.
+- Check that the selected sets are identical across batches before you compare
   values.
 
 Measured on one GPU type ([MLA and sparse case](../../../handbook/3-kernels/mla-and-sparse.md)):
-- **The flips came from the projection GEMM.** Every selection flip, at about a
-  quarter of positions under chunked prefill and batched decode, came from the
-  cuBLAS projection GEMM. A stable top-k or an invariant indexer alone removed
-  none of them. With a one-config projection everything passed.
+- **The flips came from the projection GEMM.** Under chunked prefill and
+  batched decode, about a quarter of positions flipped their selection, and
+  every flip came from the cuBLAS projection GEMM. A stable top-k alone, or an
+  invariant indexer alone, removed none of them. With a one-config projection,
+  everything passed.
 - **Keep a stable sort anyway.** `torch.topk` chose the lowest index among ties
-  in every test, but that order is not documented. The stable sort cost
-  0.87 ms extra at T=2048.
-- **Compare sets before values.** Most baseline value mismatches sat at
-  positions whose set had not changed.
+  in every test, but that order is not documented. The stable sort cost an
+  extra 0.87 ms at T=2048.
+- **Compare sets before values.** Most of the baseline's value mismatches were
+  at positions whose selected set had not changed.
 
 ## 7. Linear attention and SSMs (GDN, Mamba-style)
 
-The chunked form (training, prefill) and the recurrent form (decode) are
-different algorithms with different reduction orders. A per-sequence recurrent
-kernel is naturally batch-invariant: it has no cross-sequence reduction.
+The chunked form, used in training and prefill, and the recurrent form, used in
+decode, are different algorithms with different reduction orders. A recurrent
+kernel that handles one sequence at a time is batch-invariant by nature,
+because it never reduces across sequences.
 
-Options:
-- recurrent forward everywhere, with chunked only for backward. This was
-  reported to reach logprob difference 0 against vLLM, at 2–3x trainer
-  throughput;
+There are two options:
+- run the recurrent forward everywhere and use the chunked form only for the
+  backward. This was reported to reach a logprob difference of 0 against vLLM,
+  at a cost of 2–3x in trainer throughput;
 - or accept the difference, and report it as a choice rather than a fault.
 
-A chunked kernel is L2 when the chunk size and the in-chunk order are fixed.
+A chunked kernel is L2 as long as the chunk size and the order inside each
+chunk are fixed.
 
 Measured on one GPU type with a gated-delta-rule layer ([linear attention case](../../../handbook/3-kernels/linear-attention.md)):
 - **Recurrent.** A recurrent Triton kernel (one program per sequence, head and
   value tile) is L1, L2 and L3 with no extra work.
-- **Chunked.** A chunked kernel is L1 and L2. It is L3 only if every call's
-  chunks sit at absolute multiples of C. Decode can recompute the open chunk
-  from the last boundary state and match full prefill bitwise, at 3.4–3.7x a
-  recurrent decode step.
-- **Precision matters more than the algorithm.** With fp32 matmul operands,
-  chunked and recurrent differ in 0.03% of bf16 outputs. With bf16 operands, as
-  common chunked kernels use, they differ in 55.5%.
-- **Recurrent cost grows with T.** Against an untuned chunked kernel, the
+- **Chunked.** A chunked kernel is L1 and L2. It is L3 only if every call
+  places its chunks at absolute multiples of C. Decode can recompute the open
+  chunk from the state at the last boundary and match a full prefill bit for
+  bit, at 3.4–3.7x the cost of a recurrent decode step.
+- **Precision matters more than the algorithm.** With fp32 matmul operands, the
+  chunked and recurrent forms differ in 0.03% of bf16 outputs. With bf16
+  operands, which common chunked kernels use, they differ in 55.5%.
+- **The recurrent cost grows with T.** Against an untuned chunked kernel, the
   recurrent forward cost 0.9–1.5x at T ≤ 4096 and 2.5–3.6x at T = 8192.
-- **Configurations differ too.** Two recurrent tile configurations differ from
-  each other, so trainer and engine must share one.
+- **Configurations differ too.** Two recurrent tile configurations give
+  different results from each other, so the trainer and the engine must share
+  one.
 
 ## 8. MoE routing, dispatch and combine
 
-- **Router:** an invariant GEMM (recipes 2–3), a row-wise softmax or sigmoid
-  (recipe 1), stable top-k (score, then expert id). Keep the reference's dtype
-  for routing weights: one reported mismatch came only from casting them to
-  bf16.
-- **No batch-dependent dropping.** Capacity limits make a token's fate depend on
-  its neighbours. Use dropless routing, or a capacity rule that does not depend
-  on other tokens.
-- **Dispatch** only moves data, so it is exact. Padding rows in expert segments
-  must not change real rows; they do not when the expert GEMM is invariant.
+- **Router:** use an invariant GEMM (recipes 2–3), a row-wise softmax or sigmoid
+  (recipe 1), and a stable top-k (by score, then by expert id). Keep the
+  reference's dtype for the routing weights: one reported mismatch came only
+  from casting them to bf16.
+- **No batch-dependent dropping.** A capacity limit makes a token's fate depend
+  on its neighbours. Use dropless routing, or a capacity rule that does not
+  depend on other tokens.
+- **Dispatch** only moves data, so it is exact. Padding rows in the expert
+  segments must not change the real rows, and they do not when the expert GEMM
+  is invariant.
 - **Combine:** for each token, sum its top-k expert outputs in a fixed order (by
-  top-k rank or expert id) and at a fixed precision, in one program per token.
-  Never scatter-add or atomically index-add into the output. Under expert
-  parallelism, place returned rows into fixed slots before summing, so arrival
-  order cannot matter. Add the shared expert in a fixed position in that sum.
+  top-k rank or by expert id) and at a fixed precision, with one program per
+  token. Never scatter-add or atomically index-add into the output. Under expert
+  parallelism, put the returned rows into fixed slots before summing, so that
+  the order in which they arrive cannot matter. Add the shared expert at a fixed
+  position in that sum.
 - **Measured** ([MoE case study](../../../examples/moe_combine/REPORT.md#one-gpu), one GPU type):
   - cuBLAS expert GEMMs broke L2 from 2 tokens;
   - the deterministic mode fixed only L1;
   - an atomic combine broke L1 even with invariant GEMMs;
-  - one-config Triton GEMMs with a per-token fixed-order fp32 combine passed L1
+  - one-config Triton GEMMs with a fixed-order fp32 combine per token passed L1
     and L2, at about +11% over the same GEMMs with an atomic combine;
   - a batched matmul over fixed-size pieces was not invariant.
 - **Measured under expert parallelism** ([EP case](../../../examples/moe_ep/REPORT.md#under-expert-parallelism),
   one and two nodes of 8 GPUs):
-  - the fixed-slot combine gave the same bits at EP 1, 2, 4, 8 and 16, on one
-    node and across two, whatever the GPU placement (L5). No NCCL setting was
-    needed, because the all-to-alls contain no reduction;
-  - summing per rank before returning was L1 and L2, but failed L5 from top-3:
-    the grouping follows which experts share a rank. Its mismatches depended on
-    the EP degree, not on where the ranks sat;
-  - at top-2 any order gives the same bits, so test with top-k ≥ 3;
-  - capacity dropping changed which tokens survived with the neighbours, the EP
-    degree, or the local order.
+  - the fixed-slot combine gave bit-identical results at EP 1, 2, 4, 8 and 16,
+    on one node and across two, wherever the GPUs were placed (L5). No NCCL
+    setting was needed, because the all-to-alls contain no reduction;
+  - summing on each rank before returning the rows was L1 and L2 but failed L5
+    from top-3, because the grouping follows which experts share a rank. Its
+    mismatches depended on the EP degree, not on where the ranks sat;
+  - at top-2 every order gives the same bits, so test with top-k ≥ 3;
+  - with capacity dropping, which tokens survived changed with the neighbours,
+    the EP degree or the local order.
 
 ## 9. Quantized GEMM (FP8 block-scaled, MXFP8, NVFP4)
 
-- **Activation scales must not couple rows.** Use per token, per token-block
-  (e.g. 1x128) or static scales, never a per-tensor amax computed over the batch.
-  The same applies to NVFP4's second-level scale: per token or static.
-- The quantization kernel is itself a row-wise reduction (amax): recipe 1.
-- The GEMM follows recipe 2, plus a fixed promotion interval: how many MMA steps
-  accumulate in tensor-core precision before adding into the fp32 accumulator.
-  Apply scales at fixed points in a fixed order. No split-K.
-- Verify that the quantized values themselves (data and scales) are identical
-  per row across batches before checking the GEMM output.
+- **Activation scales must not couple rows.** Use per-token, per-token-block
+  (for example 1x128) or static scales, never a per-tensor amax computed over
+  the batch. The same applies to NVFP4's second-level scale: make it per token
+  or static.
+- The quantization kernel is itself a row-wise reduction (amax), so it follows
+  recipe 1.
+- The GEMM follows recipe 2 and also fixes the promotion interval: how many MMA
+  steps accumulate in tensor-core precision before the partial result is added
+  into the fp32 accumulator. Apply the scales at fixed points in a fixed order,
+  and use no split-K.
+- Before you check the GEMM output, verify that the quantized values themselves
+  (data and scales) are identical for each row across batches.
 
 ## 10. Collectives (TP / EP / SP)
 
 Measured on 8 GPUs (one PCIe node, NCCL 2.21.5, [collectives case](../../../handbook/3-kernels/collectives.md)):
 
 - **Pinning the algorithm and protocol is not enough.** With Ring pinned under
-  every protocol, a fixed slice of rows still got a different reduction order
+  every protocol, a fixed slice of rows was still reduced in a different order
   inside messages of different sizes. Each element's start rank follows the
-  chunk boundaries, and those move with message size and offset. Row-parallel
-  TP 4 and 8 failed L2 from M = 2.
-- **A single-order algorithm works on one node.** On that node,
-  `NCCL_ALGO=Tree` gave one order for every element at every size and passed
-  L2. It cost 1.0–1.3x all-reduce, and 5.3x at 1 MB.
+  chunk boundaries, and those boundaries move with the message size and offset.
+  Row-parallel TP 4 and 8 failed L2 from M = 2.
+- **An algorithm with a single order works on one node.** On that node,
+  `NCCL_ALGO=Tree` reduced every element in the same order at every size and
+  passed L2. It cost 1.0–1.3x all-reduce, and 5.3x at 1 MB.
 - **It also held across two nodes.** With 16 ranks over 25 GbE, pinned Tree
-  still passed. Each element is each node's chain, then one add of the two
-  node sums, and a two-operand add commutes. Three or more nodes likely break
-  this (not tested): verify on your topology.
-- **Reduce-scatter has one order per output chunk, which is not enough.** The
-  order depends on which rank owns the row. Under sequence parallelism that
-  depends on position and batch, and TP with SP failed under every setting.
-- **Fallback.** Exchange partials (all-to-all, or all-gather) and sum them
-  locally in rank order in fp32. That is invariant by construction. The
+  still passed. Each element is summed along each node's chain, and then the
+  two node sums are added once; a two-operand add commutes. Three or more nodes
+  will likely break this (not tested), so verify on your topology.
+- **Reduce-scatter has one order per output chunk, and that is not enough.**
+  The order depends on which rank owns the row. Under sequence parallelism,
+  ownership depends on position and batch, so TP with SP failed under every
+  setting.
+- **Fallback.** Exchange the partial sums (with all-to-all or all-gather) and
+  add them locally in rank order in fp32. This is invariant by construction. The
   all-to-all form cost 1.04–1.20x all-reduce from 1 MB on. It changes the
-  arithmetic, so both engines must use it for L4.
-- **Across nodes, use two levels.** The flat fallbacks cost 2.1–8.8x all-reduce
-  there. A two-level fixed order was just as invariant at 1.06–1.8x: sum inside
-  each node in rank order, then one fp32 exchange between nodes.
-- **Two ranks are order-free**, because a two-operand sum commutes. Test with 3
-  or more.
-- **A different parallel degree is a different tree.** Row-parallel differed
-  from unsharded in 37.5–59% of elements at TP 2–8. A logical TP size reaches
-  L5:
+  arithmetic, so for L4 both engines must use it.
+- **Across nodes, use two levels.** There the flat fallbacks cost 2.1–8.8x
+  all-reduce. A two-level fixed order was just as invariant at 1.06–1.8x: sum
+  inside each node in rank order, then do one fp32 exchange between nodes.
+- **Two ranks are order-free**, because a sum of two operands commutes. Test
+  with 3 or more.
+- **A different parallel degree means a different tree.** At TP 2–8,
+  row-parallel results differed from unsharded ones in 37.5–59% of elements. A
+  logical TP size reaches L5:
   - split K into a fixed number of chunks (8 here);
-  - compute each chunk's partial with the same kernel;
-  - gather the partials and sum them in chunk order.
+  - compute each chunk's partial sum with the same kernel;
+  - gather the partial sums and add them in chunk order.
 
-  TP 1, 2, 4 and 8 then agreed bitwise, at 1.6–1.9x row-parallel at TP 8 in
-  tree form. With 16 chunks, TP 1, 2, 4, 8 and 16 agreed across two nodes.
-- **Fix the chunk count everywhere.** Logical TP 8 and 16 differ from each
-  other. Logical TP 8 reached TP 16 only by splitting each chunk's output
-  columns. Splitting K instead changed the result.
+  TP 1, 2, 4 and 8 then agreed bit for bit, at 1.6–1.9x the cost of
+  row-parallel at TP 8 in tree form. With 16 chunks, TP 1, 2, 4, 8 and 16
+  agreed across two nodes.
+- **Use the same chunk count everywhere.** Logical TP 8 and logical TP 16 give
+  different results. Logical TP 8 could run at TP 16 only by splitting each
+  chunk's output columns; splitting K instead changed the result.
 - **Whole model** (case whole-model-tp): logical TP on every row-parallel layer
-  (C = 16) plus a vocab-parallel log_softmax with fixed chunk sums gave one
-  result at TP 1, 2, 4, 8 and 16 and for prefill at TP a with decode at TP b.
-  Column-parallel input gradients in the backward are also a cross-rank sum:
-  reduce them the same way (NCCL all-reduce broke L5 at all 9 points checked).
-  Cost: 1.4–1.6x prefill, 1.6–1.9x decode at TP 2–8 on 8 GPUs over PCIe. Logical TP is
-  a different arithmetic from single-GPU (84.7% of logits differ at TP 1), so
-  the trainer and the engine must both use it.
-- **Data-parallel gradients** (case training-dp-fsdp, two nodes of 8 GPUs): under Ring, the
-  bucket layout changes the bits, and torch DDP reduces its first iteration
-  (and every restart) in a single bucket. Tree or an ordered all-reduce fixes
-  packing (1.05–1.20x). Reduce-scatter's order follows the owner. For L5 across
-  DP degrees, split the batch into a fixed number of logical shards (16 here),
-  compute each shard's gradient alone, and sum them in a fixed tree that
-  includes the cross-rank sum; handing that sum to NCCL failed from 3 ranks,
-  even under Tree.
+  (C = 16), plus a vocab-parallel log_softmax with fixed chunk sums, gave one
+  result at TP 1, 2, 4, 8 and 16, and also with prefill at TP a and decode at
+  TP b. In the backward, the input gradients of column-parallel layers are also
+  a sum across ranks, so reduce them the same way (NCCL all-reduce broke L5 at
+  all 9 points checked). The cost was 1.4–1.6x for prefill and 1.6–1.9x for
+  decode at TP 2–8 on 8 GPUs over PCIe. Logical TP is different arithmetic from
+  a single GPU (84.7% of logits differ at TP 1), so the trainer and the engine
+  must both use it.
+- **Data-parallel gradients** (case training-dp-fsdp, two nodes of 8 GPUs):
+  under Ring, the bucket layout changes the bits, and torch DDP reduces its
+  first iteration (and every restart) in a single bucket. Tree or an ordered
+  all-reduce fixes the packing problem (1.05–1.20x). Reduce-scatter's order
+  follows the owning rank. For L5 across DP degrees, split the batch into a
+  fixed number of logical shards (16 here), compute each shard's gradient on
+  its own, and sum them in a fixed tree that includes the cross-rank sum.
+  Handing that cross-rank sum to NCCL failed from 3 ranks, even under Tree.
 
 ## 11. Closed or precompiled kernels
 
-- Map the invariant region with `check_batch` over many sizes. Padding to a
-  fixed M helps only if every call really runs at that M: CUDA-graph buckets
-  break this across buckets.
-- If no knob or region holds, replace the kernel. Otherwise keep a row-by-row
-  wrapper as a debugging oracle, and exclude the op from parity claims.
+- Map the region where the kernel is invariant by running `check_batch` over
+  many sizes. Padding to a fixed M helps only if every call really runs at that
+  M. CUDA-graph buckets break this, because each bucket runs at its own M.
+- If no knob works and no invariant region covers your sizes, replace the
+  kernel. If you cannot replace it, keep a row-by-row wrapper as a debugging
+  oracle, and exclude the op from parity claims.
 
 ## 12. Deployment wrappers: `torch.compile` and CUDA graphs
 
 Measured on one GPU type ([paged, varlen and compile case](../../../examples/attention_serving/REPORT.md#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs)):
 - **Register invariant kernels as opaque custom ops.** Called directly, the
-  Triton kernels made Dynamo recompile at every batch size: 18 graphs, even with
-  `dynamic=True`. As custom ops: 2.
-- **Compile can keep L2 and still change the bits.** Inductor fused RMSNorm, the
-  residual add and SiLU·up, and the compiled block differed from eager in 65% of
-  elements. Making every op that rounds opaque gave compiled = eager. An engine
-  that must match an eager trainer needs that.
+  Triton kernels made Dynamo recompile at every batch size: 18 graphs, even
+  with `dynamic=True`. Registered as custom ops, they needed 2.
+- **Compile can keep L2 and still change the bits.** Inductor fused RMSNorm,
+  the residual add and SiLU·up, and the compiled block then differed from eager
+  in 65% of elements. Making every op that rounds opaque gave compiled = eager.
+  An engine that must match an eager trainer needs this.
 - **CUDA graphs keep invariance only with invariant kernels.** With padding to
   buckets, cuBLAS gave the same sequence 6 different results across 7 buckets.
-  Graph replay itself gave eager's bits at the same shape.
+  Graph replay itself reproduced eager's bits at the same shape.
 - **Custom ops cost host time:** about 0.65 ms per call at small batch here,
-  unless graphed.
+  unless they run inside a graph.
 - **Fingerprints inside compiled code** ([compile-graph-capture case](../../../handbook/1-pretraining/capture-compiled-code.md)):
   `tools/graph_probe.py` records OpGuard-format fingerprints from compiled code
-  and graph replays. Give the probe an exact pointwise copy (`isolate=True`): a
-  non-pointwise user can switch Inductor to `addmm` and change the bits. Build
-  lazy caches (RoPE tables) in eager before compiling.
+  and graph replays. Give the probe an exact pointwise copy (`isolate=True`),
+  because a user that is not pointwise can switch Inductor to `addmm` and
+  change the bits. Build lazy caches (RoPE tables) in eager before compiling.
 
 ## 13. Sampling
 
-Key the noise by (seed, absolute position, purpose, sample index) with a
-counter-based generator, never by a generator's running state. Make the
-distribution exact: integer weights floor(exp(z−max)·2^S) so sums and cumsums
-are order-free. Order ties by (value desc, index asc) with a stable sort; greedy
-picks the lowest index. Verify speculative decoding by equality with the
-target's own sample if tokens must match no-draft decoding. Measured on one GPU type
-([sampling case](../../../handbook/2-rl/sampling.md); reference sampler
-[tools/bi_sampling.py](../../../tools/bi_sampling.py)).
+Generate the noise with a counter-based generator keyed by (seed, absolute
+position, purpose, sample index), never from a generator's running state. Make
+the distribution exact with integer weights floor(exp(z−max)·2^S), so that sums
+and cumsums do not depend on order. Break ties by (value desc, index asc) with a
+stable sort, so that greedy decoding picks the lowest index. If tokens must
+match decoding without a draft model, verify speculative decoding by checking
+that its tokens equal the target model's own samples. This was measured on one
+GPU type ([sampling case](../../../handbook/2-rl/sampling.md); the reference
+sampler is [tools/bi_sampling.py](../../../tools/bi_sampling.py)).
 
 ## 14. LoRA and multi-adapter batches
 
-Select each row's adapter inside the kernel; never regroup rows for a
-reduction. Run the base GEMM with one configuration, shrink and expand in fixed
-rank and K order, keep the update in fp32, and meet the base in one fp32 FMA
-before a single cast. Use the same kernel in the trainer (one adapter) and the
-engine (mixed adapters); pin where the scale enters; zero-pad ranks inside fp32
-accumulation; run trainer log-probs with dropout off; do not merge in bf16 when
-the engine must match an unmerged trainer. Backward: dX by the same kernel,
-dA/dB per adapter over its nonzero-gradient rows in ascending order, no
+Inside the kernel, select each row's adapter for that row; never regroup rows
+by adapter for a reduction. Run the base GEMM with one configuration. Do the
+shrink and expand steps in a fixed rank and K order, keep the LoRA update in
+fp32, and add it to the base result in one fp32 FMA, followed by a single cast.
+
+The trainer (one adapter) and the engine (a mix of adapters) must use the same
+kernel. Pin the point where the scale is applied. Pad smaller ranks with zeros
+inside the fp32 accumulation. Compute the trainer's log-probs with dropout off.
+Do not merge the adapter into the weights in bf16 when the engine must match a
+trainer that keeps it unmerged.
+
+In the backward, compute dX with the same kernel, and compute dA/dB per adapter
+over the rows that have a nonzero gradient, in ascending order, without
 atomics. Measured on one GPU type ([LoRA case](../../../handbook/2-rl/lora.md)).
 
 ## 15. Training step: backward scatters, optimizer, loss, resume
 
 - Replace `index_add_`, `scatter_add_`, the embedding backward and weighted
-  `bincount` with a written order: sort by index, then an ascending fp32
-  segmented sum. Strict mode alone is not a written order: its scatters and
-  the embedding backward change order with row width or index count.
+  `bincount` with an order you write yourself: sort by index, then take an
+  ascending fp32 segmented sum. Strict mode alone does not give a written
+  order, because its scatters and the embedding backward change order with the
+  row width or the index count.
 - Pin the optimizer path (fused, foreach or single-tensor) and the loss
-  reduction. Mean is not layout-invariant.
-- Save and restore every piece of state a step reads; the case lists 7.
+  reduction. A mean is not layout-invariant.
+- Save and restore every piece of state that a step reads; the case lists 7.
 - Measured on one GPU type ([training step case](../../../handbook/1-pretraining/training-step.md));
-  multi-GPU gradients are in recipe 10.
+  the multi-GPU gradients are covered in recipe 10.
 
 ## 16. Cross-engine rounding (L4)
 
-L2 and L3 on each side do not give L4. Write down both rounding sequences
-(packing, bias placement, norm form, RoPE table, attention, lm_head and
-log_softmax kernels), check the engine's own L1 and L2 first, then align one
-rounding point at a time. The workflow is the
-[engine-parity skill](../../engine-parity/SKILL.md). Measured with vLLM 0.19.1
-on one GPU type ([trainer vs vLLM case](../../../handbook/2-rl/engine-parity-vllm.md)):
-equality needed the trainer to call vLLM's own kernels.
+Even when each side is L2 and L3, the two sides need not agree, so L4 needs its
+own work. Write down both rounding sequences (packing, bias placement, norm
+form, RoPE table, and the attention, lm_head and log_softmax kernels). Check the
+engine's own L1 and L2 first, then align one rounding point at a time. The
+[engine-parity skill](../../engine-parity/SKILL.md) describes the workflow. In
+the [trainer vs vLLM case](../../../handbook/2-rl/engine-parity-vllm.md),
+measured with vLLM 0.19.1 on one GPU type, equality was reached only when the
+trainer called vLLM's own kernels.
 
 ## Sources for reported numbers
 
-- Thinking Machines, "Defeating Nondeterminism in LLM Inference" (2025): batch
-  invariance as the root cause of inference nondeterminism; invariant RMSNorm,
-  matmul and attention.
+- Thinking Machines, "Defeating Nondeterminism in LLM Inference" (2025). It
+  shows that missing batch invariance is the root cause of nondeterminism in
+  inference, and gives invariant RMSNorm, matmul and attention.
 - Yichuan Wang, "Closing the Training–Inference Mismatch for Linear Attention in
-  RL": GDN recurrent forward, batch-invariant `bmm` for the MoE router, 2–3x
-  trainer cost.
-- verl-omni issue #637: vLLM matched to HF numerics op by op (norm cast order,
-  residual add precision, RoPE formula, router weight cast); about 37% rollout
-  throughput.
-- IsoExec (SkyRL, vLLM blog): a cross-framework execution contract and
-  parallel-invariant kernels.
+  RL". It uses the recurrent GDN forward and a batch-invariant `bmm` for the MoE
+  router, at 2–3x trainer cost.
+- verl-omni issue #637. It matches vLLM to HF numerics one op at a time (norm
+  cast order, residual-add precision, RoPE formula, router weight cast); the
+  reported rollout throughput was about 37%.
+- IsoExec (SkyRL, vLLM blog). It describes an execution contract shared across
+  frameworks, and parallel-invariant kernels.
 
-Links are in the handbook's [references](../../../handbook/references.md). The
-observations above come from `tools/bi_check.py --demo` (results in a
-demo JSON under `tools/`) and from the case studies, each with its script and
-results JSON under `examples/`.
+The handbook's [references](../../../handbook/references.md) page has the
+links. The observations on this page come from `tools/bi_check.py --demo`,
+whose results are in a demo JSON under `tools/`, and from the case studies,
+each of which keeps its script and results JSON under `examples/`.

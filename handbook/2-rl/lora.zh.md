@@ -1,98 +1,112 @@
-# LoRA：训练批次里一个适配器，服务批次里多个
+# LoRA：训练时只有一个 adapter，推理时一个 batch 混着多个 adapter
 
 ## 我们在哪里
 
-完成[整个模型](whole-model.md)、[并行](parallelism.md)和[采样](sampling.md)几步后，
-每一侧的基础模型和采样器都已不变。RL 微调常常训练 LoRA 适配器，而适配器带来自己的 kernel。
-trainer 在整个批次上运行一个适配器。引擎在一个批次中服务多个适配器，用分组或 gather 的
-kernel，或者直接服务合并后的权重。这一步让 LoRA 层在两侧以相同方式舍入。
+经过[整个模型](whole-model.md)、[并行](parallelism.md)和[采样](sampling.md)这几步，
+rollout 端和 trainer 端的基础模型与采样器都已经各自满足不变性。RL 微调常常不训练全部权重，
+而是训练 LoRA adapter，每个 adapter 又会带来自己的 kernel。两端运行这些 kernel 的方式
+差别很大：trainer 在一个 batch 里只用一个 adapter，每一行乘的都是同一组 A 和 B；推理引擎
+却要在同一个 batch 里同时服务很多 adapter，要么用 grouped 或 gather 形式的 kernel，
+让每个 token 取自己的 adapter，要么事先把 adapter 合并进基础权重。这一步要让 LoRA 层
+在两端的舍入完全相同。
 
 ## 思路
 
-LoRA 层计算 y = x·W + s·(x·A)·B：一个基础 GEMM、一个小的更新、一个缩放 s，
-以及两者相遇的位置。除了基础 GEMM，它还新增了三个位可能改变的地方：
+LoRA 层计算 y = x·W + s·(x·A)·B。除了基础 GEMM x·W，它还包括一个低秩的小更新
+(x·A)·B、一个缩放系数 s，以及把更新加回基础结果的那一步。在基础 GEMM 之外，
+这三处都可能让两端的结果不再逐 bit 一致：
 
-| 来源 | 小例子 | 破坏什么 |
+| 来源 | 小例子 | 破坏哪一级 |
 |---|---|---|
-| 适配器分组的大小 | 引擎把共用一个适配器的 token 分到一组，每组跑一次 GEMM。一个 3 个 token 的请求，单独时组大小是 3，在繁忙的批次里是 300，GEMM 可能选另一个 kernel | L2 |
-| s 在哪里乘入 | s·(x·A)·B、(x·A)·(s·B) 和 (s·x·A)·B 在精确数学中相等；每次乘积后都舍入到 bf16 时，它们是三个不同的数（除非 s 是 2 的幂） | L4 |
-| 基础部分和更新在哪里相加 | 两个 bf16 值相加会舍入两次；把 fp32 更新加到 fp32 的基础累加器上再转换一次，只舍入一次 | L4，以及精度 |
+| 有多少 token 共用这个 adapter | 引擎把使用同一个 adapter 的 token 归成一组，每组做一次 GEMM。一个只有 3 个 token 的请求单独运行时，组里就只有这 3 个 token；放进繁忙的 batch 里，同一个 adapter 的组可能有 300 个 token，GEMM 库可能因此换用另一个 kernel | L2 |
+| 缩放系数 s 在哪一步乘进去 | s·(x·A)·B、(x·A)·(s·B) 和 (s·x·A)·B 在精确计算下相等；但如果每次乘完都舍入到 bf16，三种写法会得到三个不同的数，除非 s 恰好是 2 的幂 | L4 |
+| 在哪里把更新加回基础结果 | 两个 bf16 值相加，要经历两次舍入；把 fp32 的更新直接加进基础 GEMM 的 fp32 累加器，最后只转换一次，就只舍入一次 | L4，也影响精度 |
 
-引擎中 prefill 和 decode 往往用不同的 LoRA kernel，这也会破坏 L3。
+此外，引擎里的 prefill 和 decode 常常使用不同的 LoRA kernel，这又会破坏 L3。
 
-合并是一种形式的选择，不是故障。以 bf16 存储的 W + s·B·A，会丢掉每个小于 W 最后一位
-一半的更新元素。所以服务合并权重的引擎无法与不合并的 trainer 一致，而且更新越小，丢得越多。
+把 adapter 合并进基础权重是一种设计选择，本身不算错误，但要付出精度代价。W + s·B·A
+以 bf16 存储时，凡是小于对应权重最后一个 bit 所代表数值一半的更新元素，都会在相加时被舍掉。
+因此，部署合并权重的引擎不可能与 adapter 单独保存的 trainer 一致；更新越小，丢掉的部分越多。
 
-规则：两侧使用同一个 LoRA kernel。在这个 kernel 中，每一行自己选择适配器，
-归约顺序从不依赖还有哪些行，基础部分和更新在一次 fp32 融合乘加中相遇，之后只有一次转换。
-只转换一次也是最精确的形式：它达到精确结果的 bf16 舍入。
+所以规则是：两端运行同一个 LoRA kernel，并且这个 kernel 要做到三点。第一，每一行自己
+查找自己的 adapter；第二，归约顺序与 batch 里还有哪些行无关；第三，更新通过一次 fp32
+融合乘加（FMA）加进基础累加器，最后只转换成 bf16 一次。只转换一次同时也是最精确的
+做法：它的精度等同于把精确结果一次性舍入到 bf16。
 
 ## 步骤
 
-1. **关掉引擎无法复现的东西。**
-   - 目标：trainer 计算 logprob 时算的就是引擎算的。
-   - 做法：trainer 的 logprob 计算关闭 LoRA dropout，服务不合并的适配器。
-   - 成功标准：两侧都没有 dropout，也没有合并。
-2. **trainer 和引擎使用同一个 LoRA linear。**
-   - 目标：trainer 的位 = 引擎的位，prefill = decode。
-   - 做法：[lora_kernels.py](../../examples/lora/lora_kernels.py) 中的 `lora_linear` 和
-     `lora_linear_train`：按行选择适配器、fp32 顺序固定的 shrink，一次 fp32 FMA 加到
-     基础累加器，一次转换；反向使用相同顺序，并跳过梯度为零的行，这样 padding 不会移动分块边界。
-   - 成功标准：[lora_bi.py](../../examples/lora/lora_bi.py) 中的检查通过。
-3. **检查会让分组 kernel 失效的位置。**
-   - 目标：请求在其他适配器之间时达到 L2。
-   - 做法：把单独的请求和同一个请求与其他适配器、无适配器的行、不同位置和填充一起比较，
-     组大小覆盖 GEMM 库的每个 kernel 切换阈值；rank 用零填充。
-   - 成功标准：每种位置都相等。
-4. **检查 trainer 的反向对 padding 是否敏感。**
-   - 目标：梯度达到 L2，而不只是 L1。
-   - 做法：把单独的序列和右侧填充（输出梯度为零）的同一序列比较，再和批次中有其他序列时比较。
+1. **关掉引擎无法复现的部分。**
+   - 目标：trainer 重新计算 logprob 时，算的和引擎生成时算的是同一个函数。
+   - 做法：trainer 计算 logprob 时关闭 LoRA dropout；引擎部署时不合并 adapter。
+   - 成功标准：两端都不做 dropout，也都不合并 adapter。
+2. **trainer 和引擎使用同一个 LoRA 线性层。**
+   - 目标：trainer 与引擎的结果逐 bit 一致，prefill 与 decode 的结果也逐 bit 一致。
+   - 做法：使用 [lora_kernels.py](../../examples/lora/lora_kernels.py) 中的
+     `lora_linear` 和 `lora_linear_train`。前向时，每一行选取自己的 adapter，降维乘法
+     x·A（即 shrink）按固定的 fp32 顺序累加；随后用一次 fp32 FMA 把更新加进基础累加器，
+     只转换一次。反向按同样的顺序累加，并跳过梯度为零的行，这样 padding 就不会移动分块边界。
+   - 成功标准：[lora_bi.py](../../examples/lora/lora_bi.py) 中的检查全部通过。
+3. **测试那些会让 grouped kernel 出错的 batch 排布。**
+   - 目标：无论同一个 batch 里还有哪些 adapter，一个请求的结果都不变（L2）。
+   - 做法：拿单独运行的请求，与同一个请求在下面几种情形下的结果比较：旁边有其他 adapter、
+     旁边有不用 adapter 的行、处在 batch 中的不同位置、夹在 padding 行之间。组大小要覆盖 GEMM
+     库每个切换 kernel 的阈值，阈值上下都要测到；还要包括 rank 用零补齐过的 adapter。
+   - 成功标准：所有排布下的结果都相同。
+4. **检查 padding 会不会改变 trainer 的反向。**
+   - 目标：梯度满足 batch-invariant（L2），而不只是每次运行都能复现（L1）。
+   - 做法：把单独一条序列的梯度，与同一条序列在右边补上 padding 后（padding 部分的输出
+     梯度为零）的梯度比较，再与它和其他序列放在同一个 batch 里计算时的梯度比较。
    - 成功标准：dX、dA 和 dB 都不变。
 
-| 选项 | 得到什么 | 代价类别 | 何时选择 |
+| 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
-| 合并权重 | 一次 GEMM，最快；在 bf16 中丢掉小的更新，无法与不合并的 trainer 一致 | 免费 | 只做服务，不需要一致性 |
-| 分组或 gather 的库 GEMM | 不合并，但请求的位取决于一起批处理的 token | 免费到中等（主机开销随适配器数量增长） | 不需要一致性 |
-| 两侧使用同一个不变的 LoRA kernel | 前向和反向达到 L1–L4，精度达到 bf16 下限 | 前向中等（不到 2x）到大（2x 或更多）；训练步大；适配器很多时比分组 GEMM 快 | 使用 LoRA 的 RL，trainer 和引擎必须一致 |
+| 把 adapter 合并进权重 | 只做一次 GEMM，最快；但小的更新在 bf16 中会丢失，无法与 adapter 单独保存的 trainer 一致 | 免费 | 只做推理部署、不需要与 trainer 一致时 |
+| 使用库里的 grouped 或 gather GEMM | adapter 保持独立，但一个请求的结果取决于同一个 batch 里还有哪些 token | 免费到中等（host 端开销随 adapter 数量增长） | 两端不需要一致时 |
+| 两端使用同一个不变的 LoRA kernel | 前向和反向都达到 L1 到 L4，精度达到 bf16 所能达到的最好水平 | 前向为中等（不到 2 倍）到大（2 倍或更多）；训练 step 为大；adapter 很多时反而比 grouped GEMM 快 | 用 LoRA 做 RL、trainer 和引擎必须一致时 |
 
-已证明：使用同一个 LoRA kernel 时，trainer 和引擎在 prefill 和 decode 中给出相同的位，
-每种位置都通过，反向对 padding 不变；在一种 GPU 型号上、方形层
-（[报告](../../examples/lora/REPORT.md#results)）。尚未证明：真实引擎的 LoRA 路径
-（引擎的形式是根据源码建模的）、打包的 QKV 切片、张量并行、量化的基础权重。
+已证明：使用同一个 LoRA kernel 时，trainer 和引擎在 prefill 和 decode 中的结果都逐 bit
+一致，所有排布测试都通过，padding 也不改变反向结果。这是在一种 GPU 型号、方形的层上
+得到的（[报告](../../examples/lora/REPORT.md#results)）。尚未证明：真实引擎的 LoRA
+路径（引擎的几种 kernel 写法是照着源码建模的，并没有实际运行）、打包的 QKV 切片、
+TP，以及量化的基础权重。
 
 ## 可能出错的地方
 
-!!! warning "基础 GEMM 不变还不够"
-    LoRA 的 GEMM 有自己的 M，即共用这个适配器的 token 数，和 MoE 的专家一样。
-    只让基础部分不变时，仍有位置失败。更新路径也要不变。
+!!! warning "只让基础 GEMM 不变还不够"
+    LoRA 的 GEMM 有自己的 M，也就是共用这个 adapter 的 token 数，这一点和 MoE expert
+    的 GEMM 一样。只让基础 GEMM 不变，排布测试仍然会失败。更新路径也必须不变。
 
-!!! warning "2 的幂次缩放会掩盖缩放位置"
-    缩放为 2 时，不论在哪里乘入都是精确的，所以每种位置都一致。
-    用这样的缩放测试会通过，真实的适配器却会失败。用不是 2 的幂的缩放来测试。
+!!! warning "缩放系数是 2 的幂时，看不出它在哪一步乘入"
+    乘以 2 无论在哪一步做都是精确的，所以每种写法都一致。用这样的缩放系数测试会通过，
+    换成真实的 adapter 却会失败。测试时要用不是 2 的幂的缩放系数。
 
-!!! warning "带原子操作的 split-K 连 L1 都不满足"
-    引擎中把 K 切开、用原子操作加到 fp32 缓冲区的 shrink，每次运行都会改变这个缓冲区。
-    转换到 bf16 掩盖了大部分，但不是全部。使用顺序固定的归约。
+!!! warning "用原子操作做 split-K，连 L1 都达不到"
+    如果引擎的 shrink 把 K 维切开，再用原子操作把部分和加进 fp32 缓冲区，这个缓冲区
+    每次运行得到的值都不一样。转换到 bf16 能掩盖大部分差异，但掩盖不了全部。
+    应改用顺序固定的归约。
 
 !!! warning "确定性不等于不变性"
-    经过库 GEMM 的 trainer 反向，可能多次运行完全相同，却在批次被填充时改变。
-    对梯度做 L2 检查，而不只是 L1。
+    经过库 GEMM 的 trainer 反向，可能每次运行都完全相同，但 batch 一加 padding，结果就变了。
+    梯度要做 L2 检查，不能只做 L1 检查。
 
-!!! warning "rank 填充会改变 K"
-    用零把小适配器的 rank 填充后，GEMM 的 K 变了，GEMM 库可能为它选另一个 kernel。
-    顺序固定的 FMA 循环加上的是精确的零，不受影响。
+!!! warning "补齐 rank 会改变 K"
+    用零把小 adapter 的 rank 补大，它的 GEMM 的 K 就变了，GEMM 库可能因此换用另一个
+    kernel。顺序固定的 FMA 循环加上的只是精确的零，不受影响。
 
 ## 小结
 
-- LoRA 新增三个舍入来源：分组大小、缩放在哪里乘入、基础部分和更新在哪里相加。
-- 在 bf16 中合并是一种有损的形式选择；服务合并权重的引擎无法与不合并的 trainer 一致。
-- 两侧同一个 kernel、一次 fp32 FMA、一次转换：既不变，又是最精确的形式。
-- trainer 计算 logprob 时关闭 LoRA dropout。
+- LoRA 新增了三处可能让舍入不同的地方：共用 adapter 的 token 数、缩放系数在哪一步乘入、
+  更新在哪里加回基础结果。
+- 在 bf16 中合并 adapter 会丢掉一部分更新，所以部署合并权重的引擎无法与 adapter
+  单独保存的 trainer 一致。
+- 两端运行同一个 kernel，用一次 fp32 FMA 加入更新、只转换一次。这样既满足不变性，
+  又是最精确的写法。
+- trainer 重新计算 logprob 时，要关闭 LoRA dropout。
 
 ## 深入阅读
 
-- [实验报告](../../examples/lora/REPORT.md)：比较过的每种形式、合并损失表、位置扫描、
-  舍入点、精度、代价，以及 vLLM 的 LoRA kernel 怎样舍入（根据源码阅读）。
+- [实验报告](../../examples/lora/REPORT.md)：逐一比较的各种写法、合并会丢掉什么的
+  对照表、排布扫描、舍入点、精度和代价，以及 vLLM 的 LoRA kernel 如何舍入（根据源码分析）。
 - 代码：[lora_kernels.py](../../examples/lora/lora_kernels.py)、
   [lora_bi.py](../../examples/lora/lora_bi.py)。
 - Skill：[batch-invariant-kernel](../../skills/batch-invariant-kernel/SKILL.md)。

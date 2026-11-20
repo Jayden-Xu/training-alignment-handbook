@@ -60,6 +60,61 @@ link to its evidence and the conditions it was shown under in plain words
 - Prefer a figure (Mermaid) or a small table to a paragraph of structure.
 - No sales words, no "simply", no hedging chains.
 
+## Natural language
+
+Write as a careful engineer explains to a colleague, not as a summary of
+notes. Read every title and sentence aloud; if a reader would have to decode
+it, rewrite it.
+
+- **Titles say what the page is about in plain words**, not a compressed
+  formula. "LoRA: one adapter per training batch, many per serving batch" →
+  "LoRA: matching training and serving when one batch mixes many adapters".
+  "Parallelism: same bits at every TP size (L5)" → "Getting the same result
+  at any tensor-parallel degree (L5)".
+- **No fragments, no stacked noun phrases, no colon chains.** Full sentences
+  with a subject and a verb. Avoid "X: Y, Z" headlines inside prose.
+- **Say who does what.** "The engine groups the tokens that share an adapter"
+  rather than "adapter grouping by the engine".
+- **One term per thing, explained once.** Do not mix "bits", "位" and
+  "比特" for the same idea; pick the glossary word.
+- **Generic section names stay plain** ("Where we are", "The idea", "The
+  steps"), but the content under them must read as connected prose, with
+  transitions ("so", "because", "this means").
+- **Chinese is written as Chinese**: natural word order, no translated
+  English syntax, no literal renderings such as "位都相同", "两侧相遇的位置",
+  "以相同方式舍入". Prefer "结果逐位一致", "在哪一步把两部分加起来",
+  "在同一个地方做舍入". Keep the glossary's English terms (rollout, trainer,
+  kernel, logprob, …) but explain them in Chinese around them.
+
+### Chinese terms: keep the English words Chinese engineers use
+
+On zh pages keep conventional English terms instead of coined translations.
+Translate only words that are ordinary Chinese (确定性, 不变性, 归约, 舍入, 算子,
+采样, 梯度, 优化器, 精度, 并行度). "Job" is 训练任务/任务, not 作业; "side" is
+rollout 端 / trainer 端 / 两端, not 侧.
+
+| Keep in English | Do not write |
+|---|---|
+| bit（"逐 bit 一致"） | 位、比特（"位都相同"） |
+| batch、token、kernel、GEMM、tile、split-K | 批次、令牌、内核、通用矩阵乘 |
+| prefill、decode、KV cache | 预填充、解码、键值缓存 |
+| TP、DP、EP、PP、SP，以及 rank、shard | 张量并行规模下、秩 |
+| rollout、trainer、logprob、staleness | 推演、训练器、对数概率、陈旧度 |
+| torch.compile、CUDA graph、eager | 编译代码、CUDA 图、急切模式 |
+| checkpoint、dtype、bf16、fp32 | 检查点、数据类型 |
+| all-reduce、reduce-scatter、all-to-all | 全规约、规约散射 |
+| LoRA、adapter、MoE、expert、top-k | 适配器、专家混合 |
+| fingerprint、harness、skill、agent、SDC | 指纹（可在首次出现时括注"指纹"） |
+
+Rewrites of titles that read as machine translation:
+
+| Machine-translated | Natural Chinese |
+|---|---|
+| 并行度：每个 TP 大小下位都相同（L5） | 换 TP 规模，结果仍逐 bit 一致（L5） |
+| 作业运行编译代码时 | 用了 torch.compile 和 CUDA graph 之后怎么抓取 |
+| LoRA：训练批次里一个适配器，服务批次里多个 | LoRA：训练时只有一个 adapter，推理时一个 batch 混着多个 adapter |
+| 让单侧不变：整个模型 | 先让一端自己不变：整个模型 |
+
 ## Honesty
 
 - Never weaken a result in words: bitwise means bitwise; a known-answer

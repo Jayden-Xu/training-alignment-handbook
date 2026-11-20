@@ -1,173 +1,216 @@
 ---
 name: pretraining-alignment
-description: Find where two pre-training runs stop agreeing bit for bit and why. Choose the reference run, check and diff the determinism settings of both runs, capture both with OpGuard, take the first divergence, hand it to OpGuard's harness skills, map the operator to the handbook's operator classes, fix it through a determinism setting or the batch-invariant-kernel skill, confirm the identical prefix extends, and record a regression entry. Use when a training run went wrong (loss spike, drift after an upgrade or config change, a resume that does not continue the same trajectory) or when two runs should agree and do not.
+description: Find the first point where two pre-training runs stop agreeing bit for bit, and find out why. Choose the reference run; check the determinism settings of both runs and diff them; capture both runs with OpGuard; take the first divergence and hand it to OpGuard's harness skills; map the operator to the handbook's operator classes; fix it with a determinism setting or with the batch-invariant-kernel skill; confirm that the identical prefix of the two runs now extends further; and record a regression entry. Use when a training run went wrong (a loss spike, drift after an upgrade or a config change, a resume that does not continue the same trajectory), or when two runs that should agree do not.
 ---
 
 # Pre-training alignment
 
-Own one question: two training runs that should agree bit for bit do not.
-Return where they first stop agreeing, the operator class and cause (or a
-bounded inconclusive result), the fix with its cost, and a regression entry.
+This skill answers one question: two training runs should agree bit for bit,
+and they do not. Return:
 
-The method is [part 1](../../handbook/1-pretraining/README.md). The measured
-walkthrough is the [pre-training case](../../handbook/1-pretraining/localize-with-opguard.md).
-Tools:
-- [tools/determinism_preflight.py](../../tools/determinism_preflight.py):
-  `report`, `findings`, `diff`;
-- [tools/opguard_bridge.py](../../tools/opguard_bridge.py): `run_pair`,
-  `first_divergence`, `coverage`, `suggest`, fingerprints, `TraceWriter`;
+- where they first stop agreeing;
+- the operator class and the cause, or, if the cause cannot be established, an
+  inconclusive result that states clearly what is and is not known;
+- the fix and its cost;
+- a regression entry.
+
+The method is explained in [part 1](../../handbook/1-pretraining/README.md),
+and the [pre-training case](../../handbook/1-pretraining/localize-with-opguard.md)
+walks through it with measurements. The tools are:
+
+- [tools/determinism_preflight.py](../../tools/determinism_preflight.py), with
+  `report`, `findings` and `diff`;
+- [tools/opguard_bridge.py](../../tools/opguard_bridge.py), with `run_pair`,
+  `first_divergence`, `coverage`, `suggest`, the fingerprint functions and
+  `TraceWriter`;
 - OpGuard itself (`python -m opguard.tools`, `opguard-harness`), which this
   skill drives and never modifies.
 
-## Who owns what
+## Who does each part of the work
 
-| Step | Owner | Returns |
+| Step | Done by | Returns |
 |---|---|---|
-| Reference, preflight, diff | this skill | the question, both reports, the diff |
-| Capture and comparison | OpGuard backend, through the harness (`run_pair`) | per-rank Perfetto exports, `verdict: not_evaluated` |
-| First divergence facts | OpGuard harness read-only tools (`first_divergence` calls them) | pivot event, previous ok event, unaligned counts, fingerprints |
-| Correspondence, upstream walk | OpGuard skill `investigate-first-diff`, then `trace-upstream` | a narrowed boundary, or the smallest missing observation |
-| Testing a cause | OpGuard skill `validate-hypothesis` | supported, refuted or inconclusive, with the control |
-| Operator class, recipe | this skill (`suggest` gives leads) | class, recipe, fix options |
-| Kernel fix | skill [batch-invariant-kernel](../batch-invariant-kernel/SKILL.md) | changed kernel, verification, cost |
-| Confirmation, regression entry | this skill | rerun with no divergence, entry |
+| Choosing the reference, preflight and diff | this skill | the question under test, both reports and the diff |
+| Capture and comparison | the OpGuard backend, driven through the harness (`run_pair`) | Perfetto exports for each rank, with `verdict: not_evaluated` |
+| The facts about the first divergence | the read-only tools of the OpGuard harness, which `first_divergence` calls | the pivot event, the last event that agreed before it, the counts of unaligned events, and fingerprints |
+| Deciding which events correspond, and walking upstream | the OpGuard skill `investigate-first-diff`, then `trace-upstream` | a narrower boundary, or the smallest observation still missing |
+| Testing a cause | the OpGuard skill `validate-hypothesis` | supported, refuted or inconclusive, together with the control |
+| Finding the operator class and its recipe | this skill, with leads from `suggest` | the class, the recipe and the fix options |
+| Fixing a kernel | the [batch-invariant-kernel](../batch-invariant-kernel/SKILL.md) skill | the changed kernel, its verification and its cost |
+| Confirming the fix and adding a regression entry | this skill | a rerun with no divergence, and the entry |
 
-OpGuard produces facts. Judgments (which events correspond, which difference
-is first, what caused it) are yours and carry evidence. `suggest` gives leads,
-never a verdict.
+OpGuard produces facts. The judgments are yours: which events correspond,
+which difference comes first, and what caused it. Each judgment must carry its
+evidence. `suggest` gives leads, never a verdict.
 
-## 1. Choose the reference
+## 1. Choose the reference run
 
-Pick it for the question (part 1, step 1 table): self-replay for residual
-nondeterminism or SDC, the last good commit for a regression, one flag off for
-a feature, the old version for an upgrade. Both runs use the same data, seeds
-and checkpoint. Write down the one difference under test.
+Choose the reference according to the question you are asking (see the table
+in part 1, step 1). For residual nondeterminism or SDC, replay the same run
+against itself. For a regression, use the last good commit. For a new feature,
+use the same run with that one flag off. For an upgrade, use the old version.
+Both runs use the same data, seeds and checkpoint. Write down the single
+difference under test.
 
-Evidence: both launch commands, the commit of each, the difference under test.
+Evidence to keep: both launch commands, the commit of each run, and the
+difference under test.
 
-## 2. Preflight and diff
+## 2. Preflight both runs and diff the reports
 
-In each run, after the model, optimizer, scheduler and loader are built and any
-checkpoint is restored, just before the first step:
+In each run, call the preflight just before the first step, after the model,
+optimizer, scheduler and loader are built and any checkpoint has been
+restored:
 
 ```python
 rep = determinism_preflight.report(optimizer=opt, dataloader=loader, scheduler=sched,
                                    autocast=amp, model=model)
 ```
 
-Then `determinism_preflight.diff(rep_a, rep_b, declared=[...])`, declaring the
-difference under test (for example `launch.argv`, `stack.torch`).
+Then compare the two reports with
+`determinism_preflight.diff(rep_a, rep_b, declared=[...])`, and declare the
+difference under test (for example `launch.argv` or `stack.torch`).
 
-- `bitwise_comparison: not_meaningful`: a blocking difference outside the
-  declared one. Fix it or declare it before capturing; otherwise the first
-  divergence only shows that configuration.
-- `at_risk` (from `findings`): surfaces left uncontrolled on a side. The
-  common one: `warn_only=True` keeps SDPA's backward nondeterministic
-  (measured). Fix these first; a self-replay may then already agree.
-- On a resume, a difference in `optimizer.state`, `scheduler`, `seeds` or the
-  loader position after the restore is the bug itself (measured: the step
-  counter showed up here before any capture).
+- `bitwise_comparison: not_meaningful` means there is a blocking difference
+  besides the declared one. Fix it or declare it before you capture; otherwise
+  the first divergence will only show you that configuration difference.
+- `at_risk` (from `findings`) lists the surfaces, the sources of
+  nondeterminism, that one side leaves uncontrolled. The most common one is
+  `warn_only=True`, which leaves SDPA's backward nondeterministic (measured).
+  Fix these first; a self-replay may then agree with no further work.
+- When the question is a resume, a difference after the restore in
+  `optimizer.state`, `scheduler`, `seeds` or the loader position is the bug
+  itself. In the measured case, the step counter showed up here before
+  anything was captured.
 
-Evidence: both report files and the diff.
+Evidence to keep: both report files and the diff.
 
-### Data at the loader's exit
+### Check the data at the loader's exit
 
-On every rank of both runs, record each batch as the loader returns it: `rec = data_fingerprint.Recorder(dir, rank=dp_rank, meta={...})`, then `rec.record(step, batch)` ([data alignment](../../handbook/1-pretraining/data-alignment.md)). `python tools/data_fingerprint.py compare A B` (`--global` when the DP sizes differ) must report no differing record before capture; otherwise the first divergence is the data. Fix by its class. Evidence: both record directories and the compare output.
+On every rank of both runs, record each batch as the loader returns it. Create
+a recorder with `rec = data_fingerprint.Recorder(dir, rank=dp_rank, meta={...})`
+and call `rec.record(step, batch)` for each batch (see
+[data alignment](../../handbook/1-pretraining/data-alignment.md)). Before you
+capture, `python tools/data_fingerprint.py compare A B` must report no
+differing record; add `--global` when the two runs use different DP sizes. If
+a record differs, the first divergence is in the data, and you fix it
+according to its class. Evidence to keep: both record directories and the
+output of compare.
 
 ## 3. Capture both runs with OpGuard
 
-Use dedicated checkouts per side (`stage_checkouts`), then `run_pair`: four
-workload launches (discovery and capture on each side) plus a comparison.
-Keep runs short: a few steps, one or two GPUs. Give both sides the same
-`CUDA_VISIBLE_DEVICES` index: OpGuard compares device strings.
+Give each side its own checkout (`stage_checkouts`), then call `run_pair`. It
+launches the workload four times, a discovery run and a capture run on each
+side, and then compares the captures. Keep the runs short: a few steps on one
+or two GPUs. Give both sides the same `CUDA_VISIBLE_DEVICES` index, because
+OpGuard compares device strings.
 
-Then `coverage(run)`: call sites discovered in the checkout but not planned
-for instrumentation have no boundary record. Measured: with `torch.nn.Linear`
-the GEMMs are launched from torch's `linear.py`, outside the checkout, so they
-are not captured; with a Linear that calls `F.linear` in model code they are.
-OpGuard captures eager execution only. Boundaries inside `torch.compile` or a
-CUDA graph need fingerprints taken there (the bridge's plain-torch functions
-work inside both) and written with `TraceWriter`.
+Then call `coverage(run)`. It lists the call sites that discovery found in the
+checkout but that were not planned for instrumentation; these have no boundary
+record. In the measured case, with `torch.nn.Linear` the GEMMs are launched
+from torch's `linear.py`, which lies outside the checkout, so they are not
+captured. With a Linear whose model code calls `F.linear`, they are. OpGuard
+captures eager execution only. For boundaries inside `torch.compile` or a CUDA
+graph, take fingerprints there (the bridge's plain-torch functions work inside
+both) and write them with `TraceWriter`.
 
-Evidence: experiment ID, stage list, launches and wall time, coverage.
+Evidence to keep: the experiment ID, the list of stages, the number of
+launches and the wall time, and the coverage report.
 
-## 4. Take the first divergence
+## 4. Read the first divergence
 
-`facts = first_divergence(report, root, og)`. Read, in this order:
-1. `status_counts` and `unaligned_before`: unaligned events are gaps, not
-   differences. With unaligned events before the pivot, an earlier divergence
-   may be hidden.
-2. `pivot`: operator, file, line, call number, `diff_fields`, inputs and
-   outputs on both sides, differing regions. If inputs already differ, the
-   pivot is a consumer; the origin is upstream.
-3. `site_statuses` / `sites`: which calls of a site agree and which differ.
-   A run of `o` then `d` at a gradient consumer means some gradients agree:
-   the origin is a backward op feeding only the ones that differ.
-4. `previous_ok`: the last agreeing event, not necessarily a producer.
+Call `facts = first_divergence(report, root, og)` and read the result in this
+order:
 
-No diff is not proof of equivalence: check coverage, and compare final
-parameters with `bi_check.bit_equal`.
+1. `status_counts` and `unaligned_before`. An unaligned event is a gap in the
+   pairing, not a difference. If there are unaligned events before the pivot,
+   an earlier divergence may be hidden among them.
+2. `pivot`, the first event that differs. It gives the operator, file, line,
+   call number, `diff_fields`, the inputs and outputs on both sides, and the
+   regions that differ. If the inputs already differ, the pivot only consumes
+   a difference made earlier, and the origin lies upstream.
+3. `site_statuses` / `sites`, which show which calls of a call site agree and
+   which differ. If a gradient consumer shows a run of `o` followed by `d`,
+   some gradients agree and others do not, so the origin is a backward op that
+   feeds only the gradients that differ.
+4. `previous_ok`, the last event that agreed. It is not necessarily the
+   producer of the pivot's inputs.
 
-## 5. Hand over to OpGuard's harness skills
+Finding no difference does not prove that the runs are equivalent. Check the
+coverage, and compare the final parameters with `bi_check.bit_equal`.
 
-In OpGuard's `harness/skills/`:
-- `investigate-first-diff`: owns the boundary and evidence record. Returns a
-  root-cause explanation or a bounded inconclusive result.
-- `trace-upstream`: when inputs already differ or the producer is unclear.
-  Returns a narrowed boundary, a candidate mechanism, or the missing
-  observation.
-- `validate-hypothesis`: one candidate cause, one discriminating
-  intervention. Returns supported / refuted / inconclusive with the control.
+## 5. Hand the divergence to OpGuard's harness skills
 
-`suggest(facts, preflight=diff)["handoff"]` says which one to enter.
+OpGuard's `harness/skills/` has three skills for this:
 
-## 6. Map to an operator class
+- `investigate-first-diff` keeps the record of the boundary and its evidence.
+  It returns a root-cause explanation, or an inconclusive result that states
+  clearly what is and is not known.
+- `trace-upstream` is for the case where the inputs already differ or the
+  producer is unclear. It returns a narrower boundary, a candidate mechanism,
+  or the observation that is missing.
+- `validate-hypothesis` tests one candidate cause with one intervention that
+  can tell the alternatives apart. It returns supported, refuted or
+  inconclusive, together with the control.
 
-`suggest` maps the pivot to the handbook's classes
+`suggest(facts, preflight=diff)["handoff"]` tells you which of the three to
+start with.
+
+## 6. Map the pivot to an operator class
+
+`suggest` maps the pivot to the handbook's operator classes
 ([part 3](../../handbook/3-kernels/README.md),
 [operator recipes](../batch-invariant-kernel/references/operator-recipes.md))
-and to part 1's root-cause patterns, with reasons. See
-[references/leads.md](references/leads.md) for what each lead kind means and
-what it took to confirm it in the measured case.
+and to the root-cause patterns of part 1, and gives its reasons.
+[references/leads.md](references/leads.md) explains what each kind of lead
+means and what it took to confirm it in the measured case.
 
-## 7. Fix
+## 7. Fix the cause
 
-Cheapest first:
-1. a determinism setting or restore fix (preflight finding, missing state);
-2. a rounding point aligned with the reference (both sides round at the same
-   place);
-3. a batch-invariant or deterministic kernel through
-   [batch-invariant-kernel](../batch-invariant-kernel/SKILL.md).
+Try the cheapest fix first:
+
+1. a determinism setting, or a fix to what is saved and restored (for a
+   preflight finding or missing state);
+2. a rounding point moved to match the reference, so that both sides round at
+   the same place;
+3. a batch-invariant or deterministic kernel, built with the
+   [batch-invariant-kernel](../batch-invariant-kernel/SKILL.md) skill.
+
 Record the cost next to the fix.
 
-## 8. Confirm
+## 8. Confirm the fix
 
-Rerun the same pair through OpGuard with the fix. Done when OpGuard labels no
-event `diff`, no event is unaligned, and final parameters are bit-identical.
-"The identical prefix extends" means the first divergence moved later or
-disappeared over the same steps; if it only moved, return to step 4.
+Rerun the same pair through OpGuard with the fix applied. You are done when
+OpGuard labels no event `diff`, no event is unaligned, and the final
+parameters are bit-identical. Over the same steps, a working fix moves the
+first divergence later or makes it disappear; in both cases the identical
+prefix of the two runs extends. If the divergence only moved later, return to
+step 4.
 
-## 9. Regression entry
+## 9. Add a regression entry
 
-Add a check to an example script through `tools/bi_report.py`: the pair as
-`expect="fail"` (documented variance) and the fixed pair as `expect="pass"`.
-Write a case entry: scenario, symptom, pivot, class, fix, cost, launches.
+Add a check to an example script with `tools/bi_report.py`. Register the
+original pair with `expect="fail"`, because its variance is now documented,
+and the fixed pair with `expect="pass"`. Then write a case entry that records
+the scenario, the symptom, the pivot, the operator class, the fix, its cost
+and the number of launches.
 
 ## When to stop
 
-- Supported cause plus a confirmed rerun: done.
-- Preflight shows a blocking difference that is the cause (resume state,
-  `warn_only`): fix and confirm; a capture may be unnecessary.
-- Pivot preceded by unaligned events you cannot pair, or coverage misses the
-  region: report the narrowed boundary and the smallest missing observation
-  (a boundary to add, a rank, a step). Do not guess.
-- Launch budget used: report what is established and what is not.
+- When the cause is supported and a rerun confirms the fix, you are done.
+- When the preflight shows a blocking difference that is itself the cause
+  (resume state, `warn_only`), fix it and confirm. A capture may not be
+  needed.
+- When the pivot is preceded by unaligned events that you cannot pair, or the
+  coverage misses the region, report the narrowed boundary and the smallest
+  observation still missing (a boundary to add, a rank, a step). Do not guess.
+- When the launch budget is used up, report what is established and what is
+  not.
 
 ## Guardrails
 
-- Bitwise only. No tolerance, no rounding of outputs.
+- Compare bitwise only: no tolerance, and no rounding of outputs.
 - Never modify OpGuard or the workload's numerics to make captures agree.
 - An unpaired event is a gap, not a difference.
-- Equal XOR fingerprints are not proof of equal tensors; a zero fingerprint
-  is never evidence.
-- Count launches: one `run_pair` is four workload launches.
+- Equal XOR fingerprints do not prove that the tensors are equal, and a zero
+  fingerprint is never evidence.
+- Count the launches: one `run_pair` launches the workload four times.

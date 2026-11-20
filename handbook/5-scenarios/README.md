@@ -2,195 +2,208 @@
 
 ## Where we are
 
-Parts 1 to 4 taught one method in two workflows: find where two pre-training
-runs part ([part 1](../1-pretraining/README.md)), make a rollout engine and a
-trainer agree ([part 2](../2-rl/README.md)), make one operator invariant
-([part 3](../3-kernels/README.md)), and keep the results true when the stack
-changes ([part 4](../4-operations/README.md)). Many other needs are the same
-question with a different pair of programs: a framework migration, a
-checkpoint conversion, a reference model run in an inference engine. This part
-shows how to apply the method you already have to seven such scenarios. Three
-have their own page; the other four have a short section here.
+Parts 1 to 4 taught one method through its workflows: finding where two
+pre-training runs part ([part 1](../1-pretraining/README.md)), making a rollout
+engine and a trainer agree ([part 2](../2-rl/README.md)), making one operator
+invariant ([part 3](../3-kernels/README.md)), and keeping the results true when
+the stack changes ([part 4](../4-operations/README.md)). Many other needs are
+the same question asked about a different pair of programs: a framework
+migration, a checkpoint conversion, or a reference model run in an inference
+engine. This part shows how to apply the method you already have to seven such
+scenarios. Three of them have their own page, and the other four get a short
+section on this page.
 
-## The idea: name the pair, the inputs and the claim
+## The idea: say what you compare, on which inputs, and what should hold
 
-Every scenario is a reference, a suspect, the inputs both receive, and a claim
-about which outputs should be equal and how strictly. Once those four are
-written down, an existing workflow applies. A few pairs:
+Every scenario has four parts: a reference, a suspect, the inputs that both
+receive, and a claim about which outputs should be equal and how strictly.
+Once you have written those four down, one of the existing workflows applies.
+Here are a few pairs:
 
-| Pair | Same inputs | What should be equal | Expected |
+| Pair | Same inputs | What should be equal | What to expect |
 |---|---|---|---|
-| A checkpoint and its converted copy | none: nothing is computed | every row of every weight | bitwise, always |
-| One model in two training frameworks | data, weights, seed | every boundary both share | bitwise only after aligning every rounding point |
-| A trainer and a precomputed reference log-prob | the same token ids and weights | each token's log-prob | bitwise with engine parity |
-| One request alone and inside a busy server | the request | its tokens and log-probs | bitwise with batch-invariant serving |
-| The same job on two GPU generations | everything | nothing at the bit level | different bits; localize instead |
+| A checkpoint and its converted copy | none, since nothing is computed | every row of every weight | bitwise equality, always |
+| One model in two training frameworks | the data, the weights and the seed | every boundary that both have | bitwise equality, but only after every rounding point is aligned |
+| A trainer and a precomputed reference logprob | the same token ids and weights | each token's logprob | bitwise equality once you have engine parity |
+| One request sent alone, and the same request inside a busy server | the request | its tokens and logprobs | bitwise equality once serving is batch-invariant |
+| The same job on two GPU generations | everything | nothing at the bit level | the bits will differ, so localize instead |
 
 The last row matters as much as the others. Where bitwise equality is not
-promised, the goal is the first operator whose bits differ and a decision
-about it, not equality at any cost. The rule: **state the pair, the inputs and
-the claim before comparing anything.** It is the controlled experiment of
-[part 1](../1-pretraining/README.md#the-idea-two-runs-one-difference) with the
-claim made explicit.
+promised, the goal is to find the first operator whose bits differ and make a
+decision about it, not to reach equality at any cost. So the rule is: **before
+comparing anything, state which two programs you compare, on which inputs, and
+what you claim should hold.** This is the controlled experiment of
+[part 1](../1-pretraining/README.md#the-idea-two-runs-one-difference), with the
+claim written out explicitly.
 
 ## The scenarios
 
-| Scenario | Workflow to reuse | Tools and skills | What is specific |
+| Scenario | Workflow to reuse | Tools and skills | What is specific to it |
 |---|---|---|---|
-| [Framework migration and library upgrades](framework-migration.md) | [part 1](../1-pretraining/README.md), with the other stack as the reference; the rounding-point method of [engine parity](../2-rl/engine-parity-vllm.md) | [determinism_preflight.py](../../tools/determinism_preflight.py), [opguard_bridge.py](../../tools/opguard_bridge.py), [engine-parity](../../skills/engine-parity/SKILL.md) | two programs whose traces do not line up; each difference is a bug or a choice |
-| [Checkpoint conversion and resharding](checkpoint-conversion.md) | none computes: a copy check, then a forward | [ckpt_compare.py](../../tools/ckpt_compare.py) | rows survive repacking; placement needs a forward |
-| [Offline post-training](offline-post-training.md): reference log-probs for SFT and DPO, teacher logits for distillation | [part 2](../2-rl/README.md) at L4, without sampling | [engine-parity](../../skills/engine-parity/SKILL.md), OpGuard's RL records | which tokens are scored, templates, padding |
-| [Reward models and evaluation](#reward-models-and-evaluation) | [whole model](../2-rl/whole-model.md), [sampling](../2-rl/sampling.md), [regression](../4-operations/regression.md) | [bi_audit.py](../../tools/bi_audit.py), [bi_sampling.py](../../tools/bi_sampling.py) | a score near a threshold turns one bit into a different decision |
-| [Deterministic serving](#deterministic-serving) | [whole model](../2-rl/whole-model.md) on the engine side; [part 3](../3-kernels/README.md) | [bi_audit.py](../../tools/bi_audit.py), [batch-invariant-kernel](../../skills/batch-invariant-kernel/SKILL.md) | every serving mode a request can meet |
-| [Speculative decoding and MTP](#speculative-decoding-and-mtp) | [sampling](../2-rl/sampling.md), [whole model](../2-rl/whole-model.md) at L3 | [bi_sampling.py](../../tools/bi_sampling.py) | verification is a chunk, decoding is one token |
-| [Hardware migration and mixed fleets](#hardware-migration-and-mixed-fleets) | [hardware](../4-operations/hardware.md), [localize with OpGuard](../1-pretraining/localize-with-opguard.md) | [sdc_scan.py](../../tools/sdc_scan.py), [bi_suite.py](../../tools/bi_suite.py) | bitwise is not expected across GPU generations |
+| [Framework migration and library upgrades](framework-migration.md) | [part 1](../1-pretraining/README.md), with the other stack as the reference, plus the rounding-point method of [engine parity](../2-rl/engine-parity-vllm.md) | [determinism_preflight.py](../../tools/determinism_preflight.py), [opguard_bridge.py](../../tools/opguard_bridge.py), [engine-parity](../../skills/engine-parity/SKILL.md) | The two programs' traces do not line up, and each difference is either a bug or a choice |
+| [Checkpoint conversion and resharding](checkpoint-conversion.md) | none, since nothing is computed: first a copy check, then one forward | [ckpt_compare.py](../../tools/ckpt_compare.py) | Each row keeps its values when the tensor is repacked; whether rows ended up in the right place needs a forward |
+| [Offline post-training](offline-post-training.md): reference logprobs for SFT and DPO, teacher logits for distillation | [part 2](../2-rl/README.md) at L4, without sampling | [engine-parity](../../skills/engine-parity/SKILL.md), OpGuard's RL records | Which tokens are scored, chat templates, padding |
+| [Reward models and evaluation](#reward-models-and-evaluation) | [whole model](../2-rl/whole-model.md), [sampling](../2-rl/sampling.md), [regression](../4-operations/regression.md) | [bi_audit.py](../../tools/bi_audit.py), [bi_sampling.py](../../tools/bi_sampling.py) | When a score is near a threshold, one bit can change the decision |
+| [Deterministic serving](#deterministic-serving) | [whole model](../2-rl/whole-model.md) on the engine side; [part 3](../3-kernels/README.md) | [bi_audit.py](../../tools/bi_audit.py), [batch-invariant-kernel](../../skills/batch-invariant-kernel/SKILL.md) | Every serving mode a request can run into |
+| [Speculative decoding and MTP](#speculative-decoding-and-mtp) | [sampling](../2-rl/sampling.md), [whole model](../2-rl/whole-model.md) at L3 | [bi_sampling.py](../../tools/bi_sampling.py) | Verification processes a chunk of tokens, while decoding processes one |
+| [Hardware migration and mixed fleets](#hardware-migration-and-mixed-fleets) | [hardware](../4-operations/hardware.md), [localize with OpGuard](../1-pretraining/localize-with-opguard.md) | [sdc_scan.py](../../tools/sdc_scan.py), [bi_suite.py](../../tools/bi_suite.py) | Bitwise equality is not expected across GPU generations |
 
 ## Reward models and evaluation
 
 **Goal:** a reward model gives a (prompt, response) pair the same score in any
-batch, and an evaluation gives the same number when run again.
+batch, and an evaluation gives the same number when it is run again.
 
-A reward model is a whole model with a scalar head, so it has the same
-batch and mode dependence as a policy. What is different is the use: a score
-is compared with a threshold, ranked against other responses, or averaged into
-a pass rate. A score one bit away from a threshold changes a decision, and a
-changed decision changes the training signal or the reported number.
+A reward model is a whole model with a scalar head, so its output depends on
+the batch and the mode in the same ways as a policy's does. What differs is how
+the output is used. A score is compared with a threshold, ranked against other
+responses, or averaged into a pass rate. A score one bit away from a threshold
+can therefore change a decision, and a changed decision changes the training
+signal or the number you report.
 
 How to apply the existing pages:
 
-1. Make the reward model invariant like any model: audit its operators with
-   [bi_audit.py](../../tools/bi_audit.py) and check one pair alone against
-   inside batches, padded against packed ([whole model](../2-rl/whole-model.md)).
-2. If the score is computed in an engine and recomputed by the trainer, that is
-   L4: follow [engine parity](../2-rl/engine-parity-vllm.md).
+1. Make the reward model invariant like any other model. Audit its operators
+   with [bi_audit.py](../../tools/bi_audit.py), and compare one pair scored
+   alone with the same pair scored inside batches, padded and packed
+   ([whole model](../2-rl/whole-model.md)).
+2. If the score is computed in an engine and recomputed by the trainer, you
+   are at L4: follow [engine parity](../2-rl/engine-parity-vllm.md).
 3. If the evaluation samples, make its tokens replayable from the logits and a
    seed ([sampling](../2-rl/sampling.md), [bi_sampling.py](../../tools/bi_sampling.py)).
 4. Keep a fixed evaluation set and its scores as a
    [regression](../4-operations/regression.md) entry.
 
-**Success:** the same score bits for every pair across batch sizes, and the
-same evaluation result in a rerun with a different batch composition.
+**Success:** every pair gets the same score bits at every batch size, and a
+rerun with a different batch composition gives the same evaluation result.
 
-Not yet shown: no reward model or evaluation harness was measured here.
+Not yet shown: no reward model or evaluation harness has been measured here.
 
 ## Deterministic serving
 
-**Goal:** a request's tokens and log-probs do not depend on which other
-requests share its batch (L2), or on how the server chunks, caches or decodes
+**Goal:** a request's tokens and logprobs depend neither on which other
+requests share its batch (L2) nor on how the server chunks, caches or decodes
 it (L3).
 
-This is the engine side of the [whole-model step](../2-rl/whole-model.md),
-seen by a user: two identical requests at temperature 0 get different answers
-because the server was busy differently. The causes and fixes are the same.
+This is the engine side of the [whole-model step](../2-rl/whole-model.md), as
+a user experiences it: two identical requests at temperature 0 get different
+answers because the server happened to be busy in different ways. The causes
+and the fixes are the same.
 
 How to apply the existing pages:
 
-1. Audit the served model and test every mode a request can meet: a changing
-   decode batch, chunked prefill, a prefix-cache hit, preemption
-   ([whole model](../2-rl/whole-model.md)).
-2. Replace each batch-variant operator with an invariant kernel
-   ([part 3](../3-kernels/README.md)); keep the sampler replayable
+1. Audit the served model, and test every mode a request can run into: a
+   decode batch that keeps changing, chunked prefill, a prefix-cache hit, and
+   preemption ([whole model](../2-rl/whole-model.md)).
+2. Replace every operator that varies with the batch by an invariant kernel
+   ([part 3](../3-kernels/README.md)), and keep the sampler replayable
    ([sampling](../2-rl/sampling.md)).
 3. Measure the cost at your decode batch sizes. If it is too high, offer the
-   invariant path to the requests that need it rather than to all.
+   invariant path only to the requests that need it, not to all of them.
 
-**Success:** each request's log-probs are bit-equal served alone and under
-load, in every mode the server uses.
+**Success:** each request's logprobs are bit-equal whether it is served alone
+or under load, in every mode the server uses.
 
-Not yet shown: a production server under real traffic, multi-node serving.
+Not yet shown: a production server under real traffic, and serving across
+several nodes.
 
 ## Speculative decoding and MTP
 
-**Goal:** a speculative or multi-token-prediction (MTP) decoder emits exactly
-the tokens and log-probs the target model emits on its own.
+**Goal:** a decoder that uses speculation or multi-token prediction (MTP)
+emits exactly the tokens and logprobs that the target model emits on its own.
 
-Verification runs the target model over several draft tokens at once, like a
-short prefill; plain decoding runs one token at a time. If the two paths round
-differently, an accepted token's log-prob differs from the plain decode's,
-and the acceptance test itself can flip. The draft's own numerics only change
-speed, not the result, provided acceptance compares against the target's own
-sample.
+Verification runs the target model over several draft tokens at once, much
+like a short prefill, while plain decoding runs one token at a time. If the
+two paths round differently, an accepted token's logprob differs from the one
+plain decoding would give, and the acceptance test itself can flip. The draft
+model's own numerics affect only speed, not the result, as long as acceptance
+compares against the target model's own sample.
 
 How to apply the existing pages:
 
-1. Make the target's verification forward equal its decode forward: chunk
-   against one token is the L3 case of the [whole model](../2-rl/whole-model.md),
-   and attention's prefill and decode use one split of the keys
-   ([attention](../3-kernels/attention.md)).
-2. Make acceptance replayable: with exact-equality verification, speculative
-   decoding gives the tokens of decoding without a draft
+1. Make the target model's verification forward equal its decode forward. A
+   chunk against a single token is the L3 case of the
+   [whole model](../2-rl/whole-model.md), and attention must split the keys
+   the same way in prefill and decode ([attention](../3-kernels/attention.md)).
+2. Make acceptance replayable. When drafts are verified by exact equality,
+   speculative decoding gives the same tokens as decoding without a draft
    ([sampling](../2-rl/sampling.md), [bi_sampling.py](../../tools/bi_sampling.py)).
-3. Treat MTP heads used as drafts the same way; an MTP loss in pre-training is
-   part of the training step ([part 1](../1-pretraining/README.md)).
+3. Treat MTP heads that serve as drafts in the same way. An MTP loss used in
+   pre-training belongs to the training step instead
+   ([part 1](../1-pretraining/README.md)).
 
-**Success:** the same tokens and log-prob bits with and without speculation,
-at every draft length.
+**Success:** the tokens and the logprob bits are the same with and without
+speculation, at every draft length.
 
-Not yet shown: a real engine's speculative decoding, MTP heads.
+Not yet shown: a real engine's speculative decoding, and MTP heads.
 
 ## Hardware migration and mixed fleets
 
 **Goal:** know which results carry over to new GPUs, and when two machines
-disagree, find where.
+disagree, find where they part.
 
-Across GPU generations bitwise equality is not expected: libraries pick other
-kernels and accumulation orders per architecture ([hardware](../4-operations/hardware.md)).
-So the goal changes from equality to localization. The first operator whose
-bits differ should be a library GEMM or a reduction whose order the library
-chooses; anything else is a finding.
+Bitwise equality is not expected across GPU generations, because libraries
+choose different kernels and accumulation orders for each architecture
+([hardware](../4-operations/hardware.md)). The goal therefore changes from
+equality to localization. The first operator whose bits differ should be a
+library GEMM or a reduction whose order the library chooses; anything else is
+a finding.
 
 How to apply the existing pages:
 
 1. Qualify the new hardware: run the regression suite against the committed
-   baselines and the SDC scan across groups ([hardware](../4-operations/hardware.md),
+   baselines, and run the SDC scan across groups of devices
+   ([hardware](../4-operations/hardware.md),
    [bi_suite.py](../../tools/bi_suite.py), [sdc_scan.py](../../tools/sdc_scan.py)).
-2. Within one generation and stack, compare devices bitwise: a disagreement
-   there is a fault ([SDC](../1-pretraining/sdc.md)).
+2. Within one GPU generation and one software stack, compare devices bit for
+   bit. A disagreement there is a fault ([SDC](../1-pretraining/sdc.md)).
 3. Across generations, capture both runs with OpGuard on the same inputs and
    take the first divergence ([localize with OpGuard](../1-pretraining/localize-with-opguard.md)).
-   Classify it: an architecture-dependent kernel choice (expected) or anything
-   else (report it).
-4. For RL with the trainer and the engine on different generations, only
-   kernels whose reduction order is written in their source can carry over,
-   and that is untested across architectures. Otherwise measure the numeric
-   gap and record it as a decision, as
-   [engine parity](../2-rl/engine-parity-vllm.md) does for differences
-   neither side can move.
+   Then classify it: either a kernel choice that depends on the architecture,
+   which is expected, or anything else, which you should report.
+4. For RL with the trainer and the engine on different GPU generations, only
+   kernels whose reduction order is written into their source code can carry
+   over, and even that is untested across architectures. Otherwise, measure
+   the numeric gap and record it as a decision, the way
+   [engine parity](../2-rl/engine-parity-vllm.md) handles differences that
+   neither side can remove.
 
 **Success:** every difference between generations is classified, and the
-expected ones are recorded with the stack they belong to.
+expected ones are recorded together with the stack they belong to.
 
-Not yet shown: the handbook's kernels across GPU architectures, a
-mixed-generation RL run.
+Not yet shown: the handbook's kernels on other GPU architectures, and an RL
+run that mixes GPU generations.
 
 ## What can go wrong
 
 !!! warning "Expecting bitwise equality where none is promised"
-    Two GPU generations, or two libraries' kernels, are not built to agree in
-    the last bit. Chasing equality there spends time on expected differences.
-    State the claim first; where it is not equality, localize and decide.
+    Two GPU generations, or the kernels of two different libraries, are not
+    built to agree to the last bit. Chasing equality there spends your time on
+    differences that are expected. State the claim first, and where the claim
+    is not equality, localize and decide.
 
-!!! warning "A tolerance standing in for a bit check"
-    "Close enough" outputs hide faults that happen to be small: a cast that
-    rounds small weights can leave every logit unchanged on a few inputs
-    ([checkpoint conversion](checkpoint-conversion.md)). Check copies and
-    recomputations bitwise; use a tolerance only for pairs that cannot agree.
+!!! warning "Letting a tolerance stand in for a bit check"
+    Outputs that are "close enough" can hide faults that happen to be small.
+    For example, a cast that rounds small weights can leave every logit
+    unchanged on a few inputs ([checkpoint conversion](checkpoint-conversion.md)).
+    Check copies and recomputations bit for bit, and use a tolerance only for
+    pairs that cannot agree.
 
 !!! warning "Comparing two different computations"
-    A reference log-prob scored over other tokens, a template applied on one
-    side only, a score after a different post-processing: the numbers differ
-    though nothing is wrong numerically. Check that both sides computed the
-    same thing before comparing values.
+    A reference logprob scored over different tokens, a chat template applied
+    on one side only, or a score that went through different post-processing
+    all make the numbers differ although nothing is wrong numerically. Before
+    comparing values, check that both sides computed the same thing.
 
 ## Summary
 
-- Each scenario is a pair, the inputs both receive, and a claim; write those
-  down first.
-- A copy must be bitwise; two programs can be made bitwise by aligning
-  rounding points; two GPU generations are localized, not equalized.
+- Every scenario consists of a pair of programs, the inputs they both
+  receive, and a claim. Write those down first.
+- A copy must be bitwise equal. Two programs can be made bitwise equal by
+  aligning their rounding points. Across two GPU generations you localize the
+  differences instead of removing them.
 - The existing workflows apply unchanged: preflight, capture, first
-  divergence, rounding points, decide, regression.
-- Each section says what is not yet shown; treat those as open.
+  divergence, rounding points, decision, regression.
+- Each section states what is not yet shown; treat those items as open.
 
 ## Go deeper
 
@@ -202,4 +215,4 @@ mixed-generation RL run.
 - Skills: [alignment-pipeline](../../skills/alignment-pipeline/SKILL.md),
   [engine-parity](../../skills/engine-parity/SKILL.md),
   [pretraining-alignment](../../skills/pretraining-alignment/SKILL.md).
-- [Open items](../open-items.md) for everything still untested.
+- [Open items](../open-items.md) lists everything that is still untested.

@@ -1,117 +1,125 @@
-# 离线后训练：参考 log-prob 与 teacher logits
+# 离线后训练：预先算好的参考 logprob 和 teacher logits
 
 ## 我们在哪里
 
-好几种后训练方法会提前算好损失里的一项，而且常常放在推理引擎里算，因为更快。
-DPO 及其变体要用参考模型对被选回答和被拒回答的 log-prob；带 KL 项的 SFT 要用参考 log-prob；
-蒸馏要用 teacher 的 logits 或它的 top-k log-prob。trainer 随后把存下来的数当成自己算的来用。
-如果引擎和 trainer 对相同的 token 算出不同的数，损失里就带着一个没人选择的误差。
-这就是[第 2 部分](../2-rl/README.md)的 L4 问题，只是去掉了采样器：token 由数据集固定，
-参考权重也不变，所以没有 staleness。剩下的只有记账问题和数值误差。
+好几种后训练方法会提前算好 loss 里的某一项，而且为了速度，常常放在推理引擎里算。DPO 及其变体
+要用参考模型对被选回答和被拒回答给出的 logprob；带 KL 项的 SFT 要用参考 logprob；蒸馏要用
+teacher 的 logits，或者它的 top-k logprob。trainer 随后就把这些存下来的数当成自己算的来用。
+如果引擎和 trainer 对同样的 token 算出了不同的数，loss 里就混进了一个谁也没打算引入的误差。
+这其实就是[第 2 部分](../2-rl/README.md)里的 L4 问题，只是没有采样器：token 由数据集固定，
+参考权重也不会变，所以没有 staleness，剩下的只有记账错误和数值误差。
 
-## 思路：第 0 步的免费检查
+## 思路：第 0 步自带一项免费的检查
 
-DPO 在每一对回答上比较策略和参考：一个偏好的回答 y_w，一个被拒的回答 y_l：
+DPO 在每一对回答上比较策略和参考，一个是偏好的回答 y_w，一个是被拒的回答 y_l：
 
 ```
 margin = (logp_policy(y_w) - logp_ref(y_w)) - (logp_policy(y_l) - logp_ref(y_l))
 loss   = -log sigmoid(beta * margin)
 ```
 
-第 0 步时策略就是参考，所以每个 margin 都恰好是 0，损失恰好是 log 2。
-如果存下来的参考 log-prob 来自引擎，第 0 步就能告诉你它们对得有多准：
+第 0 步时，策略就是参考本身，所以每个 margin 都恰好是 0，loss 恰好是 log 2。因此，如果存下来的
+参考 logprob 来自引擎，第 0 步就能告诉你它们对得有多准：
 
-| logp_ref 的来源 | 第 0 步的 margin |
+| logp_ref 从哪里来 | 第 0 步的 margin |
 |---|---|
 | trainer 自己的前向 | 每一对都恰好为 0 |
-| 在别处舍入的引擎 | 很小但不为零，每一对都不同 |
-| 对别的 token 打分的引擎（另一个模板、别的位置） | 并不小：打分的是另一个序列 |
+| 在别的地方舍入的引擎 | 很小但不为零，而且每一对都不一样 |
+| 给别的 token 打了分的引擎（模板不同、位置不同） | 并不小，因为打分的是另一个序列 |
 
-所以在第 0 步，让 trainer 对一部分样本对重算参考 log-prob，与存下来的值逐位比较。
-相等：预计算是精确的。不相等：先问打分的是不是同样的 token，再问用的是不是同样的权重，最后才调试数值。
+所以在第 0 步，让 trainer 对一部分样本对重新计算参考 logprob，并和存下来的值逐 bit 比较。
+如果相等，说明预计算是精确的。如果不相等，先问打分的是不是同样的 token，再问用的是不是
+同样的权重，最后才去调试数值问题。
 
-规则是：**预先算好的数，trainer 必须能从相同的 token、相同的权重逐位复现；依次检查 token、权重、数值。**
-这就是第 2 部分拆分差距的做法：先把记账问题和数值误差分开，再去调试其中任何一个。
+所以规则是：**预先算好的数，trainer 必须能用相同的 token 和相同的权重逐 bit 复现出来；
+检查时先看 token，再看权重，最后看数值。**这就是第 2 部分拆分差距的做法：先把记账错误和
+数值误差分开，再去调试其中任何一个。
 
 ## 步骤
 
 1. **确认打分的是同样的 token。**
-   - 目标：两边在相同位置上对相同的 token id 打分。
-   - 做法：每个预计算值都和它的 token id、位置以及每个 log-prob 的精确位一起存下来，
-     使用 OpGuard 的 `rollout_batch` 记录的字段（`opguard_harness.rl_records.RecordWriter`）；
-     trainer 把自己算的值写成 `trainer_logprob` 记录。先比较 id，再比较任何值。
-     重点检查通常会不同的地方：对话模板（重复的 BOS、系统提示、生成提示）、哪些 token 被打分
-     （只有回答部分，是否包含结束 token）、padding 方向和注意力掩码、packing 序列里的位置 id、截断。
-   - 成功标准：每个存下来的序列，id 和位置都相等。
+   - 目标：两边在相同的位置上，给相同的 token id 打分。
+   - 做法：每个预先算好的值，都要连同它的 token id、位置，以及每个 logprob 的精确 bit 一起
+     存下来，使用 OpGuard 的 `rollout_batch` 记录里的字段
+     （`opguard_harness.rl_records.RecordWriter`）；trainer 则把自己算的值写成一条
+     `trainer_logprob` 记录。比较任何值之前，先比较 id。重点检查通常会不一样的地方：
+     对话模板（重复的 BOS、系统提示、生成提示）、哪些 token 参与打分（是否只算回答部分，
+     是否包含结束 token）、padding 在左边还是右边以及 attention mask、packing 序列里的
+     position id，以及截断。
+   - 成功标准：每一条存下来的序列，id 和位置都相等。
 2. **确认用的是同样的权重。**
-   - 目标：引擎持有的参考或 teacher 权重，就是 trainer 加载的那份。
-   - 做法：用一条带两边逐行指纹的 `weight_sync` 记录，用 OpGuard 的 `rl.weight_sync_check` 检查；
-     如果引擎加载的是转换过的检查点，就在两个文件上运行 [ckpt_compare.py](../../tools/ckpt_compare.py)
-     （[检查点转换](checkpoint-conversion.md)）。
-   - 成功标准：没有不匹配的行。
+   - 目标：引擎持有的参考模型或 teacher 权重，正是 trainer 加载的那一份。
+   - 做法：写一条带有两端逐行 fingerprint 的 `weight_sync` 记录，用 OpGuard 的
+     `rl.weight_sync_check` 检查。如果引擎加载的是转换过的 checkpoint，就改为在两个文件上
+     运行 [ckpt_compare.py](../../tools/ckpt_compare.py)（[checkpoint 转换](checkpoint-conversion.md)）。
+   - 成功标准：每一行都能配上对。
 3. **比较数值。**
-   - 目标：每个被打分的 token，trainer 的 log-prob 与存下来的逐位相等。
-   - 做法：把存下来的 token id 以 teacher forcing 方式送进 trainer 的前向，不带容差地比较 fp32 的位；
-     在参考版本上运行 `rl.decompose`，它按 token 报告数值误差（staleness 按构造为零）
-     （[强化学习循环](../2-rl/rl-loop.md)）。
-   - 成功标准：每个 token 的数值误差都为零，或者给出不为零的 token 列表。
-4. **数值不同时，让引擎对齐，或者换个地方算。**
-   - 目标：数值误差为零，或者有一个决定。
-   - 做法：引擎会把不同长度的序列放进同一批，所以先让它自身满足不变性（[整个模型](../2-rl/whole-model.md)），
-     再把它的舍入点和 trainer 对齐（[引擎一致性](../2-rl/engine-parity-vllm.md)、
-     [engine-parity skill](../../skills/engine-parity/SKILL.md)）；剩下的差异像[强化学习循环](../2-rl/rl-loop.md)
-     那样用逐向量指纹定位。或者在 trainer 里算参考。
-   - 成功标准：第 3 步的检查通过，或者测得的差距成为一项记录下来的决定。
+   - 目标：每个参与打分的 token，trainer 算出的 logprob 都与存下来的逐 bit 一致。
+   - 做法：用 teacher forcing 把存下来的 token id 送进 trainer 的前向，逐 bit 比较
+     fp32 的值，不设任何容差。在参考模型的版本上运行 `rl.decompose`，它会按 token 报告数值误差（这里的
+     staleness 天然为零）（[RL 循环](../2-rl/rl-loop.md)）。
+   - 成功标准：每个 token 的数值误差都为零，或者你拿到了一份数值误差不为零的 token 清单。
+4. **如果数值不同，就让引擎对齐，或者换个地方算。**
+   - 目标：数值误差为零，或者有一个记录在案的决定。
+   - 做法：引擎会把不同长度的序列放进同一个 batch，所以先让它自己满足不变性
+     （[整个模型](../2-rl/whole-model.md)），再把它的舍入点和 trainer 对齐
+     （[引擎一致性](../2-rl/engine-parity-vllm.md)、[engine-parity skill](../../skills/engine-parity/SKILL.md)），
+     剩下的差异则像 [RL 循环](../2-rl/rl-loop.md)里那样，用逐向量 fingerprint 定位。
+     另一种办法是直接在 trainer 里算参考。
+   - 成功标准：第 3 步的检查通过，或者测得的差距已经作为一项决定记录下来。
 
-| 选项 | 得到什么 | 代价等级 | 何时选择 |
+| 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
-| 在 trainer 里算参考 | 按构造精确 | 中等（不到 2 倍）：每个样本多一次参考模型的前向 | 吞吐允许时的默认选择 |
-| 做到一致性的引擎 | 精确，并且是引擎的速度 | 引擎不变模式的代价（中等到大），加一次性的对齐工作 | 大数据集，打分一次、反复使用 |
-| 引擎保持原样，测量差距 | 一个已知、已记录的误差 | 免费 | 这个用途接受测得的数值误差 |
+| 在 trainer 里算参考 | 天然精确 | 中等（不到 2 倍）：每个样本多做一次参考模型的前向 | 吞吐允许时的默认做法 |
+| 使用与 trainer 逐 bit 一致的引擎 | 精确，而且是引擎的速度 | 引擎开启不变模式的代价（中等到大），再加一次性的对齐工作 | 数据集很大，打一次分、反复使用 |
+| 引擎保持原样，只测量差距 | 一个已知、已记录的误差 | 免费 | 对这个用途来说，测得的数值误差可以接受 |
 
-这些代价等级来自每个选项增加的工作量，这里没有针对后训练测量过。
-引擎不变模式的代价在[引擎一致性报告](../../examples/cross_engine/REPORT.md)里有测量。
+这些代价等级是根据每个选项额外增加的工作量推断的，这里并没有针对后训练实测过。引擎不变模式
+的代价，在[引擎一致性报告](../../examples/cross_engine/REPORT.md)里有实测。
 
-对**蒸馏**，还有两件事决定数值能不能对上：
+对于**蒸馏**，还有两件事决定数值能不能对上：
 
-- **top-k 的选择。**只存 teacher 的 top-k log-prob 时，选择本身就可能不同：
+- **top-k 选的是哪些。** 如果只存了 teacher 的 top-k logprob，选出来的集合本身就可能不同：
   第 k 名附近有两个值相等或几乎相等。先比较选出的 id，再比较值。
-- **归一化。**在整个词表上归一化的 log-prob，和在 top k 上重新归一化的不是同一个数；
-  temperature 也可以在归一化之前或之后施加。写下每一侧算的是哪一种。
+- **归一化方式。** 在整个词表上归一化的 logprob，和只在 top k 里重新归一化的，不是同一个数；
+  temperature 也可能在归一化之前或之后施加。要写清楚每一端算的是哪一种。
 
-尚未证明：这里没有测量过任何 DPO 或蒸馏运行。各个部分是分别证明的：
-一个模型上的引擎一致性（[报告](../../examples/cross_engine/REPORT.md)），
-以及小循环上的记录、权重检查和拆分（[报告](../../examples/rl_loop/REPORT.md)）。
+尚未证明：这里还没有实测过任何 DPO 或蒸馏训练。各个组成部分是分别证明的：一个模型上的引擎
+一致性（[报告](../../examples/cross_engine/REPORT.md)），以及一个小训练循环上的记录、权重检查
+和差距拆分（[报告](../../examples/rl_loop/REPORT.md)）。
 
 ## 可能出错的地方
 
-!!! warning "某一侧用了另一个模板"
-    引擎套用了自己的对话模板，或者加了一个 trainer 会再加一次的 BOS。两边打分的于是是不同的 token 序列，
-    差距很大，看起来却像数值问题。先比较 token id，再比较值。
+!!! warning "有一端用了不同的模板"
+    引擎套用了自己的对话模板，或者加了一个 BOS，而 trainer 又加了一次。两端打分的于是是不同的
+    token 序列，差距很大，看起来却像数值问题。要先比较 token id，再比较值。
 
 !!! warning "padding 改变了数值"
-    随批次变化的引擎或 trainer，在 padding 或 packing 方式不同时会给同一序列不同的位。
-    差距于是取决于哪些序列同在一批。先检查每一侧单独计算和批量计算是否一致
-    （[整个模型](../2-rl/whole-model.md)）。
+    不是 batch-invariant 的引擎或 trainer，在 padding 或 packing 方式不同时，会给同一条序列
+    算出不同的结果。差距于是取决于哪些序列碰巧在同一个 batch 里。先检查每一端单独计算和放进
+    batch 计算的结果是否一致（[整个模型](../2-rl/whole-model.md)）。
 
 !!! warning "打分的位置不同"
-    一侧对 prompt 和回答一起求和，另一侧只对回答求和；或者一侧计入了结束 token。
-    每个 token 的值都一致，总和却不同。存储并比较带位置的逐 token 值，而不是总和。
+    一端对 prompt 和回答一起求和，另一端只对回答求和；或者一端把结束 token 也算了进去。这时
+    每个 token 的值都一致，总和却不同。要存储并比较带位置的逐 token 值，而不是总和。
 
-!!! warning "引擎给的是处理过的 log-prob"
-    引擎可能报告经过 temperature、惩罚项或其他处理之后的 log-prob。它们不是模型的 log-prob，
-    任何 trainer 都对不上。向引擎要原始 log-prob，并用它自己 logits 的 log_softmax 核对一个。
+!!! warning "引擎给出的是处理过的 logprob"
+    引擎报告的 logprob 可能已经经过 temperature、惩罚项或其他处理。它们不是模型本身的 logprob，
+    任何 trainer 都对不上。要向引擎要原始的 logprob，并拿其中一个和引擎自己 logits 的
+    log_softmax 核对。
 
 ## 小结
 
-- 预先算好的参考 log-prob 或 teacher logit 就是去掉了采样器的 rollout：trainer 必须逐位复现它。
-- 第 0 步时 DPO 的 margin 必须恰好为零；在那里重算一部分样本是一项免费的检查。
-- 依次检查 token、权重、数值；大的差距大多是记账问题。
-- 数值不同时，用引擎一致性让引擎对齐，或者在 trainer 里算参考。
+- 预先算好的参考 logprob 或 teacher logit，就是一个去掉了采样器的 rollout，trainer 必须
+  逐 bit 复现它。
+- 第 0 步时 DPO 的 margin 必须恰好为零，所以在这一步重算一部分样本对，就是一项免费的检查。
+- 先查 token，再查权重，最后查数值；大的差距多半是记账错误。
+- 如果数值不同，要么通过引擎一致性让引擎对齐，要么在 trainer 里算参考。
 
 ## 深入阅读
 
 - [引擎一致性](../2-rl/engine-parity-vllm.md)和 [engine-parity skill](../../skills/engine-parity/SKILL.md)。
-- [整个模型](../2-rl/whole-model.md)：每一侧的批不变性和模式不变性。
-- [强化学习循环](../2-rl/rl-loop.md)：本页复用的记录、权重检查和拆分；OpGuard 的协议见它的 `docs/RLAlignment.md`。
-- 引擎加载转换过的参考模型时，见[检查点转换](checkpoint-conversion.md)。
+- [整个模型](../2-rl/whole-model.md)：让每一端不受 batch 和推理模式的影响。
+- [RL 循环](../2-rl/rl-loop.md)：本页沿用的记录、权重检查和差距拆分；OpGuard 的协议见它的
+  `docs/RLAlignment.md`。
+- 引擎加载的是转换过的参考模型时，见[checkpoint 转换](checkpoint-conversion.md)。

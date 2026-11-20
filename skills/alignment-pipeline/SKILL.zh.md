@@ -1,68 +1,70 @@
 ---
 name: alignment-pipeline
-description: 把一个逐位对齐问题分到正确的流程，并从头到尾执行。预训练（两次本应一致的运行、改动后的 loss 尖峰、恢复训练后出现漂移、怀疑 SDC）依次走预检、参考运行、OpGuard 捕获或图探针、首个分歧点、修复、确认、回归条目。强化学习训推（rollout 与 trainer 的 log-prob 不同）依次走模型审计、逐算子 batch-invariant、整模型 L1–L3、L5、采样、对引擎的 L4、在线记录、staleness/数值拆分、离线定位、回归。先用这个 skill，再用它调用的更具体的 skill。
+description: 判断一个逐 bit 对齐问题该走哪条流程，并把它从头做到尾。预训练场景（两次本应一致的运行、改动后出现 loss spike、恢复训练后结果漂移、怀疑有 SDC）依次是：预检，选定参考运行，用 OpGuard 或 graph probe 采集，找首个分歧点，修复，确认，加回归条目。RL 训推场景（rollout 和 trainer 的 logprob 对不上）依次是：审计模型，让每个算子都 batch-invariant，检查整个模型的 L1–L3 和 L5，检查采样，对照引擎检查 L4，在线记录，把差距拆成 staleness 和数值误差，离线定位，加回归条目。先用这个 skill，它会再调用更具体的 skill。
 ---
 
 # 对齐流程
 
-这个 skill 只做分流。每一步写明进入条件、完成工作的工具或 skill、必须留下的证据，以及何时停止。
-具体工作和规则在链接的 skill 和手册各部分里；这里不再重复。
+这个 skill 只负责分流。每一步都写明四件事：什么时候开始，用哪个工具或 skill 来做，
+做完要留下什么证据，什么时候停下。具体怎么做、要守哪些规则，都写在链接的 skill
+和 handbook 各部分里，这里不再重复。
 
-所有地方的相等都是逐位相等：没有容差，也不用舍入来强行相等。
-每个结论都写明 GPU 和版本，或者写“未测试”。
+这里说的相等一律是逐 bit 一致。不设容差，也不靠舍入把结果凑成相等。
+每个结论都要写明是在哪种 GPU、哪些软件版本上得到的；没测过就写“未测试”。
 
-## 选哪个流程
+## 先判断走哪条流程
 
-| 用户手里有 | 流程 |
+| 用户手上的情况 | 流程 |
 |---|---|
-| 两次本应一致的训练运行；升级、迁移、配置改动或恢复训练之后出现尖峰或漂移 | A. 预训练 |
-| 一台怀疑有静默数据损坏的机器 | A，只做步骤 A0 |
-| rollout 的 log-prob 与 trainer 的不同；一个悄悄偏离 on-policy 的强化学习运行 | B. 强化学习训推 |
-| 单个算子，没有 batch-invariant 实现 | 直接用 [batch-invariant-kernel](../batch-invariant-kernel/SKILL.md) |
-| 框架迁移、检查点转换、预先算好的参考 log-prob，或其他需要一致的一对 | [第 5 部分](../../handbook/5-scenarios/README.md)；转换用 [tools/ckpt_compare.py](../../tools/ckpt_compare.py) |
-| 新的软硬件栈（torch、Triton、NCCL、驱动、CUDA、GPU） | [regression](../../handbook/4-operations/regression.md)：先跑测试套件 |
+| 两次训练本应一致；或者升级、迁移、改配置、恢复训练之后，出现了 spike 或漂移 | A. 预训练 |
+| 怀疑某台机器在悄悄算错数据 | 走 A，只做 A0 这一步 |
+| rollout 的 logprob 和 trainer 的对不上；或者 RL 训练已经悄悄变成了 off-policy | B. RL 训推 |
+| 某个算子还没有 batch-invariant 实现 | 直接用 [batch-invariant-kernel](../batch-invariant-kernel/SKILL.md) |
+| 框架迁移、checkpoint 转换、预先算好的参考 logprob，或者其他需要对齐的一对运行 | 见[第 5 部分](../../handbook/5-scenarios/README.md)；checkpoint 转换用 [tools/ckpt_compare.py](../../tools/ckpt_compare.py) |
+| 换了新的软硬件栈（torch、Triton、NCCL、驱动、CUDA、GPU） | 先跑一遍回归套件，做法见 [regression](../../handbook/4-operations/regression.md) |
 
-在任一流程之前，如果是新机器或新栈，先查看那里测过什么：
-[硬件覆盖](../../handbook/4-operations/hardware.md)。尚未测试或未解决的部分（没有真实的
-引擎记录 hook、没有盲测、FSDP 是模拟的，……）列在
-[待办事项](../../handbook/open-items.md)里。
+在新机器或新栈上开始任何一条流程之前，先到[硬件覆盖](../../handbook/4-operations/hardware.md)
+里看看那里已经测过什么。还没测过、或者仍未解决的问题（真实引擎里还没有记录 hook、
+没做过盲测、FSDP 只是模拟实现……）都列在[待办事项](../../handbook/open-items.md)里。
 
 ## A. 预训练
 
-| 步骤 | 进入条件 | 工具或 skill | 要留下的证据 | 何时停止 |
+| 步骤 | 何时开始 | 工具或 skill | 要留下的证据 | 何时停下 |
 |---|---|---|---|---|
-| A0. SDC | 怀疑某个设备，或在长时间运行之前 | [tools/sdc_scan.py](../../tools/sdc_scan.py)（先 `--quick`，再 fleet 和 golden）；作业内的 `sdc_guard`、`cross_rank_check`（[案例](../../handbook/1-pretraining/sdc.md)） | 扫描结果 JSON，写明设备、算子和重复次数 | 某个设备与同组设备不一致（先排除软件差异），或全部通过 |
-| A1. 预检 | 总是，两次运行都做 | [tools/determinism_preflight.py](../../tools/determinism_preflight.py) 在恢复后每个 rank 跑 `report`；`diff(a, b, declared=[...])` | 两份报告和 diff，只剩已声明的差异 | 出现未声明的差异，使逐位比较失去意义：修正设置，重新运行 |
-| A1'. 数据 | 预检干净 | [tools/data_fingerprint.py](../../tools/data_fingerprint.py)：两次运行都在 loader 出口用 `Recorder(dir, rank)` 和 `record(step, batch)`；`compare`（DP 规模不同时加 `--global`）（[页面](../../handbook/1-pretraining/data-alignment.md)） | 两份记录目录和 compare 结果 | 有记录不同：按类别（order、samples、packing、masks）修复后再比较 |
-| A2. 参考运行 | 预检干净 | [第 1 部分第 1 步](../../handbook/1-pretraining/README.md#step-1-pick-a-reference-run) | 写下待测的那一个差异 | — |
-| A3. 捕获 | eager 运行 | 通过 [tools/opguard_bridge.py](../../tools/opguard_bridge.py) `run_pair` 使用 OpGuard；检查 `coverage(run)` | 两份 trace 和覆盖报告 | 覆盖缺少所关心的区域：先修正包装 |
-| A3'. 捕获 | `torch.compile` 或 CUDA graphs | [tools/graph_probe.py](../../tools/graph_probe.py) 加 `isolate=True`（[案例](../../handbook/1-pretraining/capture-compiled-code.md)） | 探针 trace；带探针和不带探针的编译给出相同的比特 | 探针改变了编译后的比特：把它们隔离 |
-| A4. 首个分歧点 | 两份 trace | `opguard_bridge.first_divergence` | 分歧点信息：算子、代码行、调用、不同的字段、它之前未对齐的事件 | 没有事件不同且最终参数相等：两次运行一致 |
-| A5. 原因 | 一个分歧点 | [pretraining-alignment](../pretraining-alignment/SKILL.md)（步骤 5–6）配合 OpGuard 的 harness skill；用 `suggest()` 找线索 | 一个用最小干预检验过的假设 | 该干预消除了分歧点处的差异 |
-| A6. 修复 | 一个已确认的原因 | 设置或状态：[训练步](../../handbook/1-pretraining/training-step.md)、[DP 和 FSDP 风格（模拟：扁平梯度、reduce-scatter、分片 AdamW）](../../handbook/1-pretraining/data-parallel.md)；kernel：[batch-invariant-kernel](../batch-invariant-kernel/SKILL.md) | 改动及其代价（预热、同步、中位数） | — |
-| A7. 确认 | 一个修复 | 重新捕获这一对运行 | 没有不同的事件，没有未对齐的事件，最终参数逐位相同 | 已确认；否则回到 A4 |
-| A8. 回归 | 已确认 | 一个在 `bi-results-v1` 中带 `--quick`/`--json` 的示例，在 [suite/manifest.json](../../suite/manifest.json) 中加一条（[regression](../../handbook/4-operations/regression.md#how-to-add-a-check-or-an-example)） | 示例、它的结果文件、一个基线 | 测试套件在该栈上通过 |
+| A0. SDC | 怀疑某个设备有问题，或者一次长时间训练即将开始 | [tools/sdc_scan.py](../../tools/sdc_scan.py)（先跑 `--quick`，再跑 fleet 和 golden）；训练任务内部用 `sdc_guard` 和 `cross_rank_check`（[案例](../../handbook/1-pretraining/sdc.md)） | 扫描结果 JSON，里面写明是哪个设备、哪个算子、第几次重复 | 某个设备和同组其他设备的结果不一致（先排除软件上的差异），或者全部通过 |
+| A1. 预检 | 每次都做，两次运行都要做 | [tools/determinism_preflight.py](../../tools/determinism_preflight.py)：恢复状态之后在每个 rank 上运行 `report`，再用 `diff(a, b, declared=[...])` 比较 | 两份报告和 diff 结果，其中除了已声明的那处差异，没有别的差异 | 出现了未声明的差异，逐 bit 比较因此失去意义；先改好设置，再重跑 |
+| A1'. 数据 | 预检没有问题 | [tools/data_fingerprint.py](../../tools/data_fingerprint.py)：两次运行都在 batch 离开 loader 的地方调用 `Recorder(dir, rank)` 和 `record(step, batch)`，然后运行 `compare`（DP 规模不同时加 `--global`）（[页面](../../handbook/1-pretraining/data-alignment.md)） | 两份记录目录和 compare 的结果 | 发现某条记录不同；按它的类别（order、samples、packing、masks）修好，再比较一次 |
+| A2. 参考运行 | 预检没有问题 | [第 1 部分第 1 步](../../handbook/1-pretraining/README.md#step-1-pick-a-reference-run) | 把要测试的那唯一一处差异写下来 | — |
+| A3. 采集 | 运行在 eager 模式下 | 通过 [tools/opguard_bridge.py](../../tools/opguard_bridge.py) 的 `run_pair` 用 OpGuard 采集，再检查 `coverage(run)` | 两份 trace 和覆盖报告 | 覆盖报告缺了你要看的那段代码；先把包装修好 |
+| A3'. 采集 | 运行用了 `torch.compile` 或 CUDA graph | [tools/graph_probe.py](../../tools/graph_probe.py)，并加上 `isolate=True`（[案例](../../handbook/1-pretraining/capture-compiled-code.md)） | probe 的 trace；以及带 probe 和不带 probe 各编译一次、结果逐 bit 一致的证明 | probe 改变了编译后的结果；把 probe 隔离开 |
+| A4. 首个分歧点 | 拿到了两份 trace | `opguard_bridge.first_divergence` | 分歧点的信息：哪个算子、哪行代码、哪次调用、哪些字段不同，以及在它之前有哪些没对齐的事件 | 没有任何事件不同，最终参数也相等，说明两次运行是一致的 |
+| A5. 找原因 | 找到了分歧点 | [pretraining-alignment](../pretraining-alignment/SKILL.md)（第 5–6 步），配合 OpGuard 的 harness skill；用 `suggest()` 找线索 | 一个假设，并且已经用能验证它的最小干预检验过 | 这个干预消除了分歧点上的差异 |
+| A6. 修复 | 原因已经确认 | 设置或状态的问题，见[训练 step](../../handbook/1-pretraining/training-step.md)和 [DP 与 FSDP 风格的切分（模拟实现：扁平梯度、reduce-scatter、按 shard 存放的 AdamW）](../../handbook/1-pretraining/data-parallel.md)；kernel 的问题，用 [batch-invariant-kernel](../batch-invariant-kernel/SKILL.md) | 改动本身和它的代价（先预热、做同步，再取中位数） | — |
+| A7. 确认 | 已经做了修复 | 把这对运行重新采集一次 | 没有不同的事件，也没有没对齐的事件，最终参数逐 bit 一致 | 确认完成；否则回到 A4 |
+| A8. 回归 | 修复已经确认 | 写一个支持 `--quick`/`--json`、按 `bi-results-v1` 格式输出结果的示例，并在 [suite/manifest.json](../../suite/manifest.json) 里加一条（[regression](../../handbook/4-operations/regression.md#how-to-add-a-check-or-an-example)） | 示例、它的结果文件和一个基线 | 回归套件在这个栈上通过 |
 
-## B. 强化学习训推
+## B. RL 训推
 
-顺序很重要：每个级别都假定前面的级别成立。只有在某一步的进入条件不成立时才跳过它，并且要说明。
+顺序很重要，因为每一级都以前面几级成立为前提。只有某一步的开始条件不满足时，
+才可以跳过这一步，而且要说明跳过了。
 
-| 步骤 | 进入条件 | 工具或 skill | 要留下的证据 | 何时停止 |
+| 步骤 | 何时开始 | 工具或 skill | 要留下的证据 | 何时停下 |
 |---|---|---|---|---|
-| B1. 审计 | trainer 的模型 | 在模型上运行 [tools/bi_audit.py](../../tools/bi_audit.py) | 算子清单和逐模块的 L2 判定 | 每个模块都是 L2，或列出了不满足的模块 |
-| B2. 逐算子 L2 | 一个不满足的算子 | [batch-invariant-kernel](../batch-invariant-kernel/SKILL.md) | 它的验证矩阵和代价 | 每个算子都通过，或有记录在案的退路 |
-| B3. 整模型 L1–L3 | 所有算子都是 L2 | [整模型案例](../../handbook/2-rl/whole-model.md)的方法：每种服务模式、激活梯度 | 每种模式下的 logprob 相等 | 引擎用到的每种模式都满足 L1–L3 |
-| B4. L5 | trainer 和引擎使用不同的 TP、DP 或 EP 度数 | [whole-model-tp](../../handbook/2-rl/parallelism.md)、[training-dp-fsdp](../../handbook/1-pretraining/data-parallel.md)、recipe 10 | 跨度数相等，前向和反向 | 在用到的每个度数下都相等 |
-| B5. 采样 | token 经过采样、重放、抢占或推测 | [tools/bi_sampling.py](../../tools/bi_sampling.py)（[案例](../../handbook/2-rl/sampling.md)） | 重新计算后的重放、回滚、n、推测分块、新进程 | token 逐位重放 |
-| B6. L4 | 两侧都满足 B3 | [engine-parity](../engine-parity/SKILL.md)（[vLLM 案例](../../handbook/2-rl/engine-parity-vllm.md)）；LoRA：[案例](../../handbook/2-rl/lora.md) | 两侧的舍入序列；逐算子、逐层相等 | 0 个 logprob 不同，或剩下的每个差异都是记录在案的决定，并附代价 |
-| B7. 在线记录 | 强化学习作业 | OpGuard 的 `opguard_harness.rl_records.RecordWriter`：rollout 批次、trainer log-prob、前向、权重同步、快照（[第 2 部分](../../handbook/2-rl/README.md#synchronous-and-asynchronous-runs)） | 每个 rank 的记录文件 | — |
-| B8. 拆分 | 记录 | 先 `rl.weight_sync_check`，再 `rl.decompose` | 未匹配的权重行（无）、每个 token 的 `numeric` 和 `staleness`、混合版本的 token 单独放开 | `numeric` 逐位为零：基础设施没有问题，差距来自 staleness |
-| B9. 定位 | `numeric` ≠ 0 | OpGuard 的 `rl-alignment` skill（`harness/skills/rl-alignment`）：`rl.replay_request`、用 `OPGUARD_XOR_ROWS=1` 重新捕获、`vectors.*`；[示例](../../handbook/2-rl/rl-loop.md) | 出现分歧的算子及另一侧的证据；它的原因类别 | 一个用最小改动检验过的原因；然后回到 B2、B4、B5 或 B6 去修复 |
-| B10. 回归 | 一个修复 | 同 A8 | 示例和基线 | 测试套件在该栈上通过 |
+| B1. 审计 | 拿到了 trainer 的模型 | 在模型上运行 [tools/bi_audit.py](../../tools/bi_audit.py) | 算子清单，以及每个模块的 L2 判定 | 每个模块都满足 L2，或者已经列出了不满足的模块 |
+| B2. 单个算子的 L2 | 有算子不满足 L2 | [batch-invariant-kernel](../batch-invariant-kernel/SKILL.md) | 这个算子的验证矩阵和代价 | 每个算子都通过，或者都有记录在案的回退方案 |
+| B3. 整个模型的 L1–L3 | 所有算子都满足 L2 | 按[整模型案例](../../handbook/2-rl/whole-model.md)的方法做，覆盖每种推理模式，也覆盖激活梯度 | 每种模式下的 logprob 都相等 | 引擎用到的每种模式都满足 L1–L3 |
+| B4. L5 | trainer 和引擎的 TP、DP 或 EP 规模不同 | [whole-model-tp](../../handbook/2-rl/parallelism.md)、[training-dp-fsdp](../../handbook/1-pretraining/data-parallel.md)、recipe 10 | 换并行规模后结果仍然相等，前向和反向都要 | 用到的每种规模下结果都相等 |
+| B5. 采样 | token 会经过采样、重放、抢占或 speculative decoding | [tools/bi_sampling.py](../../tools/bi_sampling.py)（[案例](../../handbook/2-rl/sampling.md)） | 在重算、回滚、改变 n、speculative decoding 分块和换新进程之后，重放的结果 | token 能逐 bit 重放出来 |
+| B6. L4 | 两端各自都满足 B3 | [engine-parity](../engine-parity/SKILL.md)（[vLLM 案例](../../handbook/2-rl/engine-parity-vllm.md)）；LoRA 见 [LoRA 案例](../../handbook/2-rl/lora.md) | 两端的舍入序列，以及逐算子、逐层的比较结果 | 0 个 logprob 不同，或者剩下的每处差异都是记录在案的决定，并写明了代价 |
+| B7. 在线记录 | RL 训练任务正在运行 | OpGuard 的 `opguard_harness.rl_records.RecordWriter`，它记录 rollout batch、trainer 的 logprob、前向、权重同步和快照（[第 2 部分](../../handbook/2-rl/README.md#synchronous-and-asynchronous-runs)） | 每个 rank 的记录文件 | — |
+| B8. 拆分 | 拿到了记录 | 先运行 `rl.weight_sync_check`，再运行 `rl.decompose` | 对不上的权重行（应当没有）；每个 token 的 `numeric` 和 `staleness`；跨多个权重版本生成的 token 单独放到一边 | `numeric` 逐 bit 为零，说明基础设施没有问题，差距全部来自 staleness |
+| B9. 定位 | `numeric` ≠ 0 | OpGuard 的 `rl-alignment` skill（`harness/skills/rl-alignment`）：先 `rl.replay_request`，再用 `OPGUARD_XOR_ROWS=1` 重新采集，然后用 `vectors.*`；见[示例](../../handbook/2-rl/rl-loop.md) | 出现分歧的算子、来自另一端的证据，以及原因属于哪一类 | 已经用最小的改动验证了原因；然后回到 B2、B4、B5 或 B6 去修复 |
+| B10. 回归 | 已经做了修复 | 和 A8 一样 | 示例和基线 | 回归套件在这个栈上通过 |
 
-## 何时停下来询问
+## 什么时候停下来问用户
 
-- 修复的代价超过用户同意的范围：报告测得的代价，以及已经成立的更便宜的级别。
-- 差异是算法上的（同一数学的两种精确形式）：这是选择，不是 bug。报告两种形式及其代价。
-- 引擎或 kernel 是闭源的，没有可调的开关：报告退路选项（batch-invariant-kernel，第 2 步）。
-- 新栈上一项必需的回归检查失败：这是要报告的发现，不能靠调参消掉。
+- 修复的代价超出了用户同意的范围。报告测得的代价，并说明哪些更便宜的级别已经成立。
+- 差异来自算法，也就是同一个数学有两种精确的写法。这是一种选择，不是 bug；
+  把两种写法和各自的代价都报告出来。
+- 引擎或 kernel 是闭源的，没有可调的开关。报告有哪些回退方案（batch-invariant-kernel 的第 2 步）。
+- 新栈上某项必需的回归检查没有通过。这是要报告的发现，不能靠调参把它消掉。

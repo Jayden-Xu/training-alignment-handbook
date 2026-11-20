@@ -1,124 +1,129 @@
-# 让单侧不变：整个模型（L1–L3）
+# 先让一端的整个模型自己不变（L1–L3）
 
 ## 我们在哪里
 
-这是 [RL 工作流程](README.md)的第一步。你有一个 trainer 和引擎都在运行的模型，
-即使权重相同，logprob 也对不上。这一步审查它的算子，让单侧对一个序列给出相同的位，
-不管它怎样被批处理、怎样被服务：多次运行之间（L1）、任意批次中（L2）、任意模式下（L3）。
-让两侧一致放在后面的[引擎一致性](engine-parity-vllm.md)。
+这是 [RL 工作流程](README.md)的第一步。你手上有一个 trainer 和引擎都在跑的模型，
+即使权重完全相同，两端的 logprob 也对不上。这一步先审查模型的算子，让其中一端对同一条
+序列，不管怎样组 batch、用什么推理模式，都算出逐 bit 一致的结果：多次运行之间相同（L1），
+在任何 batch 里相同（L2），在任何推理模式下相同（L3）。让两端彼此一致，是后面
+[引擎一致性](engine-parity-vllm.md)那一步的事。
 
 ## 思路
 
-trainer 和引擎以不同的形状计算同样的 token。trainer 把整个序列一次算完（prefill），
-放在一批训练序列里。引擎从 KV cache 每步生成一个 token（decode），所在的批次
-每一步都有成员加入和离开；它还可能把 prompt 分块、复用已缓存的前缀，或者验证投机 token。
+trainer 和引擎算的是同样的 token，但计算时的形状不同。trainer 用一次 prefill 把整条
+序列算完，而且是和其他训练序列放在同一个 batch 里一起算。引擎则借助 KV cache 每一步
+decode 一个 token，它所在的 batch 每一步都有请求加入、有请求离开。引擎还可能对 prompt
+做 chunked prefill、复用已经缓存的前缀，或者验证 speculative decoding 给出的草稿 token。
 
-<figure class="fx" data-fig="prefill-decode" aria-label="同一条序列：trainer 用 prefill 计算，引擎用 decode 计算">
+<figure class="fx" data-fig="prefill-decode" aria-label="同一条序列在 trainer 里用 prefill 计算，在引擎里用 decode 计算">
 <div class="fx-stage">
 <div class="fx-rows">
-<div class="fx-row"><span class="fx-label">trainer<span class="fx-note">prefill：一次算全部 token</span></span><div class="fx-lane" style="--n:6"><div class="fx-cells"><span class="fx-cell" data-hot="1">p</span><span class="fx-cell" data-hot="1">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="1">t2</span><span class="fx-cell is-mine" data-hot="1">t3</span><span class="fx-cell is-mine" data-hot="1">t4</span></div><div class="fx-cells"><span></span><span></span><span class="fx-span" style="--w:4" data-at="1">一次算完，batch 有 B 条</span></div><div class="fx-cells fx-lp"><span></span><span></span><span class="fx-chip" data-at="2">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="2">ℓ3</span><span class="fx-chip" data-at="2">ℓ4</span></div></div></div>
-<div class="fx-row"><span class="fx-label">引擎<span class="fx-note">decode：每步一个 token</span></span><div class="fx-lane" style="--n:6"><div class="fx-cells"><span class="fx-cell">p</span><span class="fx-cell">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="2">t2</span><span class="fx-cell is-mine" data-hot="3">t3</span><span class="fx-cell is-mine" data-hot="4">t4</span></div><div class="fx-cells fx-who"><span></span><span></span><span class="fx-note" data-at="1">+ A、B</span><span class="fx-note" data-at="2">+ B、C</span><span class="fx-note" data-at="3">单独</span><span class="fx-note" data-at="4">+ D、E</span></div><div class="fx-cells fx-lp"><span></span><span></span><span class="fx-chip" data-at="1">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="3">ℓ3</span><span class="fx-chip" data-at="4">ℓ4</span></div></div></div>
+<div class="fx-row"><span class="fx-label">trainer<span class="fx-note">prefill：一次算完所有 token</span></span><div class="fx-lane" style="--n:6"><div class="fx-cells"><span class="fx-cell" data-hot="1">p</span><span class="fx-cell" data-hot="1">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="1">t2</span><span class="fx-cell is-mine" data-hot="1">t3</span><span class="fx-cell is-mine" data-hot="1">t4</span></div><div class="fx-cells"><span></span><span></span><span class="fx-span" style="--w:4" data-at="1">在 B 条序列的 batch 里一次算完</span></div><div class="fx-cells fx-lp"><span></span><span></span><span class="fx-chip" data-at="2">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="2">ℓ3</span><span class="fx-chip" data-at="2">ℓ4</span></div></div></div>
+<div class="fx-row"><span class="fx-label">引擎<span class="fx-note">decode：每步一个 token</span></span><div class="fx-lane" style="--n:6"><div class="fx-cells"><span class="fx-cell">p</span><span class="fx-cell">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="2">t2</span><span class="fx-cell is-mine" data-hot="3">t3</span><span class="fx-cell is-mine" data-hot="4">t4</span></div><div class="fx-cells fx-who"><span></span><span></span><span class="fx-note" data-at="1">+ A、B</span><span class="fx-note" data-at="2">+ B、C</span><span class="fx-note" data-at="3">只有它自己</span><span class="fx-note" data-at="4">+ D、E</span></div><div class="fx-cells fx-lp"><span></span><span></span><span class="fx-chip" data-at="1">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="3">ℓ3</span><span class="fx-chip" data-at="4">ℓ4</span></div></div></div>
 </div>
-<div class="fx-chain is-tight"><span class="fx-node is-decision" data-at="5">logprob ℓ1–ℓ4：逐位相等？</span></div>
+<div class="fx-chain is-tight"><span class="fx-node is-decision" data-at="5">ℓ1–ℓ4 这几个 logprob 是否逐 bit 一致？</span></div>
 </div>
 <ol class="fx-say">
-<li>一条序列：prompt（p）和四个采样出的 token，t1 到 t4。</li>
-<li data-hold="1.5">trainer：一次 prefill 同时算出所有 token，batch 有 B 条序列。引擎：decode 算出 t1，同批还有 A 和 B。</li>
-<li data-hold="1.5">trainer：每个 token 一个 logprob。引擎：t2；A 离开，C 加入。</li>
-<li>引擎：t3，此时 batch 里只有它。</li>
-<li>引擎：t4，又来了两个新请求 D 和 E。</li>
-<li data-hold="2">同样的 token，不同的形状，不同的 batch。这一步要让 logprob 逐位相等。</li>
+<li>以一条序列为例：一段 prompt（p），后面跟着采样出的四个 token，t1 到 t4。</li>
+<li data-hold="1.5">trainer 在一个有 B 条序列的 batch 里，用一次 prefill 算出所有 token。引擎用 decode 算出 t1，同一个 batch 里还有请求 A 和 B。</li>
+<li data-hold="1.5">trainer 已经得到每个 token 的 logprob。引擎接着算 t2，这时 A 已经离开，C 加入了 batch。</li>
+<li>引擎算 t3，此时 batch 里只剩它自己。</li>
+<li>引擎算 t4，batch 里又来了两个新请求 D 和 E。</li>
+<li data-hold="2">token 是同样的，计算时的形状和 batch 却都不同。这一步要让两端的 logprob 依然逐 bit 一致。</li>
 </ol>
-<figcaption>图：trainer 和引擎用不同的形状计算同样的 token：一边是固定 batch 里的一次 prefill，一边是不断变化的 batch 里一次一步的 decode。</figcaption>
+<figcaption>图：trainer 和引擎以不同的形状计算同样的 token。trainer 在固定的 batch 里做一次 prefill；引擎在不断变化的 batch 里一步一步地 decode。</figcaption>
 </figure>
 
-浮点求和的结果取决于顺序。在 fp32 中把 1e8、-1e8 和 1 相加：从左到右得到 1；
-但先把 1 加到 -1e8 上，1 会被舍掉，结果是 0。一个按行数选择归约顺序的 kernel，
-因此会让同一行在批大小为 1 和 64 时得到不同的位。两侧之间有三样东西会改变顺序：
+浮点求和的结果取决于加法的顺序。在 fp32 中把 1e8、-1e8 和 1 相加：从左往右加得到 1；
+但如果先把 1 加到 -1e8 上，1 就会被舍掉，结果变成 0。因此，一个按行数选择归约顺序的
+kernel，会让同一行在 batch size 为 1 和为 64 时得到不同的结果。两端之间有三样东西会改变
+求和顺序：
 
 | 来源 | 发生了什么 | 破坏的级别 |
 |---|---|---|
-| 随批次变化的 kernel | 行数变化时，GEMM 库或归约选择另一个 kernel 或另一种切分 | L2，批次 |
-| 依赖模式的 kernel | prefill、分块 prefill 和 decode 走不同的注意力代码路径 | L3，模式 |
-| 舍入点 | 两侧在不同位置转换到 bf16，例如在乘上 norm 权重之前或之后 | L4，跨引擎 |
+| 随 batch 变化的 kernel | 行数一变，GEMM 库或归约就换用另一个 kernel，或者换一种切分方式 | L2，batch |
+| 依赖模式的 kernel | prefill、chunked prefill 和 decode 走的是不同的注意力代码 | L3，模式 |
+| 舍入点 | 两端在不同的地方转换到 bf16，例如一端在乘 norm 权重之前转换，另一端在之后 | L4，跨引擎 |
 
-规则：从 token 到 logprob 路径上的每个算子，归约顺序都必须只由该行自己的数据决定，
-不能由批次或模式决定。这是[第三部分](../3-kernels/README.md)的批不变性原则在整个模型上的应用。
-表的最后一行说明为什么只有不变的 kernel 还不够：一个达到 L2 和 L3、但有一处舍入不同的引擎，
-离 trainer 和原生引擎一样远。这一行在后面的步骤里解决。
+所以规则是：从 token 到 logprob 的路径上，每个算子的归约顺序都只能由这一行自己的数据
+决定，不能由 batch 或模式决定。这就是[第 3 部分](../3-kernels/README.md)讲的
+batch-invariant 原则，只不过用到了整个模型上。表格最后一行说明了为什么只有不变的 kernel 还不够：一个做到了
+L2 和 L3、却有一处舍入不同的引擎，离 trainer 的距离和未经修改的引擎一样远。
+这一行留到后面的步骤解决。
 
 ## 步骤
 
 1. **审查算子。**
-   - 目标：输出依赖批次的模块清单。
-   - 做法：[tools/bi_audit.py](../../tools/bi_audit.py) 把每个模块分别在单行和批次中重放，
-     指出第一个输出不同的模块，包括被 bf16 输出掩盖的 fp32 归约。
-   - 成功标准：每个模块都报告为不变，或者你拿到了需要替换的清单。
-2. **替换会变的算子。**
-   - 目标：一套归约顺序固定的算子。
-   - 做法：[batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md)
-     及其[算子配方](../../skills/batch-invariant-kernel/references/operator-recipes.md)。
+   - 目标：列出输出会随 batch 变化的模块。
+   - 做法：[tools/bi_audit.py](../../tools/bi_audit.py) 把每个模块分别在单独一行和
+     整个 batch 上重放，找出第一个输出不同的模块。被 bf16 输出掩盖住的 fp32 归约，它也能查出来。
+   - 成功标准：每个模块都报告为不变，或者你拿到了一份需要替换的模块清单。
+2. **替换会随 batch 变化的算子。**
+   - 目标：得到一套归约顺序都固定的算子。
+   - 做法：按照 [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md)
+     及其[算子 recipe](../../skills/batch-invariant-kernel/references/operator-recipes.md)来做。
    - 成功标准：审查通过。
-3. **对照 trainer 前向，检查引擎用到的每种服务模式。**
-   - 目标：整个模型达到 L1–L3，而不只是单个算子。
-   - 做法：在变化的批次中 decode、分块 prefill、前缀命中、投机验证、抢占、
-     padding、varlen；[whole_model.py](../../examples/whole_model/whole_model.py)
-     就是参考模型的这项检查。
-   - 成功标准：每种模式下 logits 逐位相等，激活梯度也相等。
+3. **对照 trainer 的前向，检查引擎用到的每种推理模式。**
+   - 目标：整个模型达到 L1–L3，而不只是每个算子单独达到。
+   - 做法：测试在不断变化的 batch 里 decode、chunked prefill、命中 prefix cache、验证草稿 token、
+     抢占、padding 和变长 batch；[whole_model.py](../../examples/whole_model/whole_model.py)
+     就是对参考模型做的这项检查。
+   - 成功标准：每种模式下 logits 都逐 bit 一致，激活梯度也逐 bit 一致。
 4. **写下舍入序列。**
-   - 目标：以后对齐引擎时要依据的记录。
-   - 做法：每一次转换、哪些算子用 fp32、RoPE 公式、norm 权重在哪里相乘；
-     检查清单见[舍入点](../../skills/engine-parity/references/rounding-points.md)，
-     实例见 [model.py](../../examples/whole_model/model.py)。
-   - 成功标准：按顺序，每个舍入点一行。
+   - 目标：留下一份记录，后面对齐引擎时以它为准。
+   - 做法：记下每一次类型转换、哪些运算用 fp32、RoPE 的公式、norm 权重在哪里乘入。
+     要记哪些内容，见[舍入点](../../skills/engine-parity/references/rounding-points.md)
+     检查清单；[model.py](../../examples/whole_model/model.py) 是一个完整的例子。
+   - 成功标准：每个舍入点一行，按发生的先后排列。
 
-| 选项 | 得到什么 | 代价类别 | 何时选择 |
+| 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
-| 保留原生算子 | 没有任何逐位保证；不同批次和模式之间大多数 token 不同 | 免费 | 只用来测量差距 |
-| 两侧都用批不变算子集 | 每侧达到 L1–L3，前向和激活梯度 | 中等（不到 2x），大 prefill 时可达大 | 两侧的模型代码都归你管 |
-| 批不变算子集加上统一的舍入序列 | L4 的前提 | 同上，再加上对齐引擎的类型转换 | trainer 和引擎是不同的代码（[引擎一致性](engine-parity-vllm.md)） |
+| 保留原生算子 | 没有任何逐 bit 保证；不同 batch、不同模式之间，大多数 token 的结果都不同 | 免费 | 只用来测量差距 |
+| 两端都使用 batch-invariant 算子集 | 每一端的前向和激活梯度都达到 L1–L3 | 中等（不到 2 倍）；prefill 很大时会到大 | 两端的模型代码都由你掌控 |
+| batch-invariant 算子集，再加上两端统一的舍入序列 | 达到 L4 的前提 | 同上，另外还要对齐引擎的类型转换 | trainer 和引擎是两套不同的代码（[引擎一致性](engine-parity-vllm.md)） |
 
-已证明：由批不变 kernel 构成的模型，在测过的每种服务模式下 logits 和激活梯度都逐位相等，
-覆盖四种架构，在一种 GPU 型号上、eager 模式下；用原生算子时几乎每个 logprob 都不同
-（[报告：不变性](../../examples/whole_model/REPORT.md#invariance)、
+已证明：由 batch-invariant kernel 构成的模型，在测过的每种推理模式下，logits 和激活梯度
+都逐 bit 一致；测了四种架构，都是在一种 GPU 型号上、eager 模式下得到的。换用原生算子时，几乎每个 logprob
+都不同（[报告：不变性](../../examples/whole_model/REPORT.md#invariance)、
 [RL 会看到什么](../../examples/whole_model/REPORT.md#what-rl-would-see-with-stock-ops)、
 [代价](../../examples/whole_model/REPORT.md#cost)）。尚未证明：
-`torch.compile`、CUDA graphs、张量并行（下一步）、真实引擎。
+`torch.compile`、CUDA graph、TP（下一步）以及真实引擎。
 
 ## 可能出错的地方
 
-!!! warning "bf16 输出可能掩盖随批次变化的 fp32 归约"
-    模块内部的 fp32 归约（RMSNorm 的方差）可能随行数变化，而模块的 bf16 输出不变。
-    只检查输出，会在一种形状下通过、在另一种形状下失败。照样替换它；审查工具会把它
-    报告为 "variant inside"（[报告](../../examples/whole_model/REPORT.md#where-the-variance-comes-from)）。
+!!! warning "bf16 输出可能掩盖随 batch 变化的 fp32 归约"
+    模块内部的 fp32 归约（例如 RMSNorm 里的方差）可能随行数变化，而模块的 bf16 输出
+    却保持不变。只检查输出的话，会在一种形状下通过，换一种形状就失败。这样的归约照样要
+    替换；审查工具会把它报告为 "variant inside"（[报告](../../examples/whole_model/REPORT.md#where-the-variance-comes-from)）。
 
-!!! warning "在编译器下构建的 RoPE 表不是 eager 的表"
-    在编译区域内构建的表使用编译器的数学，与 eager 的表有少数条目不同，
-    并且会留给之后的 eager 运行使用。先在 eager 下构建，再编译。
+!!! warning "在 torch.compile 下构建的 RoPE 表和 eager 下的不一样"
+    在编译区域里构建的表，用的是编译器生成的数学实现，有少数条目和 eager 下构建的表不同，
+    而且之后的 eager 运行也会继续用这张表。要先在 eager 模式下把表建好，再编译。
 
-!!! warning "参数梯度只能做到 L1"
-    参数梯度对整个批次求和，无法逐行比较。对它做多次运行之间的检查，
-    对激活梯度做 L2 检查。
+!!! warning "参数梯度最多只能做到 L1"
+    参数梯度是对整个 batch 求和得到的，没法逐行比较。对它只检查多次运行之间是否相同，
+    L2 检查则留给激活梯度。
 
-!!! warning "两个 Hugging Face 参考不是同一个模型"
-    加载后再转换为 bf16 的模型会把 RoPE 频率舍入到 bf16，直接以 bf16 加载的模型不会，
-    两者的 logits 有明显差别。说清楚引擎是和哪一个比较。
+!!! warning "两个 Hugging Face 参考模型并不是同一个模型"
+    加载之后再转换成 bf16 的模型，会把 RoPE 频率也舍入到 bf16；直接以 bf16 加载的模型
+    则不会。两者的 logits 有明显差别。要说清楚引擎是和哪一个比较。
 
-!!! warning "测试你实际运行的序列长度"
-    一个注意力 kernel 可能在短行上不变，在长行上随批次变化。
-    短长度上的通过对长长度说明不了什么。
+!!! warning "要测试你实际会用到的序列长度"
+    一个注意力 kernel 可能在短序列上满足不变性，在长序列上却随 batch 变化。
+    短序列上测试通过，并不能说明长序列也没问题。
 
 ## 小结
 
-- trainer 和引擎在不同的批次和模式下运行同样的 token；原生 kernel 会随两者改变归约顺序。
-- 审查模型，替换每个会变的算子，然后对照 trainer 前向检查每种服务模式。
-- 每侧的批不变性是必要条件，不是充分条件：两侧还必须在相同的位置舍入。
-- 现在就写下舍入序列；以后按它对齐引擎。
+- trainer 和引擎在不同的 batch、不同的模式下计算同样的 token，而原生 kernel 的归约顺序
+  会随这两者改变。
+- 先审查模型，替换每个会变的算子，再对照 trainer 的前向检查每种推理模式。
+- 每一端各自 batch-invariant 是必要条件，但不是充分条件：两端还必须在相同的地方舍入。
+- 现在就把舍入序列写下来，后面对齐引擎时要以它为准。
 
 ## 深入阅读
 
 - [实验报告](../../examples/whole_model/REPORT.md)：模型变体、算子集、执行模式、
-  所有结果表、审查工具、代价和局限。
+  全部结果表、审查工具，以及代价和局限。
 - 代码：[model.py](../../examples/whole_model/model.py)、
   [whole_model.py](../../examples/whole_model/whole_model.py)、
   [tools/bi_audit.py](../../tools/bi_audit.py)。

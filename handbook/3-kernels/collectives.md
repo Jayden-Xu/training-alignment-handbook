@@ -2,21 +2,22 @@
 
 ## Where we are
 
-In [MoE](moe.md), the cross-GPU traffic only moved rows, and we wrote the sum
-ourselves. A tensor-parallel (TP) layer is different: each GPU computes a
-partial product, and a collective adds the partials inside the communication
-library. The order of that sum is now chosen by the library, not by our code,
-and the parallel degree itself changes which partials exist. That makes
-collectives the hardest class: the batch (L2) and the degree (L5) both reach
-the reduction.
+On the [MoE page](moe.md), the traffic between GPUs only moved rows, and we
+wrote the sum ourselves. A tensor-parallel (TP) layer is different. Each GPU
+computes a partial product, and a collective adds the partial products inside
+the communication library. The library, not our code, now chooses the order
+of that sum, and the parallel degree itself changes which partial sums exist.
+This makes collectives the hardest class, because both the batch (L2) and the
+parallel degree (L5) reach the reduction.
 
-## The idea: the library chooses the order from the message
+## The idea: the communication library picks the order of the sum from the message
 
-A sum all-reduce adds each element over the GPUs one add at a time, rounding
-after every add. With the ring algorithm the message is cut into chunks, and
-each chunk's sum starts at a different GPU and walks the ring:
+A sum all-reduce adds up each element across the GPUs one add at a time and
+rounds after every add. With the ring algorithm, the library cuts the message
+into chunks, and the sum for each chunk starts at a different GPU and walks
+around the ring:
 
-<figure class="fx" data-fig="ring" aria-label="Ring all-reduce on 4 GPUs, two chunks">
+<figure class="fx" data-fig="ring" aria-label="Ring all-reduce on 4 GPUs with two chunks">
 <div class="fx-stage">
 <div class="fx-rows">
 <div class="fx-row"><span class="fx-label">element in chunk 0</span><div class="fx-chain is-tight"><span class="fx-col"><span class="fx-node" data-hot="1">GPU 1</span><span class="fx-note fx-mono" data-at="1">g1</span></span><span class="fx-arrow" data-hot="2" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="2">+ GPU 2</span><span class="fx-note fx-mono" data-at="2">g1 + g2</span></span><span class="fx-arrow" data-hot="3" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="3">+ GPU 3</span><span class="fx-note fx-mono" data-at="3">(g1 + g2) + g3</span></span><span class="fx-arrow" data-hot="4" aria-hidden="true"></span><span class="fx-col"><span class="fx-node to-key" data-hot="4 5">+ GPU 0</span><span class="fx-note fx-mono" data-at="4">(…) + g0</span></span></div></div>
@@ -24,134 +25,144 @@ each chunk's sum starts at a different GPU and walks the ring:
 </div>
 </div>
 <ol class="fx-say">
-<li>4 GPUs each hold a value g of every element. The ring cuts the message into chunks.</li>
-<li>Each chunk's sum starts at a different GPU: chunk 0 at GPU 1, chunk 1 at GPU 2.</li>
-<li>Each step adds the next GPU's value and rounds,</li>
-<li>and passes the partial sum along the ring.</li>
-<li data-hold="1.5">After 3 adds each chunk has its sum, each in its own order.</li>
-<li data-hold="2">Which chunk an element falls in depends on its offset and the message size: a bigger batch moves it, and its bits.</li>
+<li>Each of 4 GPUs holds a value g for every element, and the ring cuts the message into chunks.</li>
+<li>The sum for each chunk starts at a different GPU: chunk 0 starts at GPU 1, and chunk 1 at GPU 2.</li>
+<li>At each step the next GPU adds its value and rounds,</li>
+<li>and passes the partial sum on along the ring.</li>
+<li data-hold="1.5">After 3 adds, each chunk has its sum, each computed in its own order.</li>
+<li data-hold="2">Which chunk an element falls in depends on its offset and on the message size, so a bigger batch can move it to another chunk and change its bits.</li>
 </ol>
-<figcaption>Figure: ring all-reduce on 4 GPUs: each chunk's sum starts at a different GPU.</figcaption>
+<figcaption>Figure: ring all-reduce on 4 GPUs. The sum for each chunk starts at a different GPU.</figcaption>
 </figure>
 
-Which chunk an element falls in depends on its offset and on the message size.
-In a TP layer the message is the whole batch's output, so when the batch grows
-or the row moves, the row's sum starts at another GPU (L2 fails). Other
-algorithms behave differently:
+Which chunk an element falls in depends on its offset and on the message
+size. In a TP layer the message is the output of the whole batch, so when the
+batch grows or the row moves, the row's sum starts at a different GPU, and L2
+fails. Other algorithms behave differently:
 
-| Algorithm | Order of an element's sum | Depends on the batch? |
+| Algorithm | Order of an element's sum | Does it depend on the batch? |
 |---|---|---|
-| Ring all-reduce | starts at a GPU set by the element's chunk | yes |
+| Ring all-reduce | it starts at a GPU chosen by the element's chunk | yes |
 | Tree all-reduce on one node | one chain, the same for every element | no |
-| Ring reduce-scatter | fixed for each output chunk, set by which GPU owns it | yes, when the owner of a row changes with the batch |
-| Any, with two GPUs | x0 + x1 = x1 + x0 exactly | no |
+| Ring reduce-scatter | fixed for each output chunk, and set by the GPU that owns the chunk | yes, when the GPU that owns a row changes with the batch |
+| Any algorithm on two GPUs | x0 + x1 = x1 + x0 exactly | no |
 
 **The parallel degree is a second dependence.** A row-parallel layer rounds
-each GPU's partial product, then sums the partials. On 2 GPUs the partials are
-two halves of K; on 4 GPUs they are four quarters. Different partials give a
-different sum, so no library setting gives L5.
+the partial product on each GPU and then sums the partial products. On 2 GPUs
+the partial products cover two halves of K; on 4 GPUs they cover four
+quarters. Different partial sums give a different total, so no library
+setting can give L5.
 
-**The rule for collectives.** Fix the order of the cross-GPU sum so it does not
-depend on the message (a pinned tree, or exchange the partials and sum them in
-a fixed order yourself), and for L5 fix the partials themselves: a logical TP
-size C cuts K into C fixed chunks, and those chunks are summed in one fixed
-tree however many GPUs hold them.
+**The rule for collectives.** Fix the order of the cross-GPU sum so that it
+does not depend on the message, either by pinning a tree or by exchanging the
+partial sums and adding them yourself in a fixed order. For L5, also fix the
+partial sums themselves: a logical TP size C cuts K into C fixed chunks, and
+those chunks are summed in one fixed tree, however many GPUs hold them.
 
 ## The steps
 
-### 1. Locate the variance
+### 1. Find which collectives and settings change a row's result
 
-- **Goal:** know which collectives and settings change a row's bits.
-- **How:** reduce a fixed slice alone and inside messages of many sizes, at
-  several positions, and record the library's per-call choice from its tuning
-  log; [examples/collectives_tp/collectives_tp.py](../../examples/collectives_tp/collectives_tp.py)
-  does this, with an order diagnostic that explains each element's sum.
-- **Success:** every failing element explained by a known order
+- **Goal:** know which collectives and which settings change a row's bits.
+- **How:** reduce a fixed slice on its own, and then inside messages of many
+  sizes and at several positions, and record from the library's tuning log
+  what it chose for each call.
+  [examples/collectives_tp/collectives_tp.py](../../examples/collectives_tp/collectives_tp.py)
+  does this, and includes an order diagnostic that explains how each
+  element's sum was formed.
+- **Success:** every failing element is explained by a known order
   ([report](../../examples/collectives_tp/REPORT.md#what-this-shows)).
 
-### 2. Fix the order of the sum (L2)
+### 2. Fix the order of the cross-GPU sum (L2)
 
 - **Goal:** a row's cross-GPU sum is the same in any batch.
-- **How:** [recipe 10](../../skills/batch-invariant-kernel/references/operator-recipes.md#10-collectives-tp--ep--sp).
-- **Success:** the TP layer passes `check_batch`. Shown on one node of 8 GPUs
-  and on two nodes of 8 GPUs ([report](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)).
-
-| Option | What it gives | Cost class | When to choose it |
-|---|---|---|---|
-| Library default | fails L2 | free | never for parity |
-| Ring pinned, any protocol | fails L2 | free | never: pinning the algorithm does not fix the chunking |
-| Tree pinned (`NCCL_ALGO=Tree`) | L2 for all-reduce, on one and two nodes | small to moderate; large at some message sizes | configure-only, up to two nodes; does not reach reduce-scatter |
-| All-gather, then a local fp32 sum in GPU order | L2 | large | small messages, or as a reference |
-| All-to-all, local fp32 sum in GPU order, all-gather | L2; its first half replaces reduce-scatter | small to moderate on one node | the default fallback on one node |
-| Two-level fixed order: inside each node, then one exchange across nodes | L2 | moderate | across nodes |
-
-The fallbacks change the arithmetic (fp32 accumulation, one rounding), so
-both sides must use the same one for L4.
-
-### 3. Fix the partials (L5)
-
-- **Goal:** the same rows give the same bits at TP 1, 2, 4 and more.
-- **How:** a logical TP size C: K is cut into C fixed chunks, each GPU computes
-  whole chunks with an fp32 output, and the partials are summed in one fixed
-  pairwise tree. Degrees that divide C give each GPU whole chunks; above C,
-  split each chunk's output columns, never its K range.
-- **Success:** one result at every degree. Shown up to 16 GPUs on two nodes
+- **How:** follow [recipe 10](../../skills/batch-invariant-kernel/references/operator-recipes.md#10-collectives-tp--ep--sp).
+- **Success:** the TP layer passes `check_batch`. This was shown on one node
+  of 8 GPUs and on two nodes of 8 GPUs
   ([report](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
-| Row-parallel with any fixed-order sum | L2; changes with the degree | small to moderate | the degree never changes between runs |
-| Column-parallel (all-gather only) | L5: no sum across GPUs | free | layers that can be column-split |
-| Logical TP size, fixed tree | L5 at every degree that divides C, and above C by column split | moderate to large | trainer and engine run different degrees |
+| The library's default | L2 fails | free | never, if you need parity |
+| Pin the ring algorithm, with any protocol | L2 fails | free | never: pinning the algorithm does not fix the chunking |
+| Pin the tree algorithm (`NCCL_ALGO=Tree`) | L2 for all-reduce, on one node and on two | small to moderate, and large at some message sizes | you can only change settings and run on at most two nodes; it does not cover reduce-scatter |
+| All-gather, then add the values locally in fp32 in GPU order | L2 | large | small messages, or as a reference |
+| All-to-all, add locally in fp32 in GPU order, then all-gather | L2; its first half can replace reduce-scatter | small to moderate on one node | the default fallback on one node |
+| A fixed order on two levels: first inside each node, then one exchange across nodes | L2 | moderate | across nodes |
 
-### 4. Sequence parallelism
+The fallbacks change the arithmetic (they accumulate in fp32 and round once),
+so for L4 both sides must use the same fallback.
 
-Reduce-scatter gives each row the order of whichever GPU owns it, and under
-sequence parallelism the owner follows the row's position. Replace it with the
-all-to-all half of the fallback; the pinned tree does not reach it.
+### 3. Fix the partial sums themselves (L5)
+
+- **Goal:** the same rows give the same bits at TP 1, 2, 4 and higher.
+- **How:** choose a logical TP size C. K is cut into C fixed chunks, each GPU
+  computes whole chunks with an fp32 output, and the partial sums are added in
+  one fixed pairwise tree. A parallel degree that divides C gives each GPU
+  whole chunks. Above C, split each chunk's output columns across GPUs, never
+  its range of K.
+- **Success:** every parallel degree gives the same result. This was shown on
+  up to 16 GPUs across two nodes
+  ([report](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)).
+
+| Option | What it gives | Cost class | When to choose it |
+|---|---|---|---|
+| Row-parallel with any fixed-order sum | L2, but the result changes with the degree | small to moderate | the degree never changes between runs |
+| Column-parallel (all-gather only) | L5, because nothing is summed across GPUs | free | layers that can be split by columns |
+| A logical TP size with a fixed tree | L5 at every degree that divides C, and above C by splitting columns | moderate to large | the trainer and the engine run at different degrees |
+
+### 4. Replace reduce-scatter under sequence parallelism
+
+Reduce-scatter sums each row in the order set by the GPU that owns it, and
+under sequence parallelism the owner depends on the row's position. Replace it
+with the all-to-all half of the fallback above; pinning the tree algorithm has
+no effect on reduce-scatter.
 
 ### 5. Verify with three or more GPUs
 
 Run the [verification matrix](../../skills/batch-invariant-kernel/references/verification.md)
-parallel axes: three or more GPUs, a fixed slice in messages of many sizes and
-positions, every degree you deploy, and the library settings you might meet.
+along its parallel axes: three or more GPUs, a fixed slice inside messages of
+many sizes and at many positions, every degree you deploy, and the library
+settings you might meet in production.
 
 ## What can go wrong
 
-!!! warning "Pinning the ring is not invariance"
-    Every protocol under a pinned ring still started each element's sum at a
-    GPU set by its chunk. Check a fixed slice inside many message sizes.
+!!! warning "Pinning the ring does not give invariance"
+    Under a pinned ring, every protocol still started each element's sum at a
+    GPU chosen by the element's chunk. Check a fixed slice inside many message
+    sizes.
 
-!!! warning "The pinned tree does not reach reduce-scatter"
-    The library kept using the ring for reduce-scatter. A layer with sequence
-    parallelism still fails; use the all-to-all fallback.
+!!! warning "Pinning the tree has no effect on reduce-scatter"
+    The library kept using the ring for reduce-scatter, so a layer with
+    sequence parallelism still fails. Use the all-to-all fallback.
 
 !!! warning "Two GPUs hide every order bug"
-    A two-term sum commutes. A TP-2 test passes any order; test with three or
-    more GPUs.
+    A sum of two terms is the same in either order, so a test at TP 2 passes
+    whatever the order. Test with three or more GPUs.
 
-!!! warning "The pinned tree is shown up to two nodes"
-    With two nodes the top level adds two operands, which commutes. With three
-    or more, the trees can differ per channel; not yet shown.
+!!! warning "The pinned tree has been shown on at most two nodes"
+    With two nodes the top level adds only two operands, and that gives the
+    same result in either order. With three or more nodes the trees can differ
+    from channel to channel; this is not yet shown.
 
-!!! warning "Two logical sizes are two arithmetics"
-    Logical TP 8 and 16 differ from each other and from the plain GEMM. Fix one
-    C for the whole deployment.
+!!! warning "Two logical sizes are two different arithmetics"
+    Logical TP 8 and logical TP 16 give results that differ from each other
+    and from the plain GEMM. Fix one C for the whole deployment.
 
 ## Summary
 
 - The communication library chooses the order of a cross-GPU sum from the
-  message; a ring's order follows the element's chunk.
-- For L2: pin a tree (up to two nodes, all-reduce only) or exchange partials
-  and sum them in a fixed order yourself.
-- For L5: fix the partials with a logical TP size and one fixed tree.
-- Test with three or more GPUs and many message sizes.
+  message; in a ring, the order follows the element's chunk.
+- For L2, pin a tree (up to two nodes, all-reduce only), or exchange the
+  partial sums and add them yourself in a fixed order.
+- For L5, fix the partial sums with a logical TP size and one fixed tree.
+- Test with three or more GPUs and with many message sizes.
 
 ## Go deeper
 
 - Report: [collectives and TP linear layers](../../examples/collectives_tp/REPORT.md).
 - Code: [examples/collectives_tp/collectives_tp.py](../../examples/collectives_tp/collectives_tp.py).
 - Recipe: [10, collectives](../../skills/batch-invariant-kernel/references/operator-recipes.md#10-collectives-tp--ep--sp).
-- Related: [data-parallel gradients](../1-pretraining/data-parallel.md) and a
+- Related: [data-parallel gradients](../1-pretraining/data-parallel.md), and a
   whole model at several TP degrees ([parallelism](../2-rl/parallelism.md)).
 - Skill: [batch-invariant-kernel](../../skills/batch-invariant-kernel/SKILL.md).

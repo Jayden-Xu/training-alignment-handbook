@@ -1,154 +1,159 @@
-# Softmax 注意力：前向、反向和服务层
+# Softmax 注意力：前向、反向，以及引擎在 kernel 外面加的各层
 
 ## 我们在哪里
 
-[GEMM 页](gemm-and-quantized.md)通过固定 K 的走法，让每个元素的点积不变。注意力保留这些
-GEMM，再加一次归约：每个 query 带着一个运行中的 softmax，对所有更早的 key 求和。这次归约在
-每种服务模式下（prefill、decode、分块 prefill）、在分页缓存上、在打包的批中、在编译器下走法都
-不同。本页先固定对 key 的走法，再处理反向，最后处理 kernel 外围的服务层。
+[GEMM 一页](gemm-and-quantized.md)通过固定沿 K 的走法，让每个元素的点积不再随 batch 变化。注意力
+保留了这些 GEMM，又多了一次归约：每个 query 要对它之前的所有 key 求和，同时维护一个滚动的
+softmax。引擎在不同的推理模式（prefill、decode、chunked prefill）下、在 paged KV cache 上、在打包的
+batch 里、在 torch.compile 之下，走这次归约的方式都可能不同。本页先固定对 key 的遍历，再处理反向，最后处理
+引擎包在 kernel 外面的各个推理服务层。
 
-## 思路：每种模式都用同样的 block 走 key
+## 思路：每种模式都按同样的 block 遍历 key
 
-一个 query 的输出是对 key 的加权和。kernel 按 block 访问 key，并维护运行中的最大值和总和
-（online softmax），所以 block 边界就是这次归约的分组。边界一动，位就动。
+一个 query 的输出是对所有 key 的加权和。kernel 按 block 访问 key，同时维护滚动的最大值和滚动的和
+（online softmax），所以 block 的边界决定了这次归约怎样分组。边界一动，结果就不再逐 bit 一致。
 
-<figure class="fx" data-fig="kv-split" aria-label="一个 query 的 key：按固定分块走，和按 split-KV decode 走">
+<figure class="fx" data-fig="kv-split" aria-label="一个 query 的 key：按固定的 block 遍历，和按 split-KV decode 遍历">
 <div class="fx-stage">
 <div class="fx-rows">
-<div class="fx-row"><span class="fx-label">从位置 0 起的固定分块</span><div class="fx-tree" style="--n:10">
+<div class="fx-row"><span class="fx-label">从位置 0 起数的固定 block</span><div class="fx-tree" style="--n:10">
 <div class="fx-level"><span class="fx-cell" style="--w:4" data-hot="1">key 0–63</span><span class="fx-cell" style="--w:4" data-hot="2">key 64–127</span><span class="fx-cell" style="--w:2" data-hot="3">128–t</span></div>
-<div class="fx-level" data-at="1"><span class="fx-walk" style="--w:10">一次走完，带着运行中的最大值和总和</span></div>
-<div class="fx-level" data-at="3"><span class="fx-j" style="--w:10;--k:1"><span class="fx-node is-ok">每种模式下都是同样的和</span></span></div>
+<div class="fx-level" data-at="1"><span class="fx-walk" style="--w:10">一遍走完，同时维护滚动的最大值和总和</span></div>
+<div class="fx-level" data-at="3"><span class="fx-j" style="--w:10;--k:1"><span class="fx-node is-ok">每种模式算出的和都一样</span></span></div>
 </div></div>
-<div class="fx-row"><span class="fx-label">split-KV decode：切分由 batch 决定</span><div class="fx-tree" style="--n:10">
+<div class="fx-row"><span class="fx-label">split-KV decode：切成几份由 batch 决定</span><div class="fx-tree" style="--n:10">
 <div class="fx-swap is-block"><div class="fx-level" data-to="6"><span class="fx-cell" style="--w:5" data-hot="4">key 0–t/2</span><span class="fx-cell" style="--w:5" data-hot="4">key t/2–t</span></div><div class="fx-level" data-at="6"><span class="fx-cell" style="--w:3">0–t/3</span><span class="fx-cell" style="--w:3">t/3–2t/3</span><span class="fx-cell" style="--w:4">2t/3–t</span></div></div>
 <div class="fx-swap is-block"><div class="fx-level" data-at="5" data-to="6"><span class="fx-j" style="--w:10"><span class="fx-node is-bad">合并两个部分结果</span></span></div><div class="fx-level" data-at="6"><span class="fx-j" style="--w:10;--k:3"><span class="fx-node is-bad">合并三个部分结果</span></span></div></div>
 </div></div>
 </div>
 </div>
 <ol class="fx-say">
-<li>位置 t 上的一个 query 对 key 0 到 t 求和，带着运行中的最大值和总和。</li>
-<li>从位置 0 起数的固定分块：先是 key 0–63，</li>
+<li>位置 t 上的一个 query 对 key 0 到 t 求和，同时维护滚动的最大值和总和。</li>
+<li>按从位置 0 起数的固定 block，它先访问 key 0–63，</li>
 <li>然后是 key 64–127，</li>
-<li data-hold="1.5">然后是 128–t。prefill、decode 和 chunked prefill 都走这些块。</li>
-<li data-hold="1.5">split-KV decode：batch 大小和核心数决定切成几份；这里是两份，同时求和。</li>
-<li data-hold="1.5">合并两个部分结果：同一个和的另一种分组。</li>
-<li data-hold="2">换一个 batch，切成三份：边界移动了，位也跟着变。</li>
+<li data-hold="1.5">然后是 key 128–t。prefill、decode 和 chunked prefill 都按这几个 block 走。</li>
+<li data-hold="1.5">在 split-KV decode 里，batch size 和核心数决定切成几份。这里切成两份，同时计算。</li>
+<li data-hold="1.5">两个部分结果再合并起来，这是同一个和的另一种分组。</li>
+<li data-hold="2">换一个 batch，切成了三份：边界移动了，结果也跟着变。</li>
 </ol>
-<figcaption>图：块边界就是归约的分组方式。边界一动，位就变。</figcaption>
+<figcaption>图：block 的边界决定了归约怎样分组。边界一动，结果就变。</figcaption>
 </figure>
 
-有三样东西会移动边界：
+有三样东西会移动这些边界：
 
-- **模式。** prefill、decode 和分块 prefill 常常运行不同的 kernel；decode kernel 还可能把
-  key 拆成几段，段数由批大小和 GPU 核心数决定（split-KV）。
-- **布局。** 让每个 block 等于一页的分页 kernel，把分组绑到页大小上；在整个打包上铺 block 的
-  kernel，把分组绑到邻居的长度上。
-- **后端。** 库调用可能按参数挑选后端，所以传入 mask 而不是 causal 标志就会换 kernel。
+- **模式。** prefill、decode 和 chunked prefill 常常运行不同的 kernel。decode kernel 还可能把
+  key 拆成几段，段数由 batch size 和 GPU 核心数决定（split-KV）。
+- **布局。** 如果 paged kernel 让每个 block 恰好等于一页，分组就和页大小绑在了一起。如果处理打包
+  batch 的 kernel 在整个打包上铺 block，分组就和相邻序列的长度绑在了一起。
+- **后端。** 库函数可能根据参数挑选后端，所以传入一个 mask 而不是 causal 标志，实际运行的 kernel
+  就可能换掉。
 
-**注意力的规则。** 每个 query 都按固定大小的 block 走 key，从它所在序列的绝对位置 0 开始计，
-不用 split-KV（或只用固定大小的拆分），而且每种模式都运行同一个 kernel，只传入 query 的绝对
-偏移。超过 query 位置的 block 被完全屏蔽，是精确的空操作：重缩放因子恰好是 1，加上的权重恰好
-是 0。因此短的 decode 调用和长的 prefill 算出相同的和。
+**注意力的规则。** 每个 query 都按固定大小的 block 遍历 key，从它所在序列的绝对位置 0 开始数。
+不用 split-KV，或者只用固定大小的切分；每种模式都运行同一个 kernel，只是传入 query 的绝对偏移。
+位于 query 之后的 block 被完全屏蔽，不改变任何东西：它的重缩放因子恰好是 1，加上的权重恰好是 0。
+所以一次短的 decode 调用和一次长的 prefill 算出的和完全相同。
 
-**反向沿另一个方向归约。** 前向中每个输出行由一个 program 负责。反向中，一个 key 的梯度要对
-所有更晚的 query 求和，一个 query 的梯度要对所有更早的 key 求和。常见 kernel 用原子操作把这些
-份额加起来，于是顺序跟随时序，连 L1 都会失败。修法是两遍计算：每个 program 负责一个输出，
-按固定顺序走完它的和。
+**反向沿另一个方向归约。** 前向里，每个输出行由一个 program 负责。反向里，一个 key 的梯度是对它
+之后所有 query 的求和，一个 query 的梯度是对它之前所有 key 的求和。常见的 kernel 用原子操作把
+这些贡献加起来，于是加法顺序取决于时序，连 L1 都保不住。修法是分成两遍计算：每一遍里，每个
+program 只负责一个输出，并按固定顺序完成它的求和。
 
 ## 步骤
 
-### 1. 前向：每种模式都用固定的 key block
+### 1. 前向在每种模式下都按同样的 block 遍历 key
 
-- **目标：** prefill、decode 和分块 prefill 在每个位置给出相同的位，一个序列在任何批中给出
-  相同的位（L2、L3）。
-- **方法：** [tools/bi_kernels.py](../../tools/bi_kernels.py) 中的固定 block kernel
-  `attention_fixed_blocks`，遵循
-  [recipe 4](../../skills/batch-invariant-kernel/references/operator-recipes.md#4-softmax-attention-prefill-decode-chunked-prefill-paged-kv)。
-  在 kernel 运行前把新的 key 和 value 写入缓存，这样 decode 读取它们的方式与 prefill 相同。
-- **成功标准：** [tools/bi_check.py](../../tools/bi_check.py) 中的 `check_modes` 和
-  `check_batch` 通过。在一种 GPU 上得到证明，原生后端在那里两项都失败
+- **目标：** prefill、decode 和 chunked prefill 在每个位置上的结果逐 bit 一致，一个序列放在任何 batch 里，
+  结果也逐 bit 一致（L2、L3）。
+- **做法：** 使用 [tools/bi_kernels.py](../../tools/bi_kernels.py) 里的固定 block kernel
+  `attention_fixed_blocks`，它按
+  [recipe 4](../../skills/batch-invariant-kernel/references/operator-recipes.md#4-softmax-attention-prefill-decode-chunked-prefill-paged-kv)
+  实现。在 kernel 运行之前先把新的 key 和 value 写进 cache，这样 decode 读取它们的方式就和
+  prefill 一样。
+- **成功标准：** [tools/bi_check.py](../../tools/bi_check.py) 里的 `check_modes` 和
+  `check_batch` 都通过。这在一种 GPU 上得到了证明，而原生后端在那里两项检查都没通过
   （[报告](../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3)）。
 
-| 方案 | 得到什么 | 代价等级 | 何时选择 |
+| 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
-| 原生后端 | L1；L2 和 L3 失败 | 免费 | 一致性场景下永远不选 |
-| 固定 block kernel，每种模式同一个 | L2、L3 | prefill 中等（未调优）；decode 不更慢 | 默认修法 |
-| 长 decode 用固定大小的 split-KV | 若拆分大小以 token 计固定，则 L2、L3 | 小 | 长上下文；这里尚未证明 |
+| 原生后端 | L1，但 L2 和 L3 不成立 | 免费 | 需要一致性时永远不选 |
+| 固定 block 的 kernel，每种模式用同一个 | L2、L3 | prefill 中等（未调优）；decode 不变慢 | 默认的修法 |
+| 长 decode 用固定大小的 split-KV | 如果切分大小按 token 数固定，就满足 L2 和 L3 | 小 | 长上下文；这里尚未证明 |
 
-### 2. 反向：两遍，无原子操作
+### 2. 反向分两遍计算，不用原子操作
 
-- **目标：** 同一序列单独、在更大的批中、右填充时都得到相同的梯度（L1、L2）。
-- **方法：** [tools/bi_kernels.py](../../tools/bi_kernels.py) 中无原子操作的反向
-  `attention_fixed_blocks_train`。第一遍让每个 program 负责一个 key block；它按固定顺序对组内
-  的 query 头和更晚的 query 求和，只写一次 dK 和 dV。第二遍让每个 program 负责一个 query
-  block；它像前向一样从位置 0 走 key，只写一次 dQ。
-- **成功标准：** 重复运行下 L1 成立；单独、成批和填充时 L2 成立，填充部分的输出梯度为零。
-  在一种 GPU 上得到证明（[报告](../../examples/attention_backward/REPORT.md#results)）。
+- **目标：** 同一个序列单独运行、放在更大的 batch 里，还是在右边做了 padding，得到的梯度都逐 bit 一致（L1、L2）。
+- **做法：** 使用 [tools/bi_kernels.py](../../tools/bi_kernels.py) 里不用原子操作的反向
+  `attention_fixed_blocks_train`。第一遍给每个 program 分一个 key block，它按固定顺序对本组的
+  各个 query 头和之后的所有 query 求和，dK 和 dV 各只写一次。第二遍给每个 program 分一个
+  query block，它像前向那样从位置 0 开始遍历 key，dQ 只写一次。
+- **成功标准：** 重复运行时 L1 成立；单独运行、放进 batch 运行和带 padding 运行时 L2 都成立，padding 部分的
+  输出梯度为零。这在一种 GPU 上得到了证明（[报告](../../examples/attention_backward/REPORT.md#results)）。
 
-| 方案 | 得到什么 | 代价等级 | 何时选择 |
+| 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
-| 库的默认反向 | L1 失败（原子操作） | 免费 | 一致性场景下永远不选 |
-| 库的反向，严格确定性模式 | 只有 L1：它的前向已经随批变化 | 中等到大 | 只需要 L1 时 |
-| 库的 memory-efficient 后端，严格确定性 | 在测过的形状上 L1 和 L2 | 大 | 只靠配置；推理引擎不运行它，所以没有 L4 |
-| 无原子操作的两遍 kernel | L1、L2，含右填充 | 中等 | 默认修法 |
+| 库的反向，默认设置 | 因为原子操作，L1 不成立 | 免费 | 需要一致性时永远不选 |
+| 库的反向，严格确定性模式 | 只有 L1，因为它的前向已经随 batch 变化 | 中等到大 | 只需要 L1 时 |
+| 库里节省显存的后端，严格确定性模式 | 在测过的形状上满足 L1 和 L2 | 大 | 只能改设置时；推理引擎不运行这个后端，所以得不到 L4 |
+| 不用原子操作的两遍 kernel | L1、L2，包括右 padding | 中等 | 默认的修法 |
 
-这里右填充是精确的：因果性让填充不进入真实 token 的前向，填充行的输出梯度为零，所以它们的
-贡献是精确的零。左填充会移动绝对位置，因此不在覆盖范围内。
+这里对右 padding 的处理是精确的。因果性保证 padding 不会进入真实 token 的前向，而 padding 行的输出梯度为零，
+所以它们的贡献恰好是零。左 padding 会改变绝对位置，所以不在覆盖范围内。
 
-### 3. 服务层：分页、打包、编译器、graph
+### 3. paged KV、打包、torch.compile 和 CUDA graph 都不能改变结果
 
-- **目标：** 引擎在 kernel 外围加的各层都保持位不变。
-- **方法：** [examples/attention_serving](../../examples/attention_serving/serving_kernels.py)
-  中的分页和 varlen kernel 及其检查；编译器和 graph 见
+- **目标：** 引擎在 kernel 外面加的这些层，不能改变结果的任何一个 bit。
+- **做法：** 使用 [examples/attention_serving](../../examples/attention_serving/serving_kernels.py)
+  里的 paged kernel、varlen kernel 和它们的检查；torch.compile 和 CUDA graph 的做法见
   [recipe 12](../../skills/batch-invariant-kernel/references/operator-recipes.md#12-deployment-wrappers-torchcompile-and-cuda-graphs)。
-- **成功标准：** 每种页大小、打包偏移、编译和 graph 变体都给出连续 kernel 的位。在一种 GPU
-  上得到证明（[报告](../../examples/attention_serving/REPORT.md#what-the-serving-layer-results-show)）。
+- **成功标准：** 每种页大小、每种打包偏移、每个编译版本和 CUDA graph 版本，结果都与连续 cache 上的
+  kernel 逐 bit 一致。这在一种 GPU 上得到了证明
+  （[报告](../../examples/attention_serving/REPORT.md#what-the-serving-layer-results-show)）。
 
-| 层 | 做法 | 代价等级 |
+| 层 | 怎么做 | 代价等级 |
 |---|---|---|
-| 分页 KV | 计算 block 留在绝对位置上；无论页大小，都把页收集进 block | 小到中等，取决于页大小和流水 |
-| 打包的变长批 | 每个序列的 block 从它自己的第一个 token 开始，而不是落在打包的网格上 | 小 |
-| `torch.compile` | 把每个会舍入的算子（norm、激活，不只是 kernel）注册为不透明 custom op，使编译器无法移动舍入点 | 在 CUDA graph 下小；小批 eager 下主机开销大 |
-| CUDA graph | 使用不变的 kernel；填充后的批以 bucket 大小运行，位相同 | 免费 |
+| paged KV | 计算用的 block 始终按绝对位置划分，无论页大小如何，都把各页的数据收集到 block 里 | 小到中等，取决于页大小和流水线设置 |
+| 变长序列打包成的 batch | 每个序列的 block 从它自己的第一个 token 开始，而不是落在整个打包的网格上 | 小 |
+| `torch.compile` | 把每个会舍入的算子（norm、激活函数，而不只是 kernel）注册为不透明的自定义算子，让编译器无法移动舍入点 | 在 CUDA graph 下小；batch 小时在 eager 下 host 端开销大 |
+| CUDA graph | 使用不变的 kernel；padding 后的 batch 按桶的大小运行，结果仍然逐 bit 一致 | 免费 |
 
-### 4. 验证
+### 4. 按注意力特有的维度验证
 
-运行[验证矩阵](../../skills/batch-invariant-kernel/references/verification.md)，加上注意力的
-各轴：不整除 block 的分块大小下的各模式，随机放页的多种页大小，不是 block 倍数的打包偏移，
-编译对比 eager，以及带填充的反向。
+运行[验证矩阵](../../skills/batch-invariant-kernel/references/verification.md)，并加上注意力
+特有的维度：在不能整除 block 大小的 chunk 大小下测每种模式，用多种页大小并随机摆放页，用不是
+block 大小倍数的打包偏移，比较 torch.compile 和 eager 的结果，以及测带 padding 的反向。
 
 ## 可能出错的地方
 
-!!! warning "只警告的确定性模式并不确定"
-    在 `warn_only=True` 下，库先警告，然后照样运行非确定性的反向。梯度仍逐次变化；要用
-    `warn_only=False`，它会对任何没有确定性版本的算子报错。
+!!! warning "只发警告的确定性模式并不确定"
+    在 `warn_only=True` 下，库先打出一条警告，然后照样运行非确定性的反向，所以梯度每次运行仍会变。
+    要用 `warn_only=False`，这样遇到没有确定性版本的算子时会直接报错。
 
 !!! warning "反向不可能比它的前向更不变"
-    在随批变化的前向上做确定性反向，结果仍随批变化。先修前向。
+    如果前向会随 batch 变化，在它上面做确定性的反向，结果仍然随 batch 变化。先修前向。
 
-!!! warning "单一页大小总是自洽"
-    block 等于页的 kernel，在任一页大小下跨模式自洽，而每种页大小给出不同的答案。要测多种。
+!!! warning "只测一种页大小，发现不了依赖页大小的 kernel"
+    如果 kernel 的 block 恰好等于一页，那么在任何一种页大小下它在各模式之间都自洽，但每换一种
+    页大小，答案就不同。要测多种页大小。
 
-!!! warning "打包偏移恰为 block 倍数时会侥幸通过"
-    落在打包网格上的 kernel，恰在序列从 block 边界开始时才正确。要测不是 block 倍数的偏移。
+!!! warning "打包偏移恰好是 block 的倍数时，测试会侥幸通过"
+    跟着打包网格走的 kernel，只有在序列恰好从 block 边界开始时才正确。要测不是 block 大小倍数的偏移。
 
 !!! warning "编译器会移动舍入点"
-    编译后的 norm 和激活保持批不变，但与 eager 不同。如果引擎要对齐 eager 的 trainer，就把
-    每个会舍入的算子都做成不透明的。
+    编译后的 norm 和激活函数仍然是 batch-invariant 的，但和 eager 下的结果不再一致。如果引擎要和 eager 的
+    trainer 对齐，就把每个会舍入的算子都对编译器设为不透明。
 
 ## 小结
 
-- 注意力对 key 归约；block 边界就是分组。
-- 从绝对位置 0 起的固定 block，不用 split-KV，每种模式同一 kernel。
-- 反向需要两遍无原子操作的计算；只开严格确定性模式只给出 L1，不给 L2。
-- 分页、打包、编译器和 graph 只有在计算 block 不理会它们时才保持位不变。
+- 注意力在 key 上做归约，block 的边界决定了怎样分组。
+- 使用从绝对位置 0 起数的固定 block，不用 split-KV，每种模式都用同一个 kernel。
+- 反向需要分成两遍、不用原子操作；只打开严格确定性模式只能得到 L1，得不到 L2。
+- 只有当计算用的 block 完全不理会 paged KV、打包、torch.compile 和 CUDA graph 时，这些层才不会改变结果。
 
 ## 深入阅读
 
 - 报告：[kernel 案例](../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3)
-  （前向）、[注意力反向](../../examples/attention_backward/REPORT.md)、
-  [服务层](../../examples/attention_serving/REPORT.md)。
+  （前向）、[注意力反向](../../examples/attention_backward/REPORT.md)和
+  [推理服务层](../../examples/attention_serving/REPORT.md)。
 - 代码：[tools/bi_kernels.py](../../tools/bi_kernels.py)、
   [examples/attention_backward/attn_bwd.py](../../examples/attention_backward/attn_bwd.py)、
   [examples/attention_serving/serving_cases.py](../../examples/attention_serving/serving_cases.py)。

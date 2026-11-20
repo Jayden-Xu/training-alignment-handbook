@@ -2,76 +2,79 @@
 
 ## Where we are
 
-This continues step 2 of the [pre-training workflow](README.md). The
+This page continues step 2 of the [pre-training workflow](README.md). The
 [preflight](determinism-and-preflight.md) has read back the settings of both
-runs and only the declared difference is left. What is still open: whether
-the two runs train on the same data. Two runs can only be compared bitwise if
-every rank sees the same token bits at every step. If they do not, every
-later comparison shows the data, not the cause you are looking for. This page
-checks the batches themselves, where they leave the loader, before the pair is
-captured ([Localize with OpGuard](localize-with-opguard.md)).
+runs, and only the declared difference is left. What you do not know yet is
+whether the two runs train on the same data. Two runs can only be compared bit
+for bit if every rank sees the same token bits at every step. If they do not,
+every later comparison shows you the data difference, not the cause you are
+looking for. So this page checks the batches themselves, at the point where
+they leave the loader, before the pair is captured
+([Localize with OpGuard](localize-with-opguard.md)).
 
-## The idea: same seed, different batches
+## The idea: the same seed can still give different batches
 
-A tiny example. Eight documents, A to H, a batch of 4, the same seed. Run 1
-reads them in one process. Run 2 uses two worker processes, and each worker
-takes every other document:
+Here is a small example. There are eight documents, A to H, a batch size of 4
+and the same seed in both runs. Run 1 reads the documents in one process. Run
+2 uses two worker processes, and each worker takes every other document:
 
 | Step | Run 1 (no workers) | Run 2 (two workers) |
 |---|---|---|
 | 0 | A B C D | A C E G |
 | 1 | E F G H | B D F H |
 
-Both runs see every document once in the epoch, so a check of the epoch's
-contents passes. But step 0 sums the gradient of other samples, and the
-weights part at the first update. The seed fixed the shuffle; it did not fix
-which process delivered which sample.
+Both runs see every document exactly once in the epoch, so a check of the
+epoch's contents passes. But at step 0 each run sums the gradients of
+different samples, so the weights already differ after the first update. The
+seed fixed the shuffle; it did not fix which process delivered which sample.
 
-The same happens in five places between the files and the model:
+The same thing can happen in five places between the files and the model:
 
-| Where | What changes | Tiny example |
+| Where | What changes | A small example |
 |---|---|---|
-| Order | which step a sample lands in | the worker split above; a shuffle buffer seeded from a process-wide random state |
-| Partition | which rank a sample lands in | the same global batch split over 2 ranks or over 4 |
-| Packing | how documents become rows | 6 documents in 6 padded rows, or packed into 3 rows |
-| Tokenizer | which token ids a document becomes | a lowercasing normalizer; a begin-of-sequence token added |
-| State | where a resumed run starts | a restart that does not restore the sampler's position replays the first steps |
+| Order | the step at which a sample arrives | the worker split above; a shuffle buffer seeded from the process-wide random state |
+| Partition | the rank that receives a sample | the same global batch split over 2 ranks or over 4 |
+| Packing | how documents are laid out in rows | 6 documents in 6 padded rows, or packed into 3 rows |
+| Tokenizer | the token ids a document turns into | a normalizer that lowercases the text; an added begin-of-sequence token |
+| State | the point where a resumed run starts | a restart that does not restore the sampler's position and so replays the first steps |
 
 None of these is a numerical effect. They change the input itself.
 
-**Rule.** Fingerprint every batch where it leaves the loader, per step and
-rank, and compare the two runs bitwise before looking at the model. The
-loader's exit is the first boundary in call order, so a difference there is
-the first divergence. This instances part 0's controlled experiment: the
-input is part of what must be held equal.
+**Rule.** Fingerprint every batch where it leaves the loader, for each step
+and each rank, and compare the two runs bit for bit before you look at the
+model. The loader's exit is the first boundary in call order, so a difference
+there is the first divergence. This applies part 0's controlled experiment:
+the input is part of what must be held equal.
 
-A fingerprint of the whole batch is not enough to say what went wrong. Three
-levels are kept: the whole field (did anything change), one per sample (did
-the samples move or change), and one per document inside a row (are the same
-documents packed differently). An XOR fingerprint does not see two tokens
-swapped inside a row, so the per-sample value also keys every token by its
-position.
+A single fingerprint of the whole batch tells you that something changed, but
+not what. So the records keep three levels: one fingerprint for each whole
+field (did anything change?), one for each sample (did samples move, or did
+their contents change?), and one for each document inside a row (are the same
+documents packed differently?). An XOR fingerprint cannot see two tokens that
+swapped places inside a row, so the per-sample value also mixes each token's
+position into its fingerprint.
 
 ## The step
 
-### 2c. Pin the source and the tokenizer
+### 2c. Pin the data source and the tokenizer
 
 **Goal:** both runs read the same files and turn them into the same token ids.
 
-**How:** hash the data files and the tokenizer, including the arguments it is
-called with, and store both in the header of the fingerprint records
-(`source_fingerprint`, `tokenizer_fingerprint` in
-[data_fingerprint.py](../../tools/data_fingerprint.py)). Tokenizing offline,
-as Megatron-LM's preprocessing does, moves the tokenizer into the files.
+**How:** hash the data files and the tokenizer, together with the arguments
+the tokenizer is called with, and store both hashes in the header of the
+fingerprint records (`source_fingerprint` and `tokenizer_fingerprint` in
+[data_fingerprint.py](../../tools/data_fingerprint.py)). If you tokenize
+offline, as Megatron-LM's preprocessing does, the tokenizer's output is fixed
+in the files themselves.
 
 **Success:** the two headers agree, or differ only in the declared difference.
 
-### 2d. Fingerprint at the loader's exit
+### 2d. Fingerprint each batch where it leaves the loader
 
 **Goal:** a record of what each rank consumed at each step.
 
-**How:** two lines in the training loop, on every rank, on the batch as the
-loader returns it:
+**How:** add two lines to the training loop, on every rank, and apply them to
+the batch exactly as the loader returns it:
 
 ```python
 import data_fingerprint as dfp
@@ -84,17 +87,18 @@ for step, batch in enumerate(loader):
     ...
 ```
 
-Every tensor field is recorded: token ids, attention mask, position ids,
-labels or loss mask. With `opguard=` the recorder also writes the records in
-OpGuard's capture layout, so OpGuard's `first_diff` sees the data boundary
-before the model's ([Localize with OpGuard](localize-with-opguard.md)). A
-resumed run passes `append=True`.
+Every tensor field is recorded: the token ids, the attention mask, the
+position ids, and the labels or the loss mask. With `opguard=`, the recorder
+also writes its records in OpGuard's capture layout, so OpGuard's `first_diff`
+sees the data boundary before the model's boundaries
+([Localize with OpGuard](localize-with-opguard.md)). A resumed run passes
+`append=True`.
 
-**Success:** one record per step and rank on both runs.
+**Success:** both runs have one record for each step and each rank.
 
-### 2e. Compare
+### 2e. Compare the two runs
 
-**Goal:** the first (step, rank, field) whose bits differ.
+**Goal:** find the first (step, rank, field) whose bits differ.
 
 **How:**
 
@@ -103,106 +107,111 @@ python tools/data_fingerprint.py compare fp/run_a fp/run_b
 python tools/data_fingerprint.py compare fp/run_a fp/run_b --global
 ```
 
-The comparison is exact: no tolerance. The second form concatenates the ranks
-of each step first, for runs at different data-parallel sizes.
+The comparison is exact, with no tolerance. The second form first
+concatenates the ranks of each step, which is what you need when the two runs
+use different data-parallel sizes.
 
-**Success:** no record differs. Then the data is aligned and the pair is ready
-to capture ([Localize with OpGuard](localize-with-opguard.md)).
+**Success:** no record differs. The data is then aligned, and the pair is
+ready to capture ([Localize with OpGuard](localize-with-opguard.md)).
 
-### 2f. Classify
+### 2f. Find out what kind of difference it is
 
-**Goal:** the kind of difference, because each has its own fix.
+**Goal:** name the kind of difference, because each kind has its own fix.
 
-**How:** the compare command names a class for the first difference and
+**How:** the compare command assigns a class to the first difference and
 counts the classes over all steps:
 
 | Class | What it means | Typical cause |
 |---|---|---|
-| order | the same samples, in another order inside the batch, or at another step or rank | worker split of a streaming dataset; data-parallel size; a shuffle buffer's seed; a resume that replays (it repeats an earlier step of its own run) |
-| samples | some documents exist on one side only | tokenizer or data source; a shuffle with another seed; the tail of a replayed resume |
-| packing | the same documents per step, laid out in other rows | padding against packing; another row length |
-| masks | the same token ids, other masks, positions or labels | position ids not reset per document; a loss mask change |
+| order | the same samples, but in another order inside the batch, or at another step or rank | a streaming dataset split across workers; a different data-parallel size; the seed of a shuffle buffer; a resume that replays, repeating an earlier step of its own run |
+| samples | some documents appear on one side only | the tokenizer or the data source; a shuffle with a different seed; the tail end of a resume that replays |
+| packing | the same documents at each step, but laid out in different rows | padding on one side and packing on the other; a different row length |
+| masks | the same token ids, but different masks, positions or labels | position ids that are not reset for each document; a changed loss mask |
 
-The header difference comes first: a changed tokenizer shows there, unless
-only its call arguments changed and they were not recorded.
+A difference in the header is reported first. A changed tokenizer shows up
+there, unless only its call arguments changed and they were not recorded.
 
-**Success:** one class and one named cause.
+**Success:** you have one class and one named cause.
 
-### 2g. Fix
+### 2g. Fix the difference
 
-**Goal:** the fingerprints equal, at every step and rank.
+**Goal:** the fingerprints are equal at every step and on every rank.
 
-**How:** pick the fix by problem. The libraries named are the ones that solve
-it by design; each holds only under its own conditions
+**How:** choose the fix by the problem. The libraries named in the table solve
+the problem by design, but each one does so only under its own conditions
 ([survey](../../examples/data_alignment/REPORT.md#existing-work)).
 
 | Problem | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|---|
-| Worker count changes the order | a map-style dataset with the sampler in the main process; or each worker builds whole batches, taken in turn (Grain reads workers in strict round robin); MosaicML Streaming's order does not depend on workers | the same batch at the same step for any worker count | free | a streaming dataset split by sample across workers |
-| Data-parallel size changes the partition | one global batch per step, each rank a contiguous slice (Megatron-LM's pretraining sampler, OLMo-core's global indices); MosaicML Streaming with a fixed canonical node count | the step's batch, ranks merged, identical at any size | free | comparing runs at different DP sizes |
-| Resume does not restore the position | save the consumed samples or the loader state with the checkpoint (torchdata's StatefulDataLoader, Grain, Megatron-LM's consumed samples, Megatron-Energon, Streaming, OLMo-core) | the resumed run continues where it stopped | free | every resumed run |
-| Shuffle buffer seeded from the process | seed it from seed, epoch and worker id, or give the loader its own generator; Hugging Face datasets takes seed and epoch | the buffer's order independent of other random draws | free | any streaming shuffle |
-| Packing differs | the same collate, row length and packing rule on both sides | the same rows | free | packing on one side only, or a changed packer |
-| Tokenizer differs | pin the tokenizer file and its call arguments, or tokenize offline | the same token ids | free | a tokenizer upgrade, a new special token |
+| The number of workers changes the order | use a map-style dataset with the sampler in the main process; or let each worker build whole batches and take them in turn (Grain reads its workers in strict round robin); MosaicML Streaming's order does not depend on the workers | the same batch at the same step, for any number of workers | free | a streaming dataset whose samples are split across workers |
+| The data-parallel size changes the partition | build one global batch per step and give each rank a contiguous slice of it (Megatron-LM's pretraining sampler, OLMo-core's global indices); or use MosaicML Streaming with a fixed canonical node count | with the ranks merged, the batch of each step is identical at any size | free | comparing runs at different DP sizes |
+| A resume does not restore the position | save the number of consumed samples, or the loader's state, with the checkpoint (torchdata's StatefulDataLoader, Grain, Megatron-LM's consumed samples, Megatron-Energon, Streaming, OLMo-core) | the resumed run continues where it stopped | free | every resumed run |
+| The shuffle buffer is seeded from the process | seed it from the seed, the epoch and the worker id, or give the loader its own generator; Hugging Face datasets takes a seed and an epoch | an order that does not depend on other random draws | free | any streaming shuffle |
+| The packing differs | use the same collate function, row length and packing rule on both sides | the same rows | free | packing on one side only, or a changed packer |
+| The tokenizer differs | pin the tokenizer file and its call arguments, or tokenize offline | the same token ids | free | a tokenizer upgrade, or a new special token |
 
-**Success:** compare again: no record differs.
+**Success:** compare again, and no record differs.
 
 ## What can go wrong
 
-!!! warning "Per-rank comparison across data-parallel sizes"
-    At another DP size a rank holds another slice of the batch, so a per-rank
-    comparison always differs. You chase a difference that is by design.
-    Compare with the ranks of each step merged.
+!!! warning "Comparing rank by rank across data-parallel sizes"
+    At another DP size, each rank holds a different slice of the batch, so a
+    rank-by-rank comparison always differs. You end up chasing a difference
+    that exists by design. Compare with the ranks of each step merged.
 
-!!! warning "The sampler's own position after prefetch"
-    Workers prefetch, so the sampler has handed out more indices than training
-    consumed. Restoring that position skips batches. Save the count of
-    consumed samples kept by the training loop, or use a loader that tracks
-    it (measured: [report](../../examples/data_alignment/REPORT.md#cases)).
+!!! warning "Restoring the sampler's own position after prefetching"
+    Workers prefetch, so the sampler has handed out more indices than
+    training has consumed. Restoring that position skips batches. Save the
+    count of consumed samples that the training loop keeps, or use a loader
+    that tracks it (measured: [report](../../examples/data_alignment/REPORT.md#cases)).
 
-!!! warning "A tokenizer fingerprint without its call arguments"
-    The tokenizer's file does not hold call arguments such as adding special
-    tokens. The header then agrees while the batches differ. Record the call
-    arguments with the tokenizer.
+!!! warning "A tokenizer fingerprint without the call arguments"
+    The tokenizer's file does not contain call arguments such as whether to
+    add special tokens. The headers then agree while the batches differ.
+    Record the call arguments together with the tokenizer.
 
 !!! warning "A shuffle seed taken from the process"
-    A buffer seeded from the process's random state moves when anything else
-    draws a random number first, and only when workers are used. One extra
-    initialized parameter changes the data. Seed it explicitly.
+    A buffer seeded from the process's random state shifts whenever anything
+    else draws a random number first, and this only happens when workers are
+    used. A single extra initialized parameter then changes the data. Seed the
+    buffer explicitly.
 
-!!! warning "Equal over the epoch is not equal per step"
-    A check of the epoch's contents passes when samples only moved between
-    steps. The weights still differ from the first step. Compare per step.
+!!! warning "Equal over the epoch does not mean equal at each step"
+    A check of the epoch's contents passes when samples have only moved
+    between steps, yet the weights differ from the first step on. Compare step
+    by step.
 
-!!! warning "Fingerprints taken after the batch changed"
-    A batch recorded after a cast, a device move with padding, or the
-    model's own masking mixes loader and model differences. You cannot tell
-    which side caused it. Record the batch as the loader returns it.
+!!! warning "Fingerprints taken after the batch has changed"
+    If you record a batch after a cast, after a move to the device that adds
+    padding, or after the model's own masking, loader differences and model
+    differences get mixed up, and you cannot tell which side caused the
+    difference. Record the batch exactly as the loader returns it.
 
 ## Summary
 
-- Two runs are comparable only if every rank sees the same token bits at
-  every step; a shared seed does not guarantee it.
-- Order, partition, packing, tokenizer and resume state each change the
-  batches without any numerical effect.
-- Fingerprint every field at the loader's exit, per step and rank, and
-  compare exactly; merge the ranks when the DP sizes differ.
+- Two runs can be compared only if every rank sees the same token bits at
+  every step, and a shared seed does not guarantee that.
+- Order, partition, packing, the tokenizer and the resume state can each
+  change the batches without any numerical effect.
+- Fingerprint every field where the batch leaves the loader, for each step and
+  rank, and compare exactly; merge the ranks when the DP sizes differ.
 - Read the class of the first difference, apply the matching fix, and compare
   again until no record differs.
 
-Shown on CPU with ranks simulated in one process; not yet shown on a real
-distributed job or with the surveyed libraries
+This was shown on CPU, with ranks simulated in one process. It has not yet
+been shown on a real distributed job, or with the libraries in the survey
 ([report](../../examples/data_alignment/REPORT.md#limits)).
 
 ## Go deeper
 
-- [data_fingerprint.py](../../tools/data_fingerprint.py): the tool, its
-  record format and the classifier.
-- [Report: the survey of existing loaders, every planted case and its fix, the OpGuard check, the cost](../../examples/data_alignment/REPORT.md).
-- [data_alignment.py](../../examples/data_alignment/data_alignment.py): the
-  planted cases.
-- [Determinism and preflight](determinism-and-preflight.md): the settings and
-  state read back before this check.
-- [Data parallel](data-parallel.md): a sum over the same samples in another
-  order is bitwise equal only with an order-independent reduction.
+- [data_fingerprint.py](../../tools/data_fingerprint.py) is the tool; it
+  defines the record format and the classifier.
+- [Report: the survey of existing loaders, every planted case and its fix, the OpGuard check, and the cost](../../examples/data_alignment/REPORT.md).
+- [data_alignment.py](../../examples/data_alignment/data_alignment.py)
+  contains the planted cases.
+- [Determinism and preflight](determinism-and-preflight.md) covers the
+  settings and the state that are read back before this check.
+- [Data parallel](data-parallel.md) explains why a sum over the same samples
+  in another order is bit-for-bit equal only with a reduction that does not
+  depend on the order.
 - [pretraining-alignment skill](../../skills/pretraining-alignment/SKILL.md).
