@@ -8,8 +8,8 @@ runs and only the declared difference is left. What is still open: whether
 the two runs train on the same data. Two runs can only be compared bitwise if
 every rank sees the same token bits at every step. If they do not, every
 later comparison shows the data, not the cause you are looking for. This page
-checks the batches themselves, where they leave the loader, before the
-[training step](training-step.md) is examined.
+checks the batches themselves, where they leave the loader, before the pair is
+captured ([Localize with OpGuard](localize-with-opguard.md)).
 
 ## The idea: same seed, different batches
 
@@ -106,8 +106,8 @@ python tools/data_fingerprint.py compare fp/run_a fp/run_b --global
 The comparison is exact: no tolerance. The second form concatenates the ranks
 of each step first, for runs at different data-parallel sizes.
 
-**Success:** no record differs. Then the data is aligned and the comparison
-moves on to the [training step](training-step.md).
+**Success:** no record differs. Then the data is aligned and the pair is ready
+to capture ([Localize with OpGuard](localize-with-opguard.md)).
 
 ### 2f. Classify
 

@@ -9,9 +9,22 @@ workflow for that one operator. It takes the operator from "variant or
 unknown" to "verified invariant at a stated level" (see the
 [levels](../0-foundations/README.md)), or to a documented fallback.
 
-<figure class="fig">
-<div class="fig-chain"><span class="fig-node">1. Locate the variance</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">2. Choose the cheapest strategy</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">3. Keep the rounding points</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">4. Verify the matrix</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">5. Integrate</span></div>
-<div class="fig-back">If step 4 fails, go back to step 1.</div>
+<figure class="fx" data-fig="kernel-workflow" aria-label="The batch-invariant kernel workflow" markdown>
+<div class="fx-stage" markdown>
+<div class="fx-chain" markdown="span"><span class="fx-step" data-hot="0 5">[1. Locate the variance](#1-locate-the-variance)</span><span class="fx-arrow" data-hot="1 5" aria-hidden="true"></span><span class="fx-step" data-hot="1 5">[2. Choose the cheapest strategy](#2-choose-the-cheapest-strategy-that-holds)</span><span class="fx-arrow" data-hot="2 5" aria-hidden="true"></span><span class="fx-step" data-hot="2 5">[3. Keep the rounding points](#3-keep-the-rounding-points)</span><span class="fx-arrow" data-hot="3 6" aria-hidden="true"></span><span class="fx-step" data-hot="3 6">[4. Verify the matrix](#4-verify-the-matrix)<span class="fx-swap"><span class="fx-note fx-fail" data-at="3" data-to="5">a cell fails</span><span class="fx-note fx-pass" data-at="6">zero mismatches</span></span></span><span class="fx-arrow" data-hot="7" aria-hidden="true"></span><span class="fx-step" data-hot="7">[5. Integrate](#5-integrate)</span></div>
+<div class="fx-back" data-hot="4">If step 4 fails, go back to step 1.</div>
+</div>
+<ol class="fx-say">
+<li>1. Locate the variance: which choice inside the operator depends on more than the element's own length.</li>
+<li>2. Choose the cheapest strategy that removes the dependence.</li>
+<li>3. Keep the rounding points of the side the kernel must match.</li>
+<li>4. Verify the matrix: batch sizes, positions, modes, layouts, degrees, bitwise.</li>
+<li data-hold="1.5">A cell fails: go back to step 1 with the failing pattern.</li>
+<li data-hold="1.5">Locate again, choose again, keep the rounding points.</li>
+<li>4. Verify again: zero mismatches.</li>
+<li data-hold="2">5. Integrate: the verified kernel is what runs, and its cost is recorded.</li>
+</ol>
+<figcaption>Figure: the five steps for one operator. Step 4 is evidence, not an argument from the code; a failure sends you back to step 1.</figcaption>
 </figure>
 
 The agent workflow that applies these steps is the
@@ -25,10 +38,22 @@ Floating-point addition rounds after every add, so the grouping changes the
 answer. In fp32, 1e8 + 1 rounds back to 1e8, because the next number after
 1e8 is 8 away:
 
-| Grouping | Steps | Result |
-|---|---|---|
-| (1e8 + 1) − 1e8 | 1e8 + 1 rounds to 1e8; then 1e8 − 1e8 | 0 |
-| (1e8 − 1e8) + 1 | 0; then 0 + 1 | 1 |
+<figure class="fx" data-fig="two-groupings" aria-label="The same three numbers in two groupings">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label fx-mono">(1e8 + 1) − 1e8</span><div class="fx-chain is-tight"><span class="fx-swap" data-at="1"><span class="fx-node is-mono" data-at="1" data-to="2">1e8 + 1 = 100000001</span><span class="fx-node is-mono is-warn" data-at="2">1e8 + 1 → 1e8<span class="fx-note">rounded: the next number is 8 away</span></span></span><span class="fx-arrow" data-at="3" aria-hidden="true"></span><span class="fx-node is-mono" data-at="3">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="4" aria-hidden="true"></span><span class="fx-node is-mono is-key" data-at="4">0</span></div></div>
+<div class="fx-row"><span class="fx-label fx-mono">(1e8 − 1e8) + 1</span><div class="fx-chain is-tight"><span class="fx-node is-mono" data-at="1">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="3" aria-hidden="true"></span><span class="fx-node is-mono" data-at="3">0 + 1 = 1</span><span class="fx-arrow" data-at="4" aria-hidden="true"></span><span class="fx-node is-mono is-key" data-at="4">1</span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>The same three fp32 numbers, 1e8, 1 and −1e8, in two groupings.</li>
+<li>Each grouping forms its first partial sum.</li>
+<li data-hold="1.5">1e8 + 1 rounds back to 1e8: the next number after 1e8 is 8 away.</li>
+<li>Each grouping adds its last number.</li>
+<li data-hold="2">Same three numbers, two answers: 0 and 1.</li>
+</ol>
+<figcaption>Figure: floating-point addition rounds after every add, so the grouping changes the answer.</figcaption>
+</figure>
 
 Same three numbers, two answers. A kernel makes this choice for every output
 element, and it often makes it from the shape of the whole call. Take one row

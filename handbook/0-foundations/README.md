@@ -33,10 +33,23 @@ Take three numbers and add them in two orders. In ordinary Python (fp64):
 The same happens in fp32 with numbers a model meets every day. Let
 a = 1e8, b = 1, c = −1e8:
 
-| Order | Step by step (fp32) | Result |
-|---|---|---|
-| (a + b) + c | a + b = 100000001 is not representable; it rounds to 1e8. Then 1e8 − 1e8 | 0 |
-| (a + c) + b | a + c = 0 exactly. Then 0 + 1 | 1 |
+<figure class="fx" data-fig="two-orders" aria-label="Three numbers added in two orders">
+<div class="fx-stage">
+<div class="fx-chain is-tight"><span class="fx-label">fp32</span><span class="fx-chip">a = 1e8</span><span class="fx-chip">b = 1</span><span class="fx-chip">c = −1e8</span></div>
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label fx-mono">(a + b) + c</span><div class="fx-chain is-tight"><span class="fx-swap" data-at="1"><span class="fx-node is-mono" data-at="1" data-to="2">a + b = 100000001</span><span class="fx-node is-mono is-warn" data-at="2">a + b → 1e8<span class="fx-note">rounded</span></span></span><span class="fx-arrow" data-at="3"></span><span class="fx-node is-mono" data-at="3">1e8 + c = 0</span><span class="fx-arrow" data-at="4"></span><span class="fx-node is-mono is-key" data-at="4">0</span></div></div>
+<div class="fx-row"><span class="fx-label fx-mono">(a + c) + b</span><div class="fx-chain is-tight"><span class="fx-node is-mono" data-at="1">a + c = 0<span class="fx-note">exact</span></span><span class="fx-arrow" data-at="3"></span><span class="fx-node is-mono" data-at="3">0 + b = 1</span><span class="fx-arrow" data-at="4"></span><span class="fx-node is-mono is-key" data-at="4">1</span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>Three fp32 numbers: a = 1e8, b = 1, c = −1e8. Two orders of adding them.</li>
+<li>Each order forms its first partial sum.</li>
+<li data-hold="1.5">a + b = 100000001 is not representable in fp32: it rounds to 1e8.</li>
+<li>Each order adds its last number.</li>
+<li data-hold="2">Same three numbers, two orders, two results: 0 and 1.</li>
+</ol>
+<figcaption>Figure: (a + b) + c and (a + c) + b in fp32. Which partial sums are formed decides which roundings happen.</figcaption>
+</figure>
 
 Every addition rounds its result to the nearest representable number, and
 which roundings happen depends on which partial sums are formed. So:
@@ -55,13 +68,23 @@ A kernel does not choose its order from the mathematics. It chooses it from the
 shape it is given, so the arithmetic changes with the batch. Take a dot product
 of four terms, t = [1e8, 1, −1e8, 1], in fp32:
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">one program, left to right</span><div class="fig-chain"><span class="fig-node">1e8 + 1 = 1e8</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">1e8 − 1e8 = 0</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">0 + 1 = 1</span></div></div>
-<div class="fig-group"><span class="fig-label">split-K in two halves</span><div class="fig-chain"><div class="fig-stack"><span class="fig-node">1e8 + 1 = 1e8</span><span class="fig-node">−1e8 + 1 = −1e8</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">1e8 + (−1e8) = 0</span></div></div>
-<div class="fig-group"><span class="fig-label">atomics, one finishing order</span><div class="fig-chain"><span class="fig-node">1e8 − 1e8 = 0</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">0 + 1 = 1</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">1 + 1 = 2</span></div></div>
+<figure class="fx" data-fig="three-orders" aria-label="One dot product reduced in three orders">
+<div class="fx-stage">
+<div class="fx-chain is-tight"><span class="fx-label">t</span><span class="fx-chip">1e8</span><span class="fx-chip">1</span><span class="fx-chip">−1e8</span><span class="fx-chip">1</span></div>
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">one program, left to right</span><div class="fx-chain is-tight"><span class="fx-node is-mono" data-at="1">1e8 + 1 = 1e8</span><span class="fx-arrow" data-at="2"></span><span class="fx-node is-mono" data-at="2">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="3"></span><span class="fx-node is-mono is-key" data-at="3" data-hot="4">0 + 1 = 1</span></div></div>
+<div class="fx-row"><span class="fx-label">split-K in two halves</span><div class="fx-chain is-tight"><div class="fx-stack" data-at="1"><span class="fx-node is-mono" data-at="1">1e8 + 1 = 1e8</span><span class="fx-node is-mono" data-at="1">−1e8 + 1 = −1e8</span></div><span class="fx-arrow" data-at="2"></span><span class="fx-node is-mono is-key" data-at="2" data-hot="4">1e8 + (−1e8) = 0</span></div></div>
+<div class="fx-row"><span class="fx-label">atomics, one finishing order</span><div class="fx-chain is-tight"><span class="fx-node is-mono" data-at="1">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="2"></span><span class="fx-node is-mono" data-at="2">0 + 1 = 1</span><span class="fx-arrow" data-at="3"></span><span class="fx-node is-mono is-key" data-at="3" data-hot="4">1 + 1 = 2</span></div></div>
 </div>
-<figcaption>t = [1e8, 1, −1e8, 1] in fp32: the same four terms, three orders, three results.</figcaption>
+</div>
+<ol class="fx-say">
+<li>The same four terms, t = [1e8, 1, −1e8, 1], reduced three ways in fp32.</li>
+<li>First adds. Split-K sums its two halves at once, on two programs.</li>
+<li>Split-K adds its two partial sums and is done: 0.</li>
+<li>The other two finish: left to right gives 1, this finishing order gives 2.</li>
+<li data-hold="2">Three orders, three results: 1, 0 and 2. Each is a correct rounding of some order.</li>
+</ol>
+<figcaption>Figure: t = [1e8, 1, −1e8, 1] in fp32: the same four terms, three orders, three results.</figcaption>
 </figure>
 
 Three orders, three answers: 1, 0 and 2. Each is a correct rounding of some
@@ -168,11 +191,24 @@ can be compared there.
 must catch any single-bit change, must not let small corruptions cancel, and
 must not synchronize the device. A tiny example with a tensor of four values:
 
-| | Values | Sum | XOR of the raw 32-bit words |
-|---|---|---|---|
-| reference | [1, 2, 3, 4] | 10 | w |
-| one bit flipped in one value | [1, 2, 3, 4 + ε] | changes | changes |
-| two errors that cancel | [1 + ε, 2, 3, 4 − ε] | 10, unchanged | changes |
+<figure class="fx" data-fig="sum-xor" aria-label="A sum against an XOR fingerprint">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">reference</span><div class="fx-chain is-tight"><div class="fx-cells fx-sweep" style="--n:4" data-hot="1"><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell">4</span></div><span class="fx-arrow" data-at="1"></span><span class="fx-node" data-at="1">sum <span class="fx-mono">10</span></span><span class="fx-node" data-at="1">XOR of the raw 32-bit words <span class="fx-mono">w</span></span></div></div>
+<div class="fx-row" data-at="2"><span class="fx-label">one bit flipped in one value</span><div class="fx-chain is-tight"><div class="fx-cells fx-sweep" style="--n:4" data-hot="3"><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell is-bad">4 + ε</span></div><span class="fx-arrow" data-at="3"></span><span class="fx-node is-ok" data-at="3">sum <span class="fx-mono">changes</span><span class="fx-note">caught</span></span><span class="fx-node is-ok" data-at="3">XOR <span class="fx-mono">changes</span><span class="fx-note">caught</span></span></div></div>
+<div class="fx-row" data-at="4"><span class="fx-label">two errors that cancel</span><div class="fx-chain is-tight"><div class="fx-cells fx-sweep" style="--n:4" data-hot="5"><span class="fx-cell is-bad">1 + ε</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell is-bad">4 − ε</span></div><span class="fx-arrow" data-at="5"></span><span class="fx-node is-bad" data-at="5">sum <span class="fx-mono">10, unchanged</span><span class="fx-note">missed</span></span><span class="fx-node is-ok" data-at="5">XOR <span class="fx-mono">changes</span><span class="fx-note">caught</span></span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>A tensor of four values: [1, 2, 3, 4].</li>
+<li>Its sum is 10; the XOR of its raw 32-bit words is w.</li>
+<li>Flip one bit in one value: 4 becomes 4 + ε.</li>
+<li>Both summaries change: the flip is caught.</li>
+<li>Now two errors that cancel: 1 + ε and 4 − ε.</li>
+<li data-hold="2">The sum is 10 again and misses both; the XOR still changes.</li>
+</ol>
+<figcaption>Figure: a sum lets errors cancel; XOR over the raw bits does not lose a single flip.</figcaption>
+</figure>
 
 A sum or a mean lets errors cancel; XOR over the raw bits does not lose a
 single flip. OpGuard computes XOR fingerprints on the device, in two forms:
@@ -184,6 +220,32 @@ single flip. OpGuard computes XOR fingerprints on the device, in two forms:
   layout: `[T, heads, dim]` and `[T, hidden]` give the same row. Rows become
   comparable across stacks that batch, pack and decode differently, and the
   differing head is named.
+
+<figure class="fx" data-fig="xor-fold" aria-label="Per-vector fingerprints folding into a row fingerprint">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label fx-mono">[T, heads, dim]</span><div class="fx-tree" style="--n:4">
+<div class="fx-level"><span class="fx-cell">head 0</span><span class="fx-cell">head 1</span><span class="fx-cell">head 2</span><span class="fx-cell">head 3</span></div>
+<div class="fx-level"><span class="fx-j" style="--k:1" data-at="1"><span class="fx-node is-mono">f0</span></span><span class="fx-j" style="--k:1" data-at="1"><span class="fx-node is-mono">f1</span></span><span class="fx-j" style="--k:1" data-at="1"><span class="fx-node is-mono">f2</span></span><span class="fx-j" style="--k:1" data-at="1"><span class="fx-node is-mono">f3</span></span></div>
+<div class="fx-level"><span class="fx-j" style="--w:2" data-at="2"><span class="fx-node is-mono">f0 ⊕ f1</span></span><span class="fx-j" style="--w:2" data-at="2"><span class="fx-node is-mono">f2 ⊕ f3</span></span></div>
+<div class="fx-level"><span class="fx-j" style="--w:4" data-at="3" data-hot="5"><span class="fx-node is-mono is-key">row r</span></span></div>
+</div></div>
+<div class="fx-row" data-at="4"><span class="fx-label fx-mono">[T, hidden]</span><div class="fx-tree" style="--n:4">
+<div class="fx-level"><span class="fx-cell" style="--w:4">one vector of hidden values</span></div>
+<div class="fx-level"><span class="fx-j" style="--w:4;--k:1" data-at="4" data-hot="5"><span class="fx-node is-mono is-ok">row r</span></span></div>
+</div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>One token's row, stored as [T, heads, dim]: four head vectors.</li>
+<li>Per vector: one XOR for each last-dimension vector, f0 to f3.</li>
+<li>XOR merges, so the vectors fold pairwise,</li>
+<li>into the row's fingerprint r.</li>
+<li>Stored as [T, hidden], the same row is one vector, and its XOR is the same r.</li>
+<li data-hold="2">Rows compare across layouts; when they differ, the differing f names the head.</li>
+</ol>
+<figcaption>Figure: per-vector fingerprints fold into one row fingerprint whatever the layout.</figcaption>
+</figure>
 
 The options, from cheapest to most complete:
 

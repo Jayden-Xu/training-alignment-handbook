@@ -17,10 +17,26 @@ production is a cost decision.
 
 ## The workflow
 
-<figure class="fig">
-<div class="fig-steps"><span class="fig-node">1. Audit the operators</span><span class="fig-node">2. Make one side invariant (whole model, L1–L3)</span><span class="fig-node">3. Parallel degrees (L5)</span><span class="fig-node">4. Sampling</span><span class="fig-node">5. LoRA</span><span class="fig-node">6. Make both sides agree (engine parity, L4)</span><span class="fig-node">7. Record online</span></div>
-<div class="fig-chain"><span class="fig-node is-key">8. Split staleness from numeric error</span><span class="fig-arrow" aria-hidden="true"></span><div class="fig-branch"><div class="fig-chain"><span class="fig-arrow">numeric = 0</span><span class="fig-node is-ok">10. Regression</span></div><div class="fig-chain"><span class="fig-arrow">numeric ≠ 0</span><span class="fig-node is-bad">9. Localize offline</span></div></div></div>
-<figcaption>After step 9, go back to step 6 with the cause it found.</figcaption>
+<figure class="fx" data-fig="rl-workflow" aria-label="The RL train–inference workflow" markdown>
+<div class="fx-stage" markdown>
+<div class="fx-steps" markdown="span"><span class="fx-step" data-hot="0">[1. Audit the operators](whole-model.md)</span><span class="fx-step" data-hot="1">[2. Make one side invariant (whole model, L1–L3)](whole-model.md)</span><span class="fx-step" data-hot="2">[3. Parallel degrees (L5)](parallelism.md)</span><span class="fx-step" data-hot="3">[4. Sampling](sampling.md)</span><span class="fx-step" data-hot="4">[5. LoRA](lora.md)</span><span class="fx-step" data-hot="5 9">[6. Make both sides agree (engine parity, L4)](engine-parity-vllm.md)</span><span class="fx-step" data-hot="6">[7. Record online](rl-loop.md)</span></div>
+<div class="fx-chain" markdown="span"><span class="fx-node is-key" data-hot="7">[8. Split staleness from numeric error](rl-loop.md)</span><span class="fx-arrow" data-hot="8 10" aria-hidden="true"></span><span class="fx-branch"><span class="fx-chain"><span class="fx-arrow" data-hot="8">numeric ≠ 0</span><span class="fx-node to-bad" data-hot="8">[9. Localize offline](rl-loop.md)</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="10">numeric = 0</span><span class="fx-node to-ok" data-hot="10">[10. Regression](../4-operations/regression.md)</span></span></span></div>
+<div class="fx-back" data-hot="9">After step 9, go back to step 6 with the cause it found.</div>
+</div>
+<ol class="fx-say">
+<li>1. Audit the operators: list the modules whose output depends on the batch or the mode.</li>
+<li>2. Make one side invariant: the same bits in every batch and serving mode (L1–L3).</li>
+<li>3. The same bits at every parallel degree (L5).</li>
+<li>4. Sampling: a sampled token that can be replayed.</li>
+<li>5. LoRA: adapters that round the same way in any batch.</li>
+<li>6. Make both sides agree: trainer logprobs equal to the engine's (L4).</li>
+<li>7. Record the running loop online.</li>
+<li>8. Split each token's gap into staleness and numeric error.</li>
+<li>numeric ≠ 0: 9. localize it offline, down to an operator.</li>
+<li>Then go back to step 6 with the cause it found.</li>
+<li data-hold="2">numeric = 0: 10. keep the result as a regression baseline.</li>
+</ol>
+<figcaption>Figure: steps 2–5 make each side invariant on its own, step 6 makes the two agree, and steps 7–9 watch the running loop.</figcaption>
 </figure>
 
 | Step | Page | What you have after it |

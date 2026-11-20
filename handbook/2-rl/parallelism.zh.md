@@ -26,12 +26,28 @@ x0 + x1 满足交换律，但部分和本身已经不是不切分时的和。
 TP C（每个 rank 一块）的树。规则：归约树是模型的属性，不是集群的属性。
 这是批不变性原则的 L5 形式，单个 GEMM 的情形见[集合通信](../3-kernels/collectives.md)。
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">TP 1</span><div class="fig-chain"><span class="fig-node">c0 c1 c2 c3</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">固定的树，fp32</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">一次 cast</span></div></div>
-<div class="fig-group"><span class="fig-label">TP 2</span><div class="fig-chain"><div class="fig-stack"><div class="fig-chain"><span class="fig-node">rank 0：c0 c1</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">子树</span></div><div class="fig-chain"><span class="fig-node">rank 1：c2 c3</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">子树</span></div></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">同一棵树，fp32</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">一次 cast</span></div></div>
+<figure class="fx" data-fig="tp-tree" aria-label="TP 1、2、4 下的同一棵固定归约树">
+<div class="fx-stage">
+<div class="fx-head"><span class="fx-label">K 切成 C = 4 个 chunk；张量并行度</span><span class="fx-swap"><span class="fx-chip" data-to="3">TP 1</span><span class="fx-chip is-key" data-at="3" data-to="5">TP 2</span><span class="fx-chip is-key" data-at="5">TP 4</span></span></div>
+<div class="fx-tree" style="--n:4">
+<div class="fx-swap is-block"><div class="fx-level" data-to="3"><span class="fx-band" data-c="0" style="--w:4">rank 0</span></div><div class="fx-level" data-at="3" data-to="5"><span class="fx-band" data-c="0" style="--w:2">rank 0</span><span class="fx-band" data-c="1" style="--w:2">rank 1</span></div><div class="fx-level" data-at="5"><span class="fx-band" data-c="0" style="--w:1">rank 0</span><span class="fx-band" data-c="1" style="--w:1">rank 1</span><span class="fx-band" data-c="2" style="--w:1">rank 2</span><span class="fx-band" data-c="3" style="--w:1">rank 3</span></div></div>
+<div class="fx-level"><span class="fx-cell">c0</span><span class="fx-cell">c1</span><span class="fx-cell">c2</span><span class="fx-cell">c3</span></div>
+<div class="fx-level" data-at="1" data-hot="3 5"><span class="fx-j" style="--w:2"><span class="fx-node is-mono">c0 + c1</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-mono">c2 + c3</span></span></div>
+<div class="fx-level" data-at="2" data-hot="4 6"><span class="fx-j" style="--w:4"><span class="fx-node is-mono">同一棵树，fp32</span></span></div>
+<div class="fx-level" data-at="2" data-hot="4 6"><span class="fx-j" style="--w:4;--k:1"><span class="fx-node is-key">一次 cast 到 bf16：y</span></span></div>
 </div>
-<figcaption>每个 rank 求一棵对齐的子树；各 rank 完成同一棵树，只舍入一次，所以 TP 1 和 TP 2 给出相同的位。</figcaption>
+<div class="fx-chain is-tight"><span class="fx-label">结果</span><span class="fx-chip is-ok" data-at="2">TP 1: y</span><span class="fx-chip is-ok" data-at="4">TP 2: y</span><span class="fx-chip is-ok" data-at="6">TP 4: y</span></div>
+</div>
+<ol class="fx-say">
+<li>无论并行度多少，K 都切成 C = 4 个 chunk。TP 1：一个 GPU 拿着全部四个。</li>
+<li>固定的树先把 chunk 两两相加，用 fp32，</li>
+<li>再把两半相加，只舍入一次到 bf16：y。</li>
+<li data-hold="1.5">TP 2：每个 rank 求一棵对齐的子树，用 fp32。</li>
+<li data-hold="1.5">各 rank 交换子树，完成同一棵树，只舍入一次：还是 y。</li>
+<li data-hold="1.5">TP 4：每个 rank 一个 chunk。各 rank 交换 chunk，按同一棵树相加。</li>
+<li data-hold="2">同一棵树，一次舍入：TP 1、TP 2 和 TP 4 给出相同的位。</li>
+</ol>
+<figcaption>图：每个 rank 求一棵对齐的子树；各 rank 完成同一棵树，只舍入一次，所以 TP 1 和 TP 2 给出相同的位。</figcaption>
 </figure>
 
 还有三处跨 rank 求和，需要同样处理：

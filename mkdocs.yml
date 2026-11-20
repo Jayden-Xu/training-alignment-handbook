@@ -20,8 +20,10 @@ hooks:
 # Figures: animated workflow lanes on the home page, static diagrams elsewhere
 extra_css:
   - assets/flows.css
+  - assets/figs.css
 extra_javascript:
   - assets/flows.js
+  - assets/figs.js
 
 watch:
   - skills
@@ -133,11 +135,11 @@ nav:
   - 1 Pre-training:
       - 1-pretraining/README.md
       - 1-pretraining/determinism-and-preflight.md
-      - Data alignment: 1-pretraining/data-alignment.md
+      - 1-pretraining/data-alignment.md
+      - 1-pretraining/localize-with-opguard.md
       - 1-pretraining/training-step.md
       - 1-pretraining/data-parallel.md
       - 1-pretraining/capture-compiled-code.md
-      - 1-pretraining/localize-with-opguard.md
       - 1-pretraining/sdc.md
   - 2 RL train–inference:
       - 2-rl/README.md

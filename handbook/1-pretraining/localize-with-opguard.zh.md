@@ -2,15 +2,28 @@
 
 ## 我们在哪里
 
-本页覆盖[预训练工作流](README.md)的第 3、4、6、7 步：采集、首个分歧点、修复和确认。你有一次参考运行和一次 suspect 运行，它们只在声明过的那一点上不同（[预检](determinism-and-preflight.md)）。还没解决的是：两次运行在哪里第一次分开，以及为什么。分类（第 5 步）在[工作流页面](README.md#step-5-classify)。
+本页是[预训练工作流](README.md)的核心循环：第 3、4、6、7 步，即采集、首个分歧点、修复和确认。你有一次参考运行和一次 suspect 运行，它们只在声明过的那一点上不同（[预检](determinism-and-preflight.md)），读到的 batch 也相同（[数据对齐](data-alignment.md)）。还没解决的是：两次运行在哪里第一次分开，以及为什么。分类（第 5 步）在[工作流页面](README.md#step-5-classify)；本页之后的几页讲首个分歧点最常指向的原因：[训练 step](training-step.md)、[梯度集合通信](data-parallel.md)、[编译代码](capture-compiled-code.md)和[硬件](sdc.md)。
 
 ## 思路：首个差异是起点，不是原因
 
 OpGuard 在两次运行的每个模型级边界上记录 fingerprint，把两份 trace 配对，并报告第一对不同的事件：**pivot**。
 
-<figure class="fig">
-<div class="fig-grid" style="--cols:5"><span class="fig-label">参照</span><span class="fig-node">embed</span><span class="fig-node">norm</span><span class="fig-node is-empty"></span><span class="fig-node">attn</span><span class="fig-node">mlp</span><span></span><span class="fig-pair">相等</span><span class="fig-pair">相等</span><span class="fig-pair">空缺：不配对</span><span class="fig-pair is-bad">第一个差别：pivot</span><span></span><span class="fig-label">嫌疑</span><span class="fig-node">embed</span><span class="fig-node">norm</span><span class="fig-node is-ghost">多出的 cast</span><span class="fig-node is-bad">attn</span><span class="fig-node">mlp</span></div>
-<figcaption>两条 trace 按顺序排列。匹配把相同的边界配成对，多出的 cast 不配对，并报告第一个不同的对。</figcaption>
+<figure class="fx" data-fig="pairing" aria-label="两条 trace 配对并找到 pivot">
+<div class="fx-stage">
+<div class="fx-grid" style="--cols:5">
+<span class="fx-label">参照</span><span class="fx-node" data-hot="1">embed</span><span class="fx-node" data-hot="2">norm</span><span class="fx-node is-empty" data-hot="3"></span><span class="fx-node" data-hot="4">attn</span><span class="fx-node">mlp</span>
+<span></span><span class="fx-pair is-ok" data-at="1">相等</span><span class="fx-pair is-ok" data-at="2">相等</span><span class="fx-pair" data-at="3">空缺：不配对</span><span class="fx-pair is-bad" data-at="4">第一个差别：pivot</span><span></span>
+<span class="fx-label">嫌疑</span><span class="fx-node" data-hot="1">embed</span><span class="fx-node" data-hot="2">norm</span><span class="fx-node is-ghost" data-hot="3">多出的 cast</span><span class="fx-node to-bad" data-hot="4">attn</span><span class="fx-node">mlp</span>
+</div>
+</div>
+<ol class="fx-say">
+<li>两条 trace 按调用顺序排列，每个边界一个 fingerprint。</li>
+<li>embed 和 embed 配对：相等。</li>
+<li>norm 和 norm 配对：相等。</li>
+<li data-hold="1.5">嫌疑运行多了一个 cast。保序匹配让它不配对：这是空缺，不是差别。</li>
+<li data-hold="2">attn 不同：第一个不同的对就是 pivot。从它走到原因。</li>
+</ol>
+<figcaption>图：两条 trace 按顺序排列。匹配把相同的边界配成对，多出的 cast 不配对，并报告第一个不同的对。</figcaption>
 </figure>
 
 这张图里有两点要紧。
@@ -34,7 +47,7 @@ OpGuard 在两次运行的每个模型级边界上记录 fingerprint，把两份
 
 **目标：** 两次运行在每个计划边界上的 fingerprint。
 
-**做法：** [opguard_bridge.py](../../tools/opguard_bridge.py) 中的 `opguard_bridge.run_pair(reference, suspect, ...)` 让两边都走 OpGuard 的 harness：发现、插桩计划、采集、比较。发现和采集各让每一边启动一次。对编译代码，改用 [graph probe](capture-compiled-code.md) 记录。
+**做法：** [opguard_bridge.py](../../tools/opguard_bridge.py) 中的 `opguard_bridge.run_pair(reference, suspect, ...)` 让两边都走 OpGuard 的 harness：发现、插桩计划、采集、比较。发现和采集各让每一边启动一次。如果生产作业运行 `torch.compile` 或 CUDA graph，这次采集会在 eager 下运行它，可能看不到生产实际算出的比特：见[作业运行编译代码时](capture-compiled-code.md)。
 
 **成功：** 两份 trace 都存在，摘要统计了相等和不同的事件。
 
@@ -102,4 +115,4 @@ OpGuard 在两次运行的每个模型级边界上记录 fingerprint，把两份
 - [报告：OpGuard 演练](../../examples/pretraining_e2e/REPORT.md)：配置、OpGuard 对每一对报告了什么、修复和重跑、每次排查的代价、覆盖、fingerprint 检查。
 - 代码：[pretraining_e2e.py](../../examples/pretraining_e2e/pretraining_e2e.py) 和 [opguard_bridge.py](../../tools/opguard_bridge.py)。
 - [pretraining-alignment skill](../../skills/pretraining-alignment/SKILL.md)。
-- `torch.compile` 或 CUDA graph 下的运行见[采集编译代码](capture-compiled-code.md)。
+- [作业运行编译代码时](capture-compiled-code.md)：`torch.compile` 或 CUDA graph 下的运行。

@@ -36,15 +36,21 @@ asks the questions and routes you. The words used throughout are in the
 
 1. [Determinism and preflight](handbook/1-pretraining/determinism-and-preflight.md):
    turn on the settings that make a run repeatable, and check both runs really use them.
-2. [Training step](handbook/1-pretraining/training-step.md): make backward, the optimizer,
-   the loss and resume from a checkpoint repeat bit for bit.
-3. [Data parallel](handbook/1-pretraining/data-parallel.md): keep gradients equal when
-   they are summed across ranks or sharded.
-4. [Capture compiled code](handbook/1-pretraining/capture-compiled-code.md): take
-   fingerprints inside `torch.compile` and CUDA graphs, where hooks cannot see.
-5. [Localize with OpGuard](handbook/1-pretraining/localize-with-opguard.md): find the
-   first operator where the two runs differ; that is what to fix.
-6. [SDC](handbook/1-pretraining/sdc.md): rule out hardware that silently returns wrong values.
+2. [Data alignment](handbook/1-pretraining/data-alignment.md): check that every rank of
+   both runs gets the same batches at every step.
+3. [Localize with OpGuard](handbook/1-pretraining/localize-with-opguard.md): capture both
+   runs, find the first operator where they differ, walk from it to the cause, fix and
+   confirm.
+
+Then the page for where the first divergence points:
+
+- [Training step](handbook/1-pretraining/training-step.md): backward, the optimizer, the
+  loss and resume from a checkpoint, made to repeat bit for bit.
+- [Data parallel](handbook/1-pretraining/data-parallel.md): gradients summed across ranks
+  or sharded, kept equal.
+- [When the job runs compiled code](handbook/1-pretraining/capture-compiled-code.md):
+  fingerprints inside `torch.compile` and CUDA graphs, where an eager capture cannot see.
+- [SDC](handbook/1-pretraining/sdc.md): hardware that silently returns wrong values.
 
 ## Part 2: rollout and trainer disagree
 

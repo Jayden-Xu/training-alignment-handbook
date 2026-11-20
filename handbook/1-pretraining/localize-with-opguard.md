@@ -2,21 +2,39 @@
 
 ## Where we are
 
-This page covers steps 3, 4, 6 and 7 of the [pre-training workflow](README.md):
-capture, first divergence, fix and confirm. You have a reference run and a
-suspect run that differ only in the declared thing
-([preflight](determinism-and-preflight.md)). What is still open: where the two
-runs first part, and why. Classification (step 5) is on the
-[workflow page](README.md#step-5-classify).
+This page is the core loop of the [pre-training workflow](README.md): steps 3,
+4, 6 and 7, capture, first divergence, fix and confirm. You have a reference run
+and a suspect run that differ only in the declared thing
+([preflight](determinism-and-preflight.md)) and read the same batches
+([data alignment](data-alignment.md)). What is still open: where the two runs
+first part, and why. Classification (step 5) is on the
+[workflow page](README.md#step-5-classify); the pages after this one cover the
+causes a first divergence most often points to:
+[the training step](training-step.md),
+[the gradient collectives](data-parallel.md),
+[compiled code](capture-compiled-code.md) and [the hardware](sdc.md).
 
 ## The idea: the first difference is where to start, not the cause
 
 OpGuard records a fingerprint at every model-level boundary on both runs,
 pairs the two traces, and reports the first pair that differs: the **pivot**.
 
-<figure class="fig">
-<div class="fig-grid" style="--cols:5"><span class="fig-label">reference</span><span class="fig-node">embed</span><span class="fig-node">norm</span><span class="fig-node is-empty"></span><span class="fig-node">attn</span><span class="fig-node">mlp</span><span></span><span class="fig-pair">equal</span><span class="fig-pair">equal</span><span class="fig-pair">gap: unpaired</span><span class="fig-pair is-bad">first difference: pivot</span><span></span><span class="fig-label">suspect</span><span class="fig-node">embed</span><span class="fig-node">norm</span><span class="fig-node is-ghost">extra cast</span><span class="fig-node is-bad">attn</span><span class="fig-node">mlp</span></div>
-<figcaption>Both traces in order. Matching pairs equal boundaries, leaves the extra cast unpaired, and reports the first pair that differs.</figcaption>
+<figure class="fx" data-fig="pairing" aria-label="Pairing two traces and finding the pivot">
+<div class="fx-stage">
+<div class="fx-grid" style="--cols:5">
+<span class="fx-label">reference</span><span class="fx-node" data-hot="1">embed</span><span class="fx-node" data-hot="2">norm</span><span class="fx-node is-empty" data-hot="3"></span><span class="fx-node" data-hot="4">attn</span><span class="fx-node">mlp</span>
+<span></span><span class="fx-pair is-ok" data-at="1">equal</span><span class="fx-pair is-ok" data-at="2">equal</span><span class="fx-pair" data-at="3">gap: unpaired</span><span class="fx-pair is-bad" data-at="4">first difference: pivot</span><span></span>
+<span class="fx-label">suspect</span><span class="fx-node" data-hot="1">embed</span><span class="fx-node" data-hot="2">norm</span><span class="fx-node is-ghost" data-hot="3">extra cast</span><span class="fx-node to-bad" data-hot="4">attn</span><span class="fx-node">mlp</span>
+</div>
+</div>
+<ol class="fx-say">
+<li>Both traces in call order, a fingerprint at every boundary.</li>
+<li>embed pairs with embed: equal.</li>
+<li>norm pairs with norm: equal.</li>
+<li data-hold="1.5">The suspect has an extra cast. Order-preserving matching leaves it unpaired: a gap, not a difference.</li>
+<li data-hold="2">attn differs: the first pair that differs is the pivot. Walk from it to the cause.</li>
+</ol>
+<figcaption>Figure: both traces in order. Matching pairs equal boundaries, leaves the extra cast unpaired, and reports the first pair that differs.</figcaption>
 </figure>
 
 Two things in this picture matter.
@@ -55,8 +73,10 @@ files and lists what was discovered and what was planned.
 **How:** `opguard_bridge.run_pair(reference, suspect, ...)` in
 [opguard_bridge.py](../../tools/opguard_bridge.py) runs both sides through
 OpGuard's harness: discovery, instrumentation plan, capture, comparison.
-Discovery and capture launch each side once. For compiled code, record with
-the [graph probe](capture-compiled-code.md) instead.
+Discovery and capture launch each side once. If the production job runs
+`torch.compile` or CUDA graphs, this capture runs it in eager and may not show
+the bits production computes: see
+[When the job runs compiled code](capture-compiled-code.md).
 
 **Success:** both traces exist, and the summary counts equal and differing
 events.
@@ -158,5 +178,5 @@ known-answer demonstration, not a blind evaluation.
 - Code: [pretraining_e2e.py](../../examples/pretraining_e2e/pretraining_e2e.py)
   and [opguard_bridge.py](../../tools/opguard_bridge.py).
 - [pretraining-alignment skill](../../skills/pretraining-alignment/SKILL.md).
-- [Capture compiled code](capture-compiled-code.md) for runs under
+- [When the job runs compiled code](capture-compiled-code.md) for runs under
   `torch.compile` or CUDA graphs.

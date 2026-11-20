@@ -30,8 +30,25 @@
 规则是：**在两个技术栈共有的边界上比较，按内容配对行，把剩下的每处差异写成一个有名字、有决定的舍入点。**
 这就是第 1 部分的对照实验用在两个实现上，也是引擎一致性的原则：结果相等需要算术相等，而不是公式相等。
 
-<figure class="fig">
-<div class="fig-steps"><span class="fig-node">1. 预检 diff</span><span class="fig-node">2. 对齐数据和权重</span><span class="fig-node">3. 两边都采集</span><span class="fig-node is-key">4. 首个分歧点</span><span class="fig-node">5. 舍入点表</span><span class="fig-node">6. 逐处决定</span><span class="fig-node">7. 回归</span></div>
+<figure class="fx" data-fig="migration" aria-label="框架迁移这一步，以一个注意力块为例">
+<div class="fx-stage">
+<div class="fx-steps"><span class="fx-step" data-hot="0">1. 预检 diff</span><span class="fx-step" data-hot="1">2. 对齐数据和权重</span><span class="fx-step" data-hot="2">3. 两边都采集</span><span class="fx-step is-key" data-hot="3">4. 首个分歧点</span><span class="fx-step" data-hot="4">5. 舍入点表</span><span class="fx-step" data-hot="5">6. 逐处决定</span><span class="fx-step" data-hot="6">7. 回归</span></div>
+<div class="fx-grid" style="--cols:4">
+<span class="fx-label">栈 A</span><span class="fx-node" data-hot="2">RMSNorm</span><span class="fx-node" data-hot="2">q, k, v</span><span class="fx-node" data-hot="3">注意力</span><span class="fx-node to-bad" data-hot="3 4">残差相加，bf16</span>
+<span></span><span class="fx-pair" data-at="2" style="grid-column: span 2">没有共同边界：不比较</span><span class="fx-pair" data-at="3">共同边界：按内容配对</span><span class="fx-swap fx-pair" data-at="3"><span data-to="4">共同边界：按内容配对</span><span class="fx-pair is-bad" data-at="4">舍入点：bf16 对 fp32</span></span>
+<span class="fx-label">栈 B</span><span class="fx-node is-ghost" data-hot="2" style="grid-column: span 2">融合的 norm + 打包的 QKV</span><span class="fx-node" data-hot="3">注意力</span><span class="fx-node to-bad" data-hot="3 4">残差相加，fp32</span>
+</div>
+</div>
+<ol class="fx-say">
+<li>1. 比较两份预检报告：两次运行只在软件栈上不同。</li>
+<li>2. 两个栈看到同样的 token，从同样的权重开始。</li>
+<li data-hold="1.5">3. 在两个栈共有的边界上采集。栈 B 融合了 norm 和投影，所以它们不参与比较。</li>
+<li data-hold="1.5">4. 在共同边界上按内容给行配对；取第一个输入行相同而输出行不同的边界。</li>
+<li data-hold="1.5">5. 舍入点表：两个前向之间的每个差异，比如残差相加用 bf16 还是 fp32。</li>
+<li>6. 逐处决定：是要修的 bug，还是要保留的选择，并写下测得的影响。</li>
+<li data-hold="2">7. 把这一对作为回归检查保留，下次升级时就能看出什么变了。</li>
+</ol>
+<figcaption>图：在两个栈共有的边界上比较，按内容给行配对，把剩下的每个差异变成一个有决定的、有名字的舍入点。</figcaption>
 </figure>
 
 ## 步骤

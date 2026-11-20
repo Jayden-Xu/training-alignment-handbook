@@ -14,10 +14,26 @@ off-policy。这一部分讲两件事：怎样让两边逐位一致；不一致�
 
 ## 工作流程
 
-<figure class="fig">
-<div class="fig-steps"><span class="fig-node">1. 审查算子</span><span class="fig-node">2. 让一侧满足不变性（整个模型，L1–L3）</span><span class="fig-node">3. 并行度（L5）</span><span class="fig-node">4. 采样</span><span class="fig-node">5. LoRA</span><span class="fig-node">6. 让两侧一致（引擎一致性，L4）</span><span class="fig-node">7. 在线记录</span></div>
-<div class="fig-chain"><span class="fig-node is-key">8. 把 staleness 和数值误差分开</span><span class="fig-arrow" aria-hidden="true"></span><div class="fig-branch"><div class="fig-chain"><span class="fig-arrow">numeric = 0</span><span class="fig-node is-ok">10. 回归</span></div><div class="fig-chain"><span class="fig-arrow">numeric ≠ 0</span><span class="fig-node is-bad">9. 离线定位</span></div></div></div>
-<figcaption>第 9 步之后，带着找到的原因回到第 6 步。</figcaption>
+<figure class="fx" data-fig="rl-workflow" aria-label="强化学习训推对齐工作流" markdown>
+<div class="fx-stage" markdown>
+<div class="fx-steps" markdown="span"><span class="fx-step" data-hot="0">[1. 审查算子](whole-model.md)</span><span class="fx-step" data-hot="1">[2. 让一侧满足不变性（整个模型，L1–L3）](whole-model.md)</span><span class="fx-step" data-hot="2">[3. 并行度（L5）](parallelism.md)</span><span class="fx-step" data-hot="3">[4. 采样](sampling.md)</span><span class="fx-step" data-hot="4">[5. LoRA](lora.md)</span><span class="fx-step" data-hot="5 9">[6. 让两侧一致（引擎一致性，L4）](engine-parity-vllm.md)</span><span class="fx-step" data-hot="6">[7. 在线记录](rl-loop.md)</span></div>
+<div class="fx-chain" markdown="span"><span class="fx-node is-key" data-hot="7">[8. 把 staleness 和数值误差分开](rl-loop.md)</span><span class="fx-arrow" data-hot="8 10" aria-hidden="true"></span><span class="fx-branch"><span class="fx-chain"><span class="fx-arrow" data-hot="8">numeric ≠ 0</span><span class="fx-node to-bad" data-hot="8">[9. 离线定位](rl-loop.md)</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="10">numeric = 0</span><span class="fx-node to-ok" data-hot="10">[10. 回归](../4-operations/regression.md)</span></span></span></div>
+<div class="fx-back" data-hot="9">第 9 步之后，带着找到的原因回到第 6 步。</div>
+</div>
+<ol class="fx-say">
+<li>1. 审查算子：列出输出依赖 batch 或模式的模块。</li>
+<li>2. 让一侧满足不变性：在每种 batch 和服务模式下位都相同（L1–L3）。</li>
+<li>3. 在每个并行度下位都相同（L5）。</li>
+<li>4. 采样：采出的 token 能够重放。</li>
+<li>5. LoRA：adapter 在任何 batch 里都以同样的方式舍入。</li>
+<li>6. 让两侧一致：trainer 的 logprob 等于引擎的（L4）。</li>
+<li>7. 在线记录正在运行的循环。</li>
+<li>8. 把每个 token 的差距拆成 staleness 和数值误差。</li>
+<li>numeric ≠ 0：9. 离线定位，一直定位到算子。</li>
+<li>然后带着找到的原因回到第 6 步。</li>
+<li data-hold="2">numeric = 0：10. 把结果作为回归基线保留。</li>
+</ol>
+<figcaption>图：第 2–5 步让每一侧各自满足不变性，第 6 步让两侧一致，第 7–9 步看守正在运行的循环。</figcaption>
 </figure>
 
 | 步骤 | 页面 | 完成后你得到什么 |

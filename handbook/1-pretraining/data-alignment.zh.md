@@ -2,7 +2,7 @@
 
 ## 我们在哪里
 
-这一页接着[预训练工作流](README.md)的第 2 步。[预检](determinism-and-preflight.md)已经读回了两次运行的设置，只剩下声明过的那个差异。还没回答的是：两次运行训练的是不是同一份数据。只有每个 rank 在每一步看到的 token 比特都相同，两次运行才能逐位比较。否则之后的每一次比较显示的都是数据的差异，而不是你要找的原因。这一页在 batch 离开 loader 的地方检查 batch 本身，然后才去看[训练 step](training-step.md)。
+这一页接着[预训练工作流](README.md)的第 2 步。[预检](determinism-and-preflight.md)已经读回了两次运行的设置，只剩下声明过的那个差异。还没回答的是：两次运行训练的是不是同一份数据。只有每个 rank 在每一步看到的 token 比特都相同，两次运行才能逐位比较。否则之后的每一次比较显示的都是数据的差异，而不是你要找的原因。这一页在 batch 离开 loader 的地方检查 batch 本身，然后才采集这一对运行（[用 OpGuard 定位](localize-with-opguard.md)）。
 
 ## 思路：种子相同，batch 不同
 
@@ -75,7 +75,7 @@ python tools/data_fingerprint.py compare fp/run_a fp/run_b --global
 
 比较是精确的，没有容差。第二种写法先把每一步各 rank 的数据拼接起来，用于数据并行规模不同的两次运行。
 
-**成功：** 没有任何记录不同。这时数据已经对齐，比较转到[训练 step](training-step.md)。
+**成功：** 没有任何记录不同。这时数据已经对齐，这一对运行可以采集了（[用 OpGuard 定位](localize-with-opguard.md)）。
 
 ### 2f. 分类
 

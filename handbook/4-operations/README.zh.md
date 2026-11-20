@@ -8,8 +8,20 @@
 一个逐位结果属于测出它的那个软件栈。同一份源码换一个库版本，可能选中另一个 kernel；
 另一个 kernel 可能按另一种顺序把同样的数加起来。所以软件栈每变一次，判定就要重新检查，不能假定。
 
-<figure class="fig">
-<div class="fig-chain"><span class="fig-node">软件栈变化</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">运行回归套件</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-decision">与这个软件栈的基线比较</span></div><div class="fig-branch"><div class="fig-chain"><span class="fig-arrow">某条结论不再成立</span><span class="fig-node is-bad">发现：报告并修复</span></div><div class="fig-chain"><span class="fig-arrow">某个原生结果变了</span><span class="fig-node is-key">更新主题页，记录基线</span></div><div class="fig-chain"><span class="fig-arrow">与基线相同</span><span class="fig-node is-ok">完成</span></div></div>
+<figure class="fx" data-fig="ops-loop" aria-label="软件栈变化时重新检查结果" markdown>
+<div class="fx-stage" markdown>
+<div class="fx-chain" markdown="span"><span class="fx-node" data-hot="0">软件栈变化</span><span class="fx-arrow" data-hot="1" aria-hidden="true"></span><span class="fx-node" data-hot="1">[运行回归套件](regression.md)</span><span class="fx-arrow" data-hot="2" aria-hidden="true"></span><span class="fx-node is-decision" data-hot="2">与这个软件栈的基线比较</span></div>
+<div class="fx-branch" markdown="span"><span class="fx-chain"><span class="fx-arrow" data-hot="3">某条结论不再成立</span><span class="fx-node to-bad" data-hot="3">发现：报告并修复</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="4">某个原生结果变了</span><span class="fx-node to-key" data-hot="4">更新主题页，记录基线</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="5">与基线相同</span><span class="fx-node to-ok" data-hot="5">完成</span></span></div>
+</div>
+<ol class="fx-say">
+<li>软件栈变了：库升级、驱动更新、新的 GPU。</li>
+<li>运行回归套件：把每个验证过的检查再跑一遍。</li>
+<li>把每个结果与这个软件栈的基线比较。</li>
+<li data-hold="1.5">某条结论不再成立：这是一个发现。报告并修复。</li>
+<li data-hold="1.5">某个原生结果变了：更新主题页，记录新的基线。</li>
+<li data-hold="2">与基线相同：完成，直到下一次变化。</li>
+</ol>
+<figcaption>图：逐位结果属于测得它的那个软件栈，所以软件栈每变一次，就重新检查一次。</figcaption>
 </figure>
 
 ## 步骤

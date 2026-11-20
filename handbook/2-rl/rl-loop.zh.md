@@ -30,8 +30,31 @@ staleness = logp_trainer(v) - logp_trainer(c)   # policy lag: corrected by IS / 
 定位沿数据流进行，而不是沿 trace 顺序。从两侧一致的位置开始，例如 embedding 的输出，
 跟着每个张量走到它的使用者，直到第一对输入相等、输出不同的位置。
 
-<figure class="fig">
-<div class="fig-spine"><span class="fig-node">记录（在线）</span><span class="fig-arrow" aria-hidden="true"></span><div class="fig-chain"><span class="fig-node is-decision">权重一致？</span><span class="fig-arrow">否</span><span class="fig-node is-bad">修复同步；停止</span></div><span class="fig-arrow">是</span><div class="fig-chain"><span class="fig-node">把每个 token 拆成 numeric 和 staleness</span><span class="fig-arrow">numeric = 0</span><span class="fig-node is-ok">基础设施无责</span></div><span class="fig-arrow">numeric ≠ 0</span><div class="fig-chain"><span class="fig-node">两侧重新捕获，沿数据流走</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">对原因分类，测试最小的修复</span></div></div>
+<figure class="fx" data-fig="rl-triage" aria-label="正在运行的强化学习循环中一个差距的分诊">
+<div class="fx-stage">
+<div class="fx-spine">
+<span class="fx-node" data-hot="0">记录（在线）</span><span></span>
+<span class="fx-arrow is-down" data-hot="1" aria-hidden="true"></span><span></span>
+<span class="fx-node is-decision" data-hot="1">权重一致？</span><span class="fx-side" data-at="2"><span class="fx-arrow">否</span><span class="fx-node is-bad">修复同步；停止</span></span>
+<span class="fx-arrow is-down" data-hot="3">是</span><span></span>
+<span class="fx-node" data-hot="3 4">把每个 token 拆成 numeric 和 staleness</span><span class="fx-side"><span class="fx-swap is-block" data-at="3"><span class="fx-split" data-to="4"><span class="is-whole">gap 0.15</span></span><span class="fx-split" data-at="4" style="--a:1;--b:14"><span class="is-a">numeric 0.01</span><span class="is-b">staleness 0.14</span></span></span></span>
+<span class="fx-arrow is-down" data-hot="6">numeric ≠ 0</span><span class="fx-side" data-at="5"><span class="fx-arrow">numeric = 0</span><span class="fx-node is-ok">基础设施无责</span></span>
+<span class="fx-node" data-at="6">两侧重新捕获，沿数据流走</span><span></span>
+<span class="fx-arrow is-down" data-at="7" aria-hidden="true"></span><span></span>
+<span class="fx-node is-key" data-at="7">对原因分类，测试最小的修复</span><span></span>
+</div>
+</div>
+<ol class="fx-say">
+<li>记录来自正在运行的循环，附带每个 batch 实际使用的权重的 fingerprint。</li>
+<li>先问：引擎持有的权重，是 trainer 在那个版本的权重吗？</li>
+<li>如果不是，这个版本上的所有比较都没有意义：修复同步，停止。</li>
+<li>如果是，取每个 token 的差距；这里是 0.15。</li>
+<li data-hold="2">在 rollout 自己的版本上重放，把它精确拆开：numeric 0.01 加 staleness 0.14。</li>
+<li data-hold="1.5">如果 numeric 是 0，差距就只是策略滞后：基础设施无责。</li>
+<li data-hold="1.5">numeric ≠ 0：两侧重新捕获，沿数据流走，而不是沿 trace 顺序走。</li>
+<li data-hold="2">对原因分类，测试最小的修复。</li>
+</ol>
+<figcaption>图：先检查权重，在 rollout 的版本上拆开每个差距，只定位非零的数值误差。</figcaption>
 </figure>
 
 ## 步骤
@@ -66,7 +89,7 @@ OpGuard 的 RL harness 实现了下面的每个动作。记录用
      列出前向，用 `vectors.describe`、`vectors.lookup`、`vectors.coverage` 和
      `vectors.compare` 查询，从一致的锚点开始沿数据流走。运行编译代码或 CUDA graphs
      的引擎用 [tools/graph_probe.py](../../tools/graph_probe.py) 取指纹
-     （[捕获编译后的代码](../1-pretraining/capture-compiled-code.md)）。
+     （[作业运行编译代码时](../1-pretraining/capture-compiled-code.md)）。
    - 成功标准：一对候选：两侧输入行相同，输出行不同。
 5. **归类并检验原因。**
    - 目标：一个原因类别，并经过干预确认。

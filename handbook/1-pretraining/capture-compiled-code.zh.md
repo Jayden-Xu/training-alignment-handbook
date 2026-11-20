@@ -1,14 +1,83 @@
-# torch.compile 与 CUDA graph 内部的 fingerprint
+# 作业运行编译代码时
 
 ## 我们在哪里
 
-对于使用 `torch.compile` 或 CUDA graph 的运行，这是[预训练工作流](README.md)的第 3 步（采集）。两次运行已经受控（[第 2 步](determinism-and-preflight.md)）。还没解决的是：OpGuard 采集的是 eager 执行，而编译代码运行的是别的 kernel，所以 eager 采集可能看不到生产实际算出的比特。本页从编译代码和 graph 重放内部记录 OpGuard 格式的 fingerprint，使工作流的其余部分（[定位](localize-with-opguard.md)）无需改动。
+你已经能用 OpGuard 采集一对运行，并从首个分歧点走到原因（[用 OpGuard 定位](localize-with-opguard.md)）；前两页讲了出在[训练 step](training-step.md) 和[梯度集合通信](data-parallel.md)里的原因。本页讲的是采集本身的一个缺口。很多作业并不逐个算子地运行模型，而是经过 `torch.compile` 运行，或者作为 CUDA graph 重放。为了采集，OpGuard 逐个算子地运行作业（eager 模式），而 eager 模式运行的 kernel 和编译后的作业不同。所以你采到的比特，可能不是生产中出现分歧的那些比特。
 
-## 思路：编译代码是不同的算术，而 probe 可能改变它
+你会从[工作流](README.md)的两个步骤来到这里：在采集（第 3 步），生产作业是编译过的；在分类（第 5 步），eager 重放看不到症状，或者 pivot 落在编译器生成的代码里。本页先讲编译器和 CUDA graph 做了什么、各自为什么会改变比特，再讲怎样从它们内部记录 OpGuard 格式的 fingerprint，使工作流的其余部分照常运行。
 
-**编译改变顺序。** 在 eager 模式下，RMSNorm 是几个 kernel，每个都对输出舍入。Inductor 把 GEMM 之间的算子（norm、RoPE、SiLU·mul、残差加）融合进它自己的 Triton kernel，带有自己的归约顺序和数学函数，还会把 `mm` + add 改写成一个 `addmm`。同一个 norm 于是成了另一个和。
+## 编译代码做了什么
 
-**CUDA graph 改变形状。** graph 重放的是采集时选定的 kernel。一个请求被 padding 进某个桶，就按桶的批大小运行，而 GEMM 库按这个大小选 kernel：这就是第 0 部分 split-K 例子的重演。
+### torch.compile：许多小算子变成少数几个生成的 kernel
+
+在 eager 模式下，PyTorch 在 Python 调用一个算子时就运行它：一个算子一个 kernel。每个 kernel 从 GPU 内存读入输入，计算，再把输出写回内存，写回时舍入到输出的 dtype。一个由几个小算子写成的 norm，就是同样多个 kernel，每个都写出一个舍入过的中间结果。
+
+`torch.compile` 把 Python 读一遍（由它的前端 Dynamo 追踪），把算子记成一张图，再交给一个编译器（默认是 Inductor）为这张图写新的 kernel。编译器把一串逐元素算子，连同其间的归约，**融合**进一个 kernel：中间值留在寄存器里（张量是 bf16 时用 fp32），只写出结果。每个归约怎样在线程间切分，由它自己决定。它还会改写模式：矩阵乘后面跟一个加法，可以变成一个顺带做加法的矩阵乘（`addmm`）。
+
+<figure class="fx" data-fig="fusion" aria-label="同一个 norm 在 eager 下运行，和编译成一个 kernel 运行">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">eager：一个算子一个 kernel</span><div class="fx-chain is-tight"><span class="fx-col"><span class="fx-node is-mono" data-hot="1">x²</span><span class="fx-chip" data-at="1">↓ bf16</span></span><span class="fx-arrow" data-hot="2" aria-hidden="true"></span><span class="fx-col"><span class="fx-node is-mono" data-hot="2">均值</span><span class="fx-chip" data-at="2">↓ bf16</span></span><span class="fx-arrow" data-hot="3" aria-hidden="true"></span><span class="fx-col"><span class="fx-node is-mono" data-hot="3">rsqrt</span><span class="fx-chip" data-at="3">↓ bf16</span></span><span class="fx-arrow" data-hot="4" aria-hidden="true"></span><span class="fx-col"><span class="fx-node is-mono" data-hot="4">× x</span><span class="fx-chip" data-at="4">↓ bf16</span></span><span class="fx-arrow" data-hot="5" aria-hidden="true"></span><span class="fx-col"><span class="fx-node is-mono" data-hot="5">× w</span><span class="fx-chip" data-at="5">↓ bf16</span></span></div></div>
+<div class="fx-row"><span class="fx-label">编译后：一个生成的 kernel</span><div class="fx-chain is-tight"><span class="fx-col"><span class="fx-box to-key" data-hot="6"><span class="fx-note">一个 kernel</span><span class="fx-chain is-tight fx-sweep" data-hot="6"><span class="fx-chip">x²</span><span class="fx-chip">均值</span><span class="fx-chip">rsqrt</span><span class="fx-chip">× x</span><span class="fx-chip">× w</span></span><span class="fx-note">中间结果留在寄存器里，fp32</span></span><span class="fx-chip" data-at="7">↓ bf16 只写结果</span></span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>同一个 norm，写成五个算子；w 是它的权重。</li>
+<li>eager：一个算子一个 kernel。x² 写进内存，舍入到 bf16。</li>
+<li>均值把它读回来，归约，再写出一个舍入过的结果。</li>
+<li>rsqrt：又一个 kernel，又一次舍入。</li>
+<li>× x：又一个 kernel，又一次舍入。</li>
+<li>× w：五个 kernel，内存里五个舍入过的中间结果。</li>
+<li data-hold="2">编译后：一个生成的 kernel 在 fp32 寄存器里跑完全部五个算子，并按自己的顺序求均值。</li>
+<li data-hold="2">它只写出结果：一次舍入，而不是五次。</li>
+</ol>
+<figcaption>图：同一个 norm（w 是它的权重）。eager 把每个中间结果按它的 dtype 写进内存；融合的 kernel 把它们留在寄存器里，按自己的顺序求均值，只写出结果。</figcaption>
+</figure>
+
+### CUDA graph：把 launch 录一次，然后重放
+
+从 Python 逐个 launch kernel，每个 kernel 都要花 CPU 时间。step 很小时，这些时间可能超过 GPU 上的计算。**CUDA graph** 把一串 launch（哪些 kernel、什么参数、在哪些缓冲区上）录制一次，之后用一次调用重放整串。重放不运行 Python，也不重新做任何选择：kernel、形状和内存地址都是录制时的那些。
+
+所以一张 graph 只适合一种形状。输入大小多变的作业会录几张 graph，每个大小桶一张，并把每个输入 padding 到上面最近的那个录制大小。
+
+<figure class="fx" data-fig="graph-pad" aria-label="5 行的 batch 在为 8 行录制的 graph 里重放">
+<div class="fx-stage">
+<div class="fx-chain is-tight"><span class="fx-box to-key" data-hot="2"><span class="fx-swap"><span class="fx-note" data-to="2">5 行的 batch</span><span class="fx-note" data-at="2">为 8 行录制的 graph</span></span><span class="fx-cells fx-sweep" style="--n:8;--cw:1.7rem" data-hot="2"><span class="fx-cell is-mine">0</span><span class="fx-cell is-mine">1</span><span class="fx-cell is-mine">2</span><span class="fx-cell is-mine">3</span><span class="fx-cell is-mine">4</span><span class="fx-cell is-pad" data-at="1">5</span><span class="fx-cell is-pad" data-at="1">6</span><span class="fx-cell is-pad" data-at="1">7</span></span></span><span class="fx-arrow" data-at="3">保留</span><span class="fx-box" data-at="3"><span class="fx-note">前 5 行</span><span class="fx-cells" style="--n:5;--cw:1.7rem"><span class="fx-cell is-mine">0</span><span class="fx-cell is-mine">1</span><span class="fx-cell is-mine">2</span><span class="fx-cell is-mine">3</span><span class="fx-cell is-mine">4</span></span></span></div>
+</div>
+<ol class="fx-say">
+<li>来了一个 5 行的 batch。</li>
+<li>把它 padding 到下一个录制过的大小：3 行 padding（5 到 7）凑成 8 行。</li>
+<li data-hold="2">为 8 行录制的 graph 开始重放：其中每个 kernel 看到的都是 8 行。</li>
+<li data-hold="2">只有前 5 行作为答案保留。</li>
+</ol>
+<figcaption>图：5 行的 batch 在为 8 行录制的 graph 里运行。答案只用真实的行，但重放中的每个 kernel 看到的都是 8 行。</figcaption>
+</figure>
+
+## 比特为什么会变
+
+**融合移动了舍入点。** 一个 bf16 的小例子：在 1 附近，相邻两个 bf16 数的间距是 ε = 2⁻⁷。令 a = b = 1 + ε，c = −(1 + 2ε)，计算 a · b + c。
+
+| | eager：两个 kernel | 编译后：一个融合 kernel |
+|---|---|---|
+| a · b | 1 + 2ε + ε²，写出时舍入到 bf16：ε² 不到半个间距，所以是 1 + 2ε | 1 + 2ε + ε²，以 fp32 留在寄存器里 |
+| + c | (1 + 2ε) − (1 + 2ε) = 0 | ε² |
+| bf16 结果 | 0 | ε² |
+
+数学相同，舍入的次数不同。融合 kernel 自己的归约顺序改变一个和，方式和第 0 部分那三个数一样（[第 0 部分](../0-foundations/README.md#floating-point-addition-is-not-associative)）。
+
+**按 padding 后的大小重放，改变了 GEMM 看到的形状。** padding 的行不在答案里，却在矩阵里：重放中的 GEMM 乘的是 8 行，不是 5 行。GEMM 库按形状选 kernel，也就选定了归约顺序（[第 0 部分：归约的顺序取决于形状](../0-foundations/README.md#a-reductions-order-depends-on-shape)）。所以这 5 行真实数据的舍入，可能和 eager 下按 5 行运行时不同。batch-invariant（批不变）的 GEMM（[第 3 部分](../3-kernels/gemm-and-quantized.md)）能消除这一项。
+
+**规则。** 编译代码和它所来自的 eager 代码是不同的算术：舍入点不同，归约顺序不同，形状也不同。在 eager 下做的比较，说明的只是 eager。
+
+## 常规采集为什么看不到内部
+
+OpGuard 的采集方式是包装模型 Python 代码中的调用：被包装的调用运行时，包装层对它的输入和输出取 fingerprint（[用 OpGuard 定位](localize-with-opguard.md)）。编译代码并不逐个发出这些调用。编译器把 Python 读过一遍之后，运行的是它生成的 kernel；graph 重放则完全不运行 Python。在编译后的图或一次重放内部，已经没有可以包装的 Python 调用了。
+
+所以常规采集是在 eager 下运行作业，也就是上一节说的另一种算术。症状在 eager 下能复现时，这就够了。不能复现时，观察者必须放进编译代码内部。
+
+## 思路：一个编译器会保留、又无法穿透的观察者
+
+**编译代码内部的观察者，必须是编译器会保留的算子。** 自定义算子就是这样：编译器在图中它所在的位置把它当作黑盒调用，CUDA graph 也像录制其他 kernel 一样录下它，所以每次重放都会再运行它，它取到的是编译代码实际算出的张量的 fingerprint。
 
 **probe 可能改变它测量的东西。** 一个小例子：编译代码计算 `s = x + o_proj(h)` 并把 `s` 传给下一个 norm。加法是逐元素的，所以 Inductor 把它融合进 norm kernel，而 GEMM 先对输出舍入。加一个读取 `s` 的 probe，`s` 就有了一个非逐元素的使用者；Inductor 于是把加法折叠进 GEMM（`addmm`），在唯一的一次舍入之前就做了加法。对 `s` 的探测改变了 `s`。
 
@@ -65,7 +134,8 @@
 
 ## 小结
 
-- 编译代码和 CUDA graph 是与 eager 不同的算术：要从内部采集。
+- `torch.compile` 融合算子并自己选择归约顺序；CUDA graph 按 padding 后的形状重放固定的 launch。两者都是与 eager 不同的算术。
+- OpGuard 包装的是 Python 调用，而编译代码和 graph 重放一个调用也不发出，所以 eager 采集显示的是 eager 的比特：编译代码要从内部采集。
 - probe 是一个带设备环形缓冲区的自定义算子；graph 重放写各自的行。
 - 每个 probe 都要用精确的逐元素副本隔离，并用有无 probe 的对比来证明。
 - 在编译之前用 eager 构建惰性缓存。

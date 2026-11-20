@@ -16,12 +16,22 @@ A sum all-reduce adds each element over the GPUs one add at a time, rounding
 after every add. With the ring algorithm the message is cut into chunks, and
 each chunk's sum starts at a different GPU and walks the ring:
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">element in chunk 0</span><div class="fig-chain"><span class="fig-node">GPU 1</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 2</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 3</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 0</span></div></div>
-<div class="fig-group"><span class="fig-label">element in chunk 1</span><div class="fig-chain"><span class="fig-node">GPU 2</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 3</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 0</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 1</span></div></div>
+<figure class="fx" data-fig="ring" aria-label="Ring all-reduce on 4 GPUs, two chunks">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">element in chunk 0</span><div class="fx-chain is-tight"><span class="fx-col"><span class="fx-node" data-hot="1">GPU 1</span><span class="fx-note fx-mono" data-at="1">g1</span></span><span class="fx-arrow" data-hot="2" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="2">+ GPU 2</span><span class="fx-note fx-mono" data-at="2">g1 + g2</span></span><span class="fx-arrow" data-hot="3" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="3">+ GPU 3</span><span class="fx-note fx-mono" data-at="3">(g1 + g2) + g3</span></span><span class="fx-arrow" data-hot="4" aria-hidden="true"></span><span class="fx-col"><span class="fx-node to-key" data-hot="4 5">+ GPU 0</span><span class="fx-note fx-mono" data-at="4">(…) + g0</span></span></div></div>
+<div class="fx-row"><span class="fx-label">element in chunk 1</span><div class="fx-chain is-tight"><span class="fx-col"><span class="fx-node" data-hot="1">GPU 2</span><span class="fx-note fx-mono" data-at="1">g2</span></span><span class="fx-arrow" data-hot="2" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="2">+ GPU 3</span><span class="fx-note fx-mono" data-at="2">g2 + g3</span></span><span class="fx-arrow" data-hot="3" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="3">+ GPU 0</span><span class="fx-note fx-mono" data-at="3">(g2 + g3) + g0</span></span><span class="fx-arrow" data-hot="4" aria-hidden="true"></span><span class="fx-col"><span class="fx-node to-key" data-hot="4 5">+ GPU 1</span><span class="fx-note fx-mono" data-at="4">(…) + g1</span></span></div></div>
 </div>
-<figcaption>Ring all-reduce on 4 GPUs: each chunk's sum starts at a different GPU.</figcaption>
+</div>
+<ol class="fx-say">
+<li>4 GPUs each hold a value g of every element. The ring cuts the message into chunks.</li>
+<li>Each chunk's sum starts at a different GPU: chunk 0 at GPU 1, chunk 1 at GPU 2.</li>
+<li>Each step adds the next GPU's value and rounds,</li>
+<li>and passes the partial sum along the ring.</li>
+<li data-hold="1.5">After 3 adds each chunk has its sum, each in its own order.</li>
+<li data-hold="2">Which chunk an element falls in depends on its offset and the message size: a bigger batch moves it, and its bits.</li>
+</ol>
+<figcaption>Figure: ring all-reduce on 4 GPUs: each chunk's sum starts at a different GPU.</figcaption>
 </figure>
 
 Which chunk an element falls in depends on its offset and on the message size.

@@ -77,17 +77,18 @@
 .md-typeset .flow-head a:focus-visible { color: var(--lane); }
 .md-typeset .flow-goal { color: var(--md-default-fg-color--light); margin-top: 0.15rem; }
 
-/* the row of steps; the thin line behind the nodes joins the first and last centre */
+/* the row of steps; the thin line behind the nodes joins the first and last centre.
+   A lane with another number of steps sets --steps on its list (style="--steps: 7"). */
 .md-typeset ol.flow-steps {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--steps, 6), minmax(0, 1fr));
   column-gap: 1rem;
   margin: 0;
   padding: 0;
   list-style: none;
   background: linear-gradient(var(--md-default-fg-color--lighter), var(--md-default-fg-color--lighter))
-    center / calc(100% - 100% / 6) 1px no-repeat;
+    center / calc(100% - 100% / var(--steps, 6)) 1px no-repeat;
 }
 .md-typeset ol.flow-steps > li {
   position: relative;

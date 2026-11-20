@@ -7,9 +7,22 @@ batch-invariant（批不变）实现。它可能是新的注意力变体、MoE c
 这一部分讲的就是处理这一个算子的流程：把它从"有变化或未知"带到"在给定级别上验证为不变"
 （见[级别](../0-foundations/README.md)），或者带到一个有文档的回退方案。
 
-<figure class="fig">
-<div class="fig-chain"><span class="fig-node">1. 找到变化的来源</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">2. 选最便宜的策略</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">3. 保留舍入点</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">4. 验证矩阵</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">5. 集成</span></div>
-<div class="fig-back">第 4 步失败时，回到第 1 步。</div>
+<figure class="fx" data-fig="kernel-workflow" aria-label="batch-invariant kernel 工作流" markdown>
+<div class="fx-stage" markdown>
+<div class="fx-chain" markdown="span"><span class="fx-step" data-hot="0 5">[1. 找到变化的来源](#1-locate-the-variance)</span><span class="fx-arrow" data-hot="1 5" aria-hidden="true"></span><span class="fx-step" data-hot="1 5">[2. 选最便宜的策略](#2-choose-the-cheapest-strategy-that-holds)</span><span class="fx-arrow" data-hot="2 5" aria-hidden="true"></span><span class="fx-step" data-hot="2 5">[3. 保留舍入点](#3-keep-the-rounding-points)</span><span class="fx-arrow" data-hot="3 6" aria-hidden="true"></span><span class="fx-step" data-hot="3 6">[4. 验证矩阵](#4-verify-the-matrix)<span class="fx-swap"><span class="fx-note fx-fail" data-at="3" data-to="5">某一格失败</span><span class="fx-note fx-pass" data-at="6">零不一致</span></span></span><span class="fx-arrow" data-hot="7" aria-hidden="true"></span><span class="fx-step" data-hot="7">[5. 集成](#5-integrate)</span></div>
+<div class="fx-back" data-hot="4">第 4 步失败时，回到第 1 步。</div>
+</div>
+<ol class="fx-say">
+<li>1. 找到变化的来源：算子内部哪个选择依赖于元素自身长度以外的东西。</li>
+<li>2. 选能消除这种依赖的最便宜的策略。</li>
+<li>3. 保留 kernel 必须匹配的那一侧的舍入点。</li>
+<li>4. 验证矩阵：batch 大小、位置、模式、布局、并行度，逐位比较。</li>
+<li data-hold="1.5">某一格失败：带着失败的模式回到第 1 步。</li>
+<li data-hold="1.5">重新定位，重新选择，保留舍入点。</li>
+<li>4. 再次验证：零不一致。</li>
+<li data-hold="2">5. 集成：真正运行的是验证过的 kernel，并记录它的代价。</li>
+</ol>
+<figcaption>图：一个算子的五个步骤。第 4 步要的是证据，不是从代码出发的论证；失败就回到第 1 步。</figcaption>
 </figure>
 
 执行这些步骤的 agent 流程是
@@ -21,10 +34,22 @@ batch-invariant（批不变）实现。它可能是新的注意力变体、MoE c
 浮点加法每加一次就舍入一次，所以分组方式会改变答案。在 fp32 里，1e8 + 1 会舍入回 1e8，
 因为 1e8 之后的下一个数相距 8：
 
-| 分组 | 步骤 | 结果 |
-|---|---|---|
-| (1e8 + 1) − 1e8 | 1e8 + 1 舍入为 1e8；再算 1e8 − 1e8 | 0 |
-| (1e8 − 1e8) + 1 | 0；再算 0 + 1 | 1 |
+<figure class="fx" data-fig="two-groupings" aria-label="同样三个数的两种分组">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label fx-mono">(1e8 + 1) − 1e8</span><div class="fx-chain is-tight"><span class="fx-swap" data-at="1"><span class="fx-node is-mono" data-at="1" data-to="2">1e8 + 1 = 100000001</span><span class="fx-node is-mono is-warn" data-at="2">1e8 + 1 → 1e8<span class="fx-note">舍入：下一个数相距 8</span></span></span><span class="fx-arrow" data-at="3" aria-hidden="true"></span><span class="fx-node is-mono" data-at="3">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="4" aria-hidden="true"></span><span class="fx-node is-mono is-key" data-at="4">0</span></div></div>
+<div class="fx-row"><span class="fx-label fx-mono">(1e8 − 1e8) + 1</span><div class="fx-chain is-tight"><span class="fx-node is-mono" data-at="1">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="3" aria-hidden="true"></span><span class="fx-node is-mono" data-at="3">0 + 1 = 1</span><span class="fx-arrow" data-at="4" aria-hidden="true"></span><span class="fx-node is-mono is-key" data-at="4">1</span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>同样三个 fp32 数，1e8、1 和 −1e8，两种分组。</li>
+<li>每种分组先形成自己的第一个部分和。</li>
+<li data-hold="1.5">1e8 + 1 舍入回 1e8：1e8 之后的下一个数相距 8。</li>
+<li>每种分组再加上最后一个数。</li>
+<li data-hold="2">同样三个数，两个答案：0 和 1。</li>
+</ol>
+<figcaption>图：浮点加法每加一次就舍入一次，所以分组方式会改变答案。</figcaption>
+</figure>
 
 同样三个数，两个答案。kernel 要为每个输出元素做出这个选择，而且常常依据整个调用的形状来做。
 看矩阵乘中的一行。单独计算时批里只有一行，库可能把这一行的长点积拆成四段，放在四个 program 上，

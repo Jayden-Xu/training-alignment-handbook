@@ -2,7 +2,7 @@
 
 ## 我们在哪里
 
-当运行使用数据并行时，本页服务于[预训练工作流](README.md)的第 2 步（控制）和第 5 步（分类）。[训练 step](training-step.md) 已经在单个 rank 上固定；还没解决的是跨 rank 的求和。DDP 把梯度分桶做 all-reduce，FSDP 和 ZeRO 对梯度的扁平副本做 reduce-scatter，两者还都要跨 rank 归约梯度范数和 loss 均值。每一个求和都有顺序，而这个顺序可能取决于与该参数毫无关系的东西。
+当首个分歧点指向一个由多个 rank 共同求和的梯度时，本页服务于[预训练工作流](README.md)的第 5 步（分类）；对任何使用数据并行的运行，它也服务于第 2 步（控制）。[训练 step](training-step.md) 已经在单个 rank 上固定；还没解决的是跨 rank 的求和。DDP 把梯度分桶做 all-reduce，FSDP 和 ZeRO 对梯度的扁平副本做 reduce-scatter，两者还都要跨 rank 归约梯度范数和 loss 均值。每一个求和都有顺序，而这个顺序可能取决于与该参数毫无关系的东西。
 
 ## 思路：顺序跟着位置走，并行度改变的是和本身
 
@@ -17,12 +17,34 @@
 
 **小例子：并行度。** 16 条序列在 d = 2 时，每个 rank 对 8 条序列做一次 backward，再把两个部分梯度相加。d = 4 时，是四个各含 4 条序列的部分和。这是不同的和，而不是同一个和换了顺序。没有哪种集合通信设置能修复它。
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">d = 2</span><div class="fig-chain"><div class="fig-stack"><span class="fig-node">对 s0..s7 做反向</span><span class="fig-node">对 s8..s15 做反向</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-op">+</span></div></div>
-<div class="fig-group"><span class="fig-label">逻辑分片，任意 d</span><div class="fig-chain"><div class="fig-stack"><div class="fig-chain"><div class="fig-stack"><span class="fig-node">s0</span><span class="fig-node">s1</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-op">+</span></div><div class="fig-chain"><div class="fig-stack"><span class="fig-node">s2</span><span class="fig-node">s3</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-op">+</span></div></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">+ … 16 个分片上的一棵固定的树</span></div></div>
+<figure class="fx" data-fig="dp-tree" aria-label="并行度为 2 和 4 时，按 rank 求和与按逻辑分片求和的梯度">
+<div class="fx-stage">
+<div class="fx-head"><span class="fx-label">16 条序列，数据并行度</span><span class="fx-swap"><span class="fx-chip" data-at="1" data-to="3">d = 2</span><span class="fx-chip is-key" data-at="3">d = 4</span></span></div>
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">每个 rank 各做反向</span><div class="fx-tree" style="--n:16">
+<div class="fx-swap is-block"><div class="fx-level" data-at="1" data-to="3"><span class="fx-band" data-c="0" style="--w:8">rank 0</span><span class="fx-band" data-c="1" style="--w:8">rank 1</span></div><div class="fx-level" data-at="3"><span class="fx-band" data-c="0" style="--w:4">rank 0</span><span class="fx-band" data-c="1" style="--w:4">rank 1</span><span class="fx-band" data-c="2" style="--w:4">rank 2</span><span class="fx-band" data-c="3" style="--w:4">rank 3</span></div></div>
+<div class="fx-level"><span class="fx-cell">0</span><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell">4</span><span class="fx-cell">5</span><span class="fx-cell">6</span><span class="fx-cell">7</span><span class="fx-cell">8</span><span class="fx-cell">9</span><span class="fx-cell">10</span><span class="fx-cell">11</span><span class="fx-cell">12</span><span class="fx-cell">13</span><span class="fx-cell">14</span><span class="fx-cell">15</span></div>
+<div class="fx-swap is-block"><div class="fx-level" data-at="1" data-to="3"><span class="fx-j" style="--w:8;--k:8"><span class="fx-node is-mono">Σ 0–7</span></span><span class="fx-j" style="--w:8;--k:8"><span class="fx-node is-mono">Σ 8–15</span></span></div><div class="fx-level" data-at="3"><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-mono">Σ 0–3</span></span><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-mono">Σ 4–7</span></span><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-mono">Σ 8–11</span></span><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-mono">Σ 12–15</span></span></div></div>
+<div class="fx-swap is-block"><div class="fx-level" data-at="2" data-to="3"><span class="fx-j" style="--w:16"><span class="fx-node is-mono is-key">x₂</span></span></div><div class="fx-level" data-at="4"><span class="fx-j" style="--w:16;--k:4"><span class="fx-node is-mono is-bad">x₄ ≠ x₂</span></span></div></div>
+</div></div>
+<div class="fx-row"><span class="fx-label">逻辑分片，任意 d</span><div class="fx-tree" style="--n:16">
+<div class="fx-swap is-block"><div class="fx-level" data-at="1" data-to="3"><span class="fx-band" data-c="0" style="--w:8">rank 0</span><span class="fx-band" data-c="1" style="--w:8">rank 1</span></div><div class="fx-level" data-at="3"><span class="fx-band" data-c="0" style="--w:4">rank 0</span><span class="fx-band" data-c="1" style="--w:4">rank 1</span><span class="fx-band" data-c="2" style="--w:4">rank 2</span><span class="fx-band" data-c="3" style="--w:4">rank 3</span></div></div>
+<div class="fx-level"><span class="fx-cell">0</span><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell">4</span><span class="fx-cell">5</span><span class="fx-cell">6</span><span class="fx-cell">7</span><span class="fx-cell">8</span><span class="fx-cell">9</span><span class="fx-cell">10</span><span class="fx-cell">11</span><span class="fx-cell">12</span><span class="fx-cell">13</span><span class="fx-cell">14</span><span class="fx-cell">15</span></div>
+<div class="fx-level" data-at="1" data-hot="3"><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span></div>
+<div class="fx-level" data-at="1" data-hot="3"><span class="fx-j" style="--w:4"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:4"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:4"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:4"><span class="fx-node is-op">+</span></span></div>
+<div class="fx-level" data-at="1" data-hot="4"><span class="fx-j" style="--w:8"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:8"><span class="fx-node is-op">+</span></span></div>
+<div class="fx-level" data-at="2" data-hot="4"><span class="fx-j" style="--w:16"><span class="fx-node is-mono is-ok">x</span></span></div>
+</div></div>
 </div>
-<figcaption>d = 2 时两个部分和取决于并行度。用逻辑分片时，每个并行度求的都是同一棵树。</figcaption>
+</div>
+<ol class="fx-say">
+<li>一个全局 batch 里有 16 条序列。</li>
+<li data-hold="2">d = 2：每个 rank 拥有 8 条序列。按 rank：一次反向，一个部分和。逻辑分片：每个 rank 求一棵固定的树中自己的子树。</li>
+<li data-hold="1.5">各 rank 的部分和相加：x₂。逻辑分片完成同一棵树：x。</li>
+<li data-hold="2">d = 4：每个 rank 拥有 4 条序列。按 rank：四个部分和，是另外的和。逻辑分片：同一棵树，每个 rank 的子树更小。</li>
+<li data-hold="2">按 rank：x₄ ≠ x₂，结果随并行度变化。逻辑分片：同一棵树，相同的位 x。</li>
+</ol>
+<figcaption>图：d = 2 和 d = 4 时，按 rank 的部分和取决于并行度。用逻辑分片时，每个并行度求的都是同一棵树。</figcaption>
 </figure>
 
 **规则。** 跨 rank 求和的顺序必须是元素和批次的固定逻辑切分的函数，绝不能是消息位置、归属 rank 或并行度的函数。这是第 0 部分的原则在 L5 上的体现：并行度可以改变由谁计算某个部分和，但不能改变有哪些部分和。

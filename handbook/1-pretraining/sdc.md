@@ -3,9 +3,11 @@
 ## Where we are
 
 This page serves step 5 (classify) of the [pre-training workflow](README.md),
-and the time before a long run. You reach it when a self-replay differs with no
-setting or code difference, when one rank disagrees with the others, or when a
-node returns from repair. What is still open: is the device itself returning
+and the time before a long run. The pages before it covered causes in software:
+the [training step](training-step.md), the [collectives](data-parallel.md) and
+[compiled code](capture-compiled-code.md). You reach this one when the software
+is ruled out: a self-replay differs with no setting or code difference, one
+rank disagrees with the others, or a node returns from repair. What is still open: is the device itself returning
 wrong values without an error? That is silent data corruption (SDC).
 
 ## The idea: same inputs, same kernel, same stack, different bits

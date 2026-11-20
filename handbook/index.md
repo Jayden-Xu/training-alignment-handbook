@@ -22,13 +22,14 @@ ideas all three rest on.
 <p class="flows-base" markdown>Built on [Part 0: Foundations](0-foundations/README.md): levels L1–L5, and where and how to compare.</p>
 <div class="flow-lane" data-lane="pre" data-side="above" markdown>
 <p class="flow-head" markdown><span class="flow-part">Part 1</span> [Pre-training](1-pretraining/README.md) <span class="flow-goal">Find where two runs part</span></p>
-<ol class="flow-steps" markdown>
-<li markdown="span">[Determinism and preflight](1-pretraining/determinism-and-preflight.md)<span class="flow-desc">Turn on the settings that make a run repeatable, and check both runs really use them.</span></li>
-<li markdown="span">[Training step](1-pretraining/training-step.md)<span class="flow-desc">Make backward, the optimizer, the loss and resume repeat bit for bit.</span></li>
-<li markdown="span">[Data parallel](1-pretraining/data-parallel.md)<span class="flow-desc">Keep gradients equal when they are summed across ranks or sharded.</span></li>
-<li markdown="span">[Capture compiled code](1-pretraining/capture-compiled-code.md)<span class="flow-desc">Take fingerprints inside `torch.compile` and CUDA graphs, where hooks cannot see.</span></li>
-<li class="flow-handoff" markdown="span">[Localize with OpGuard](1-pretraining/localize-with-opguard.md)<span class="flow-desc">Find the first operator where the two runs differ; that is what to fix.</span></li>
-<li markdown="span">[SDC](1-pretraining/sdc.md)<span class="flow-desc">Rule out hardware that silently returns wrong values.</span></li>
+<ol class="flow-steps" style="--steps: 7" markdown>
+<li markdown="span">[Preflight](1-pretraining/determinism-and-preflight.md)<span class="flow-desc">Turn on the settings that make a run repeatable, and check both runs really use them.</span></li>
+<li markdown="span">[Data alignment](1-pretraining/data-alignment.md)<span class="flow-desc">Check that every rank of both runs gets the same batches at every step.</span></li>
+<li class="flow-handoff" markdown="span">[Localize with OpGuard](1-pretraining/localize-with-opguard.md)<span class="flow-desc">Capture both runs, find the first operator where they differ, walk from it to the cause, fix and confirm.</span></li>
+<li markdown="span">[Training step](1-pretraining/training-step.md)<span class="flow-desc">When the cause is in backward, the optimizer, the loss or resume: make them repeat bit for bit.</span></li>
+<li markdown="span">[Data parallel](1-pretraining/data-parallel.md)<span class="flow-desc">When the cause is a gradient summed across ranks or sharded: keep it equal.</span></li>
+<li markdown="span">[Compiled code](1-pretraining/capture-compiled-code.md)<span class="flow-desc">When the job runs `torch.compile` or CUDA graphs: take fingerprints inside them, where an eager capture cannot see.</span></li>
+<li markdown="span">[SDC](1-pretraining/sdc.md)<span class="flow-desc">When the software is ruled out: find hardware that silently returns wrong values.</span></li>
 </ol>
 </div>
 <div class="flow-lane" data-lane="kernel" data-delay="1" data-target markdown>
@@ -68,15 +69,22 @@ asks the questions and routes you. The words used throughout are in the
 
 1. [Determinism and preflight](1-pretraining/determinism-and-preflight.md):
    turn on the settings that make a run repeatable, and check both runs really use them.
-2. [Training step](1-pretraining/training-step.md): make backward, the optimizer,
-   the loss and resume from a checkpoint repeat bit for bit.
-3. [Data parallel](1-pretraining/data-parallel.md): keep gradients equal when
-   they are summed across ranks or sharded.
-4. [Capture compiled code](1-pretraining/capture-compiled-code.md): take
-   fingerprints inside `torch.compile` and CUDA graphs, where hooks cannot see.
-5. [Localize with OpGuard](1-pretraining/localize-with-opguard.md): find the
-   first operator where the two runs differ; that is what to fix.
-6. [SDC](1-pretraining/sdc.md): rule out hardware that silently returns wrong values.
+2. [Data alignment](1-pretraining/data-alignment.md): check that every rank of
+   both runs gets the same batches at every step.
+3. [Localize with OpGuard](1-pretraining/localize-with-opguard.md): capture both
+   runs, find the first operator where they differ, walk from it to the cause,
+   fix and confirm.
+
+Then the page for where the first divergence points:
+
+- [Training step](1-pretraining/training-step.md): backward, the optimizer, the
+  loss and resume from a checkpoint, made to repeat bit for bit.
+- [Data parallel](1-pretraining/data-parallel.md): gradients summed across
+  ranks or sharded, kept equal.
+- [When the job runs compiled code](1-pretraining/capture-compiled-code.md):
+  fingerprints inside `torch.compile` and CUDA graphs, where an eager capture
+  cannot see.
+- [SDC](1-pretraining/sdc.md): hardware that silently returns wrong values.
 
 ## Part 2: rollout and trainer disagree
 

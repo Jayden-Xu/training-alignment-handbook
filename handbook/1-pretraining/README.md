@@ -16,8 +16,23 @@ check. It is the method OpGuard takes, and the
 [pretraining-alignment skill](../../skills/pretraining-alignment/SKILL.md)
 applies it as an agent.
 
-<figure class="fig">
-<div class="fig-steps"><span class="fig-node">1. Choose the reference</span><span class="fig-node">2. Preflight and control</span><span class="fig-node">3. Capture: eager or compiled</span><span class="fig-node">4. First divergence</span><span class="fig-node is-key">5. Classify<span class="fig-note">⇢ hardware: SDC scan</span></span><span class="fig-node">6. Fix</span><span class="fig-node">7. Confirm</span><span class="fig-node">8. Regression</span></div>
+<figure class="fx" data-fig="pre-workflow" aria-label="The pre-training workflow" markdown>
+<div class="fx-stage" markdown>
+<div class="fx-steps" markdown="span"><span class="fx-step" data-hot="0">[1. Choose the reference](#step-1-pick-a-reference-run)</span><span class="fx-step" data-hot="1">[2. Preflight and control](#step-2-preflight-and-control)</span><span class="fx-step" data-hot="2">[3. Capture](#step-3-capture)</span><span class="fx-step" data-hot="3">[4. First divergence](#step-4-take-the-first-divergence)</span><span class="fx-step is-key" data-hot="4">[5. Classify](#step-5-classify)</span><span class="fx-step" data-hot="6">[6. Fix](#step-6-fix)</span><span class="fx-step" data-hot="7">[7. Confirm](#step-7-confirm)</span><span class="fx-step" data-hot="8">[8. Regression](#step-8-keep-it-as-a-regression-check)</span></div>
+<div class="fx-chain" markdown="span"><span class="fx-node is-key" data-hot="4">5. Classify</span><span class="fx-arrow" data-hot="5" aria-hidden="true"></span><span class="fx-branch"><span class="fx-chain"><span class="fx-arrow" data-hot="5">backward, optimizer, loss, resume</span><span class="fx-node" data-hot="5 6">[Training step](training-step.md)</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="5">gradient collectives</span><span class="fx-node" data-hot="5 6">[Data parallel](data-parallel.md)</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="5">fused code, graph buckets</span><span class="fx-node" data-hot="2 5 6">[Compiled code](capture-compiled-code.md)</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="5">the device itself</span><span class="fx-node" data-hot="5 6">[SDC](sdc.md)</span></span></span></div>
+</div>
+<ol class="fx-say">
+<li>1. Choose the reference run: it decides which question the comparison answers.</li>
+<li>2. Preflight and control: the two runs differ only in the one thing under test.</li>
+<li data-hold="1.5">3. Capture fingerprints at every boundary on both runs. If the job runs compiled code, read its page first.</li>
+<li>4. Take the first boundary whose bits differ.</li>
+<li>5. Classify: the first divergence points to a cause.</li>
+<li data-hold="1.5">The common causes each have a page.</li>
+<li>6. Fix there, with the smallest change that removes the cause.</li>
+<li>7. Confirm: the pair, captured again, agrees everywhere.</li>
+<li data-hold="2">8. Keep the pair in the regression suite, so it keeps agreeing.</li>
+</ol>
+<figcaption>Figure: steps 1 to 8 are the main line. At step 5 the first divergence points to a cause, and the common causes each have a page; fix there, then confirm (step 7). Compiled code is also a capture case: if the production job runs it, read its page before step 3.</figcaption>
 </figure>
 
 | Step | What it settles | Page |
@@ -25,12 +40,22 @@ applies it as an agent.
 | 1. Choose the reference run | Which question the comparison answers | this page |
 | 2. Preflight and control | That the two runs differ only in the one thing under test | [Determinism and preflight](determinism-and-preflight.md); for the training step, [Training step](training-step.md); for gradient collectives, [Data parallel](data-parallel.md) |
 | 2. Preflight and control: the data | That every rank sees the same token bits at every step | [Data alignment](data-alignment.md) |
-| 3. Capture | Fingerprints at every model-level boundary, eager or compiled | [Localize with OpGuard](localize-with-opguard.md); compiled code: [Capture compiled code](capture-compiled-code.md) |
+| 3. Capture | Fingerprints at every model-level boundary, on both runs | [Localize with OpGuard](localize-with-opguard.md); if the job runs `torch.compile` or CUDA graphs, also [When the job runs compiled code](capture-compiled-code.md) |
 | 4. First divergence | The first boundary whose bits differ | [Localize with OpGuard](localize-with-opguard.md) |
-| 5. Classify | Which kind of cause: setting, training-step part, collective, compiled code, kernel, hardware | this page, then the page for that class |
-| 6. Fix | The smallest change that removes the cause | the page for that class; kernels in [part 3](../3-kernels/README.md) |
+| 5. Classify | Which kind of cause: setting, training-step part, collective, compiled code, kernel, hardware | this page, then the page for that cause |
+| 6. Fix | The smallest change that removes the cause | the page for that cause; kernels in [part 3](../3-kernels/README.md) |
 | 7. Confirm | The pair, captured again, agrees everywhere | [Localize with OpGuard](localize-with-opguard.md) |
 | 8. Regression | The pair stays in a suite and keeps agreeing | [Regression](../4-operations/regression.md) |
+
+The pages of this part follow the workflow. Step 2 comes first:
+[Determinism and preflight](determinism-and-preflight.md), then
+[Data alignment](data-alignment.md). Then the core loop,
+[Localize with OpGuard](localize-with-opguard.md): capture, first divergence,
+walk outward, fix, confirm. The pages after it are for where the first
+divergence points: [Training step](training-step.md) (backward, optimizer, loss,
+resume), [Data parallel](data-parallel.md) (gradient collectives),
+[When the job runs compiled code](capture-compiled-code.md) (`torch.compile` or
+CUDA graphs) and [SDC](sdc.md) (the hardware).
 
 ## The idea: two runs, one difference
 
@@ -39,12 +64,26 @@ difference is either that thing or a fault. A tiny example: two runs are
 identical except that the suspect's norm multiplies by its weight before
 rounding to bf16. Their boundary fingerprints, in call order:
 
-| Boundary | Reference | Suspect | Equal? |
-|---|---|---|---|
-| token embedding | e | e | yes |
-| attention norm | n | n′ | **no: first divergence** |
-| q projection | q | q′ | no |
-| … every later boundary | | | no |
+<figure class="fx" data-fig="first-divergence" aria-label="Two runs compared boundary by boundary">
+<div class="fx-stage">
+<div class="fx-grid" style="--cols:3">
+<span class="fx-th">Boundary</span><span class="fx-th">Reference</span><span class="fx-th">Suspect</span><span class="fx-th">Equal?</span>
+<span class="fx-label" data-hot="1">token embedding</span><span class="fx-node is-mono" data-hot="1">e</span><span class="fx-node is-mono" data-hot="1">e</span><span class="fx-pair is-ok" data-at="1">yes</span>
+<span class="fx-label" data-hot="2 5">attention norm</span><span class="fx-node is-mono" data-hot="2 5">n</span><span class="fx-node is-mono to-bad" data-hot="2 5">n′</span><span class="fx-pair is-bad" data-at="2">no: first divergence</span>
+<span class="fx-label" data-hot="3">q projection</span><span class="fx-node is-mono" data-hot="3">q</span><span class="fx-node is-mono to-bad" data-hot="3">q′</span><span class="fx-pair" data-at="3">no</span>
+<span class="fx-label" data-hot="4">… every later boundary</span><span class="fx-node is-mono" data-hot="4">…</span><span class="fx-node is-mono to-bad" data-hot="4">…</span><span class="fx-pair" data-at="4">no</span>
+</div>
+</div>
+<ol class="fx-say">
+<li>Two runs, identical except where the suspect's norm multiplies by its weight. Fingerprints in call order.</li>
+<li>The token embedding is equal on both runs.</li>
+<li data-hold="1.5">The attention norm differs: the first divergence.</li>
+<li>The q projection differs too, because its input differs.</li>
+<li>So does every later boundary.</li>
+<li data-hold="2">Read only the first difference, then walk outward from it to the cause.</li>
+</ol>
+<figcaption>Figure: hold everything equal except one declared thing; the first bitwise difference is that thing or a fault.</figcaption>
+</figure>
 
 Everything after the norm differs too, because its input differs. So read only
 the first difference, then walk outward from it to the cause.
@@ -99,7 +138,7 @@ on both runs, computed on the op's stream with no added synchronization.
 through OpGuard's harness: discovery, plan, capture, comparison. For code under
 `torch.compile` or CUDA graphs, eager capture does not show the bits production
 computes; use [graph_probe.py](../../tools/graph_probe.py)
-([Capture compiled code](capture-compiled-code.md)).
+([When the job runs compiled code](capture-compiled-code.md)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
@@ -137,7 +176,7 @@ causes OpGuard has pinpointed in production fall into these classes:
 | Racy or nondeterministic kernel | `torch.embedding` backward, a fused embedding backward, a Triton kernel missing a barrier | [Training step](training-step.md); [part 3](../3-kernels/README.md) |
 | State bookkeeping | an optimizer step variable overwritten on resume | [Training step](training-step.md) |
 | Topology-dependent reduction | reduce-scatter under a different NCCL topology | [Data parallel](data-parallel.md) |
-| Compiled code | fusion or a graph bucket changes a reduction | [Capture compiled code](capture-compiled-code.md) |
+| Compiled code | fusion or a graph bucket changes a reduction | [When the job runs compiled code](capture-compiled-code.md) |
 | Stream misuse | an fp32 RMSNorm stream race, activation offload | [Localize with OpGuard](localize-with-opguard.md) |
 | Layout assumption | QKV projections relying on implicit contiguity | [Localize with OpGuard](localize-with-opguard.md) |
 | MoE routing | a histogram bin mismatch causing routing drift | [part 3: MoE](../3-kernels/moe.md) |

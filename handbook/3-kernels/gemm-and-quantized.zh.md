@@ -11,11 +11,29 @@
 输出元素 C[m, n] 是 K 个乘积之和。GEMM 库把输出切成 tile，并在每次调用时决定怎么走 K。
 这个决定以问题形状为键，而形状包括 M，即批中的行数。
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">1 行的 batch：工作量小</span><div class="fig-chain"><span class="fig-node">K 切成 4 段，由 4 个 program 计算</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">把 4 个部分和相加</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">第 0 行：值 A</span></div></div>
-<div class="fig-group"><span class="fig-label">64 行的 batch：工作量足够</span><div class="fig-chain"><span class="fig-node">一个 program 按顺序走完整个 K</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-bad">第 0 行：值 B ≠ A</span></div></div>
+<figure class="fx" data-fig="gemm-split" aria-label="矩阵乘的第 0 行在 1 行的 batch 和 64 行的 batch 中">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">1 行的 batch：工作量小<span class="fx-batch fx-mini"><span class="fx-rowbar is-mine"></span></span></span><div class="fx-tree" style="--n:4">
+<div class="fx-level"><span class="fx-cell" data-hot="1">K/4</span><span class="fx-cell" data-hot="1">K/4</span><span class="fx-cell" data-hot="1">K/4</span><span class="fx-cell" data-hot="1">K/4</span></div>
+<div class="fx-level" data-at="1"><span class="fx-j" style="--k:1"><span class="fx-node is-mono">program 0</span></span><span class="fx-j" style="--k:1"><span class="fx-node is-mono">program 1</span></span><span class="fx-j" style="--k:1"><span class="fx-node is-mono">program 2</span></span><span class="fx-j" style="--k:1"><span class="fx-node is-mono">program 3</span></span></div>
+<div class="fx-level" data-at="2" data-hot="4"><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-key">第 0 行：值 A</span></span></div>
+</div></div>
+<div class="fx-row"><span class="fx-label">64 行的 batch：工作量足够<span class="fx-batch fx-mini"><span class="fx-rowbar is-mine"></span><span class="fx-rowbar"></span><span class="fx-rowbar"></span><span class="fx-rowbar"></span><span class="fx-rowbar"></span></span></span><div class="fx-tree" style="--n:4">
+<div class="fx-level fx-sweep" data-hot="3"><span class="fx-cell">K/4</span><span class="fx-cell">K/4</span><span class="fx-cell">K/4</span><span class="fx-cell">K/4</span></div>
+<div class="fx-level" data-at="3"><span class="fx-walk" style="--w:4">一个 program 按顺序走完整个 K</span></div>
+<div class="fx-level" data-at="4"><span class="fx-j" style="--w:4;--k:1"><span class="fx-node is-bad">第 0 行：值 B ≠ A</span></span></div>
+</div></div>
 </div>
+</div>
+<ol class="fx-say">
+<li>第 0 行（高亮）在两个 batch 里是同一个沿 K 的点积。</li>
+<li data-hold="1.5">1 行的 batch：工作量小，所以库把 K 切成 4 段，由 4 个 program 计算。</li>
+<li data-hold="1.5">把 4 个部分和相加：第 0 行得到值 A。</li>
+<li data-hold="2">64 行的 batch：不切分工作量也足够。一个 program 按顺序走完整个 K。</li>
+<li data-hold="2">第 0 行得到值 B ≠ A：数学相同，分组不同。</li>
+</ol>
+<figcaption>图：库根据行数选择 K 的切分方式，所以同一行在另一个 batch 里得到不同的位。</figcaption>
 </figure>
 
 批小时，库可能拆分 K 以让 GPU 忙起来（split-K 或 stream-K），或调用专门的小 M kernel。

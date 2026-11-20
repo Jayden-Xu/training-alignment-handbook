@@ -12,11 +12,30 @@ GEMM，再加一次归约：每个 query 带着一个运行中的 softmax，对�
 一个 query 的输出是对 key 的加权和。kernel 按 block 访问 key，并维护运行中的最大值和总和
 （online softmax），所以 block 边界就是这次归约的分组。边界一动，位就动。
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">从位置 0 起的固定分块</span><div class="fig-chain"><span class="fig-node">key 0–63</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">key 64–127</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">key 128–t</span></div></div>
-<div class="fig-group"><span class="fig-label">split-KV decode：切分由 batch 决定</span><div class="fig-chain"><div class="fig-stack"><span class="fig-node">key 0–t/2</span><span class="fig-node">key t/2–t</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-bad">合并两个部分结果</span></div></div>
+<figure class="fx" data-fig="kv-split" aria-label="一个 query 的 key：按固定分块走，和按 split-KV decode 走">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">从位置 0 起的固定分块</span><div class="fx-tree" style="--n:10">
+<div class="fx-level"><span class="fx-cell" style="--w:4" data-hot="1">key 0–63</span><span class="fx-cell" style="--w:4" data-hot="2">key 64–127</span><span class="fx-cell" style="--w:2" data-hot="3">128–t</span></div>
+<div class="fx-level" data-at="1"><span class="fx-walk" style="--w:10">一次走完，带着运行中的最大值和总和</span></div>
+<div class="fx-level" data-at="3"><span class="fx-j" style="--w:10;--k:1"><span class="fx-node is-ok">每种模式下都是同样的和</span></span></div>
+</div></div>
+<div class="fx-row"><span class="fx-label">split-KV decode：切分由 batch 决定</span><div class="fx-tree" style="--n:10">
+<div class="fx-swap is-block"><div class="fx-level" data-to="6"><span class="fx-cell" style="--w:5" data-hot="4">key 0–t/2</span><span class="fx-cell" style="--w:5" data-hot="4">key t/2–t</span></div><div class="fx-level" data-at="6"><span class="fx-cell" style="--w:3">0–t/3</span><span class="fx-cell" style="--w:3">t/3–2t/3</span><span class="fx-cell" style="--w:4">2t/3–t</span></div></div>
+<div class="fx-swap is-block"><div class="fx-level" data-at="5" data-to="6"><span class="fx-j" style="--w:10"><span class="fx-node is-bad">合并两个部分结果</span></span></div><div class="fx-level" data-at="6"><span class="fx-j" style="--w:10;--k:3"><span class="fx-node is-bad">合并三个部分结果</span></span></div></div>
+</div></div>
 </div>
+</div>
+<ol class="fx-say">
+<li>位置 t 上的一个 query 对 key 0 到 t 求和，带着运行中的最大值和总和。</li>
+<li>从位置 0 起数的固定分块：先是 key 0–63，</li>
+<li>然后是 key 64–127，</li>
+<li data-hold="1.5">然后是 128–t。prefill、decode 和 chunked prefill 都走这些块。</li>
+<li data-hold="1.5">split-KV decode：batch 大小和核心数决定切成几份；这里是两份，同时求和。</li>
+<li data-hold="1.5">合并两个部分结果：同一个和的另一种分组。</li>
+<li data-hold="2">换一个 batch，切成三份：边界移动了，位也跟着变。</li>
+</ol>
+<figcaption>图：块边界就是归约的分组方式。边界一动，位就变。</figcaption>
 </figure>
 
 有三样东西会移动边界：

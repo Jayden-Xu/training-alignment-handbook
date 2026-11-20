@@ -25,10 +25,23 @@
 
 fp32 里也一样，而且用的是模型每天都会遇到的数。令 a = 1e8，b = 1，c = −1e8：
 
-| 顺序 | 逐步计算（fp32） | 结果 |
-|---|---|---|
-| (a + b) + c | a + b = 100000001 无法表示，舍入为 1e8。然后 1e8 − 1e8 | 0 |
-| (a + c) + b | a + c 恰好为 0。然后 0 + 1 | 1 |
+<figure class="fx" data-fig="two-orders" aria-label="三个数按两种顺序相加">
+<div class="fx-stage">
+<div class="fx-chain is-tight"><span class="fx-label">fp32</span><span class="fx-chip">a = 1e8</span><span class="fx-chip">b = 1</span><span class="fx-chip">c = −1e8</span></div>
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label fx-mono">(a + b) + c</span><div class="fx-chain is-tight"><span class="fx-swap" data-at="1"><span class="fx-node is-mono" data-at="1" data-to="2">a + b = 100000001</span><span class="fx-node is-mono is-warn" data-at="2">a + b → 1e8<span class="fx-note">舍入</span></span></span><span class="fx-arrow" data-at="3"></span><span class="fx-node is-mono" data-at="3">1e8 + c = 0</span><span class="fx-arrow" data-at="4"></span><span class="fx-node is-mono is-key" data-at="4">0</span></div></div>
+<div class="fx-row"><span class="fx-label fx-mono">(a + c) + b</span><div class="fx-chain is-tight"><span class="fx-node is-mono" data-at="1">a + c = 0<span class="fx-note">精确</span></span><span class="fx-arrow" data-at="3"></span><span class="fx-node is-mono" data-at="3">0 + b = 1</span><span class="fx-arrow" data-at="4"></span><span class="fx-node is-mono is-key" data-at="4">1</span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>三个 fp32 数：a = 1e8，b = 1，c = −1e8。用两种顺序把它们相加。</li>
+<li>每种顺序先形成自己的第一个部分和。</li>
+<li data-hold="1.5">a + b = 100000001 在 fp32 里无法表示，舍入为 1e8。</li>
+<li>每种顺序再加上最后一个数。</li>
+<li data-hold="2">同样三个数，两种顺序，两个结果：0 和 1。</li>
+</ol>
+<figcaption>图：fp32 下的 (a + b) + c 与 (a + c) + b。形成哪些部分和，决定了发生哪些舍入。</figcaption>
+</figure>
 
 每次加法都把结果舍入到最近的可表示数。发生哪些舍入，取决于形成了哪些部分和。所以：
 
@@ -40,13 +53,23 @@ fp32 里也一样，而且用的是模型每天都会遇到的数。令 a = 1e8�
 
 kernel 不是按数学来选顺序的，而是按拿到的形状来选。所以算术会随批次变化。取一个四项点积，t = [1e8, 1, −1e8, 1]，fp32：
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">一个 program，从左到右</span><div class="fig-chain"><span class="fig-node">1e8 + 1 = 1e8</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">1e8 − 1e8 = 0</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">0 + 1 = 1</span></div></div>
-<div class="fig-group"><span class="fig-label">split-K，分成两半</span><div class="fig-chain"><div class="fig-stack"><span class="fig-node">1e8 + 1 = 1e8</span><span class="fig-node">−1e8 + 1 = −1e8</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">1e8 + (−1e8) = 0</span></div></div>
-<div class="fig-group"><span class="fig-label">atomics，某一种完成顺序</span><div class="fig-chain"><span class="fig-node">1e8 − 1e8 = 0</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">0 + 1 = 1</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">1 + 1 = 2</span></div></div>
+<figure class="fx" data-fig="three-orders" aria-label="同一个点积按三种顺序归约">
+<div class="fx-stage">
+<div class="fx-chain is-tight"><span class="fx-label">t</span><span class="fx-chip">1e8</span><span class="fx-chip">1</span><span class="fx-chip">−1e8</span><span class="fx-chip">1</span></div>
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">一个 program，从左到右</span><div class="fx-chain is-tight"><span class="fx-node is-mono" data-at="1">1e8 + 1 = 1e8</span><span class="fx-arrow" data-at="2"></span><span class="fx-node is-mono" data-at="2">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="3"></span><span class="fx-node is-mono is-key" data-at="3" data-hot="4">0 + 1 = 1</span></div></div>
+<div class="fx-row"><span class="fx-label">split-K，分成两半</span><div class="fx-chain is-tight"><div class="fx-stack" data-at="1"><span class="fx-node is-mono" data-at="1">1e8 + 1 = 1e8</span><span class="fx-node is-mono" data-at="1">−1e8 + 1 = −1e8</span></div><span class="fx-arrow" data-at="2"></span><span class="fx-node is-mono is-key" data-at="2" data-hot="4">1e8 + (−1e8) = 0</span></div></div>
+<div class="fx-row"><span class="fx-label">atomics，某一种完成顺序</span><div class="fx-chain is-tight"><span class="fx-node is-mono" data-at="1">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="2"></span><span class="fx-node is-mono" data-at="2">0 + 1 = 1</span><span class="fx-arrow" data-at="3"></span><span class="fx-node is-mono is-key" data-at="3" data-hot="4">1 + 1 = 2</span></div></div>
 </div>
-<figcaption>fp32 下的 t = [1e8, 1, −1e8, 1]：同样四个数，三种顺序，三个结果。</figcaption>
+</div>
+<ol class="fx-say">
+<li>同样四项 t = [1e8, 1, −1e8, 1]，在 fp32 下用三种方式归约。</li>
+<li>第一次加法。split-K 在两个 program 上同时求两半的和。</li>
+<li>split-K 把两个部分和相加，结束：0。</li>
+<li>另外两种也结束了：从左到右得 1，这种完成顺序得 2。</li>
+<li data-hold="2">三种顺序，三个结果：1、0 和 2。每个都是某种顺序的正确舍入。</li>
+</ol>
+<figcaption>图：fp32 下的 t = [1e8, 1, −1e8, 1]：同样四个数，三种顺序，三个结果。</figcaption>
 </figure>
 
 三种顺序，三个答案：1、0 和 2。每一个都是某种顺序下正确的舍入。决定顺序的机制有三种：
@@ -121,16 +144,55 @@ kernel 不是按数学来选顺序的，而是按拿到的形状来选。所以�
 
 **摘要：fingerprint（指纹）。** 转储每个张量代价太高。fingerprint 必须能抓住任何单比特变化，不能让小的损坏相互抵消，也不能同步设备。用一个四个值的张量举例：
 
-| | 值 | 和 | 原始 32 位字的 XOR |
-|---|---|---|---|
-| 参考 | [1, 2, 3, 4] | 10 | w |
-| 一个值翻转了一位 | [1, 2, 3, 4 + ε] | 改变 | 改变 |
-| 两个相互抵消的错误 | [1 + ε, 2, 3, 4 − ε] | 10，不变 | 改变 |
+<figure class="fx" data-fig="sum-xor" aria-label="和与 XOR fingerprint 的对比">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">参考</span><div class="fx-chain is-tight"><div class="fx-cells fx-sweep" style="--n:4" data-hot="1"><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell">4</span></div><span class="fx-arrow" data-at="1"></span><span class="fx-node" data-at="1">和 <span class="fx-mono">10</span></span><span class="fx-node" data-at="1">原始 32 位字的 XOR <span class="fx-mono">w</span></span></div></div>
+<div class="fx-row" data-at="2"><span class="fx-label">一个值翻转了一位</span><div class="fx-chain is-tight"><div class="fx-cells fx-sweep" style="--n:4" data-hot="3"><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell is-bad">4 + ε</span></div><span class="fx-arrow" data-at="3"></span><span class="fx-node is-ok" data-at="3">和 <span class="fx-mono">改变</span><span class="fx-note">抓到</span></span><span class="fx-node is-ok" data-at="3">XOR <span class="fx-mono">改变</span><span class="fx-note">抓到</span></span></div></div>
+<div class="fx-row" data-at="4"><span class="fx-label">两个相互抵消的错误</span><div class="fx-chain is-tight"><div class="fx-cells fx-sweep" style="--n:4" data-hot="5"><span class="fx-cell is-bad">1 + ε</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell is-bad">4 − ε</span></div><span class="fx-arrow" data-at="5"></span><span class="fx-node is-bad" data-at="5">和 <span class="fx-mono">10，不变</span><span class="fx-note">漏掉</span></span><span class="fx-node is-ok" data-at="5">XOR <span class="fx-mono">改变</span><span class="fx-note">抓到</span></span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>一个有四个值的张量：[1, 2, 3, 4]。</li>
+<li>它的和是 10；原始 32 位字的 XOR 是 w。</li>
+<li>把一个值翻转一位：4 变成 4 + ε。</li>
+<li>两种摘要都变了：这次翻转被抓到。</li>
+<li>再看两个相互抵消的错误：1 + ε 和 4 − ε。</li>
+<li data-hold="2">和又是 10，两个错误都漏掉了；XOR 仍然改变。</li>
+</ol>
+<figcaption>图：和会让错误相互抵消；对原始比特做 XOR 不会丢掉任何一次翻转。</figcaption>
+</figure>
 
 和或均值会让错误抵消；对原始比特做 XOR 不会丢掉单个翻转。OpGuard 在设备上计算 XOR fingerprint，有两种形式：
 
 - **分区**（默认）：对展平张量的等长字节区间分别做 XOR。代价低，并能看出哪个区间不同。
 - **按向量**（可选）：每个最后一维向量一个 XOR。XOR 可以合并，所以一个 token 的各向量无论布局如何都合成该 token 的行 fingerprint：`[T, heads, dim]` 和 `[T, hidden]` 得到同一行。这样在以不同方式组批、打包和解码的栈之间也能比较行，并指出不同的是哪个 head。
+
+<figure class="fx" data-fig="xor-fold" aria-label="按向量的 fingerprint 合并成行 fingerprint">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label fx-mono">[T, heads, dim]</span><div class="fx-tree" style="--n:4">
+<div class="fx-level"><span class="fx-cell">head 0</span><span class="fx-cell">head 1</span><span class="fx-cell">head 2</span><span class="fx-cell">head 3</span></div>
+<div class="fx-level"><span class="fx-j" style="--k:1" data-at="1"><span class="fx-node is-mono">f0</span></span><span class="fx-j" style="--k:1" data-at="1"><span class="fx-node is-mono">f1</span></span><span class="fx-j" style="--k:1" data-at="1"><span class="fx-node is-mono">f2</span></span><span class="fx-j" style="--k:1" data-at="1"><span class="fx-node is-mono">f3</span></span></div>
+<div class="fx-level"><span class="fx-j" style="--w:2" data-at="2"><span class="fx-node is-mono">f0 ⊕ f1</span></span><span class="fx-j" style="--w:2" data-at="2"><span class="fx-node is-mono">f2 ⊕ f3</span></span></div>
+<div class="fx-level"><span class="fx-j" style="--w:4" data-at="3" data-hot="5"><span class="fx-node is-mono is-key">行 r</span></span></div>
+</div></div>
+<div class="fx-row" data-at="4"><span class="fx-label fx-mono">[T, hidden]</span><div class="fx-tree" style="--n:4">
+<div class="fx-level"><span class="fx-cell" style="--w:4">一个 hidden 向量</span></div>
+<div class="fx-level"><span class="fx-j" style="--w:4;--k:1" data-at="4" data-hot="5"><span class="fx-node is-mono is-ok">行 r</span></span></div>
+</div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>一个 token 的行，按 [T, heads, dim] 存放：四个 head 向量。</li>
+<li>按向量：每个最后一维向量一个 XOR，f0 到 f3。</li>
+<li>XOR 可以合并，所以各向量两两合并，</li>
+<li>合成这一行的 fingerprint r。</li>
+<li>按 [T, hidden] 存放时，同一行是一个向量，它的 XOR 也是同一个 r。</li>
+<li data-hold="2">行可以跨布局比较；不同时，不同的那个 f 指出是哪个 head。</li>
+</ol>
+<figcaption>图：无论布局如何，按向量的 fingerprint 都合并成同一个行 fingerprint。</figcaption>
+</figure>
 
 各选项，从最便宜到最完整：
 

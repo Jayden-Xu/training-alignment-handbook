@@ -15,11 +15,29 @@ An output element C[m, n] is the sum of K products. A GEMM library tiles the
 output and decides, per call, how to walk K. That decision is keyed on the
 problem shape, and the shape includes M, the number of rows in the batch.
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">batch of 1 row: little work</span><div class="fig-chain"><span class="fig-node">K split in 4 pieces on 4 programs</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">add 4 partial sums</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">row 0: value A</span></div></div>
-<div class="fig-group"><span class="fig-label">batch of 64 rows: enough work</span><div class="fig-chain"><span class="fig-node">one program walks all of K in order</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-bad">row 0: value B ≠ A</span></div></div>
+<figure class="fx" data-fig="gemm-split" aria-label="Row 0 of a matrix product in a batch of 1 and a batch of 64">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">batch of 1 row: little work<span class="fx-batch fx-mini"><span class="fx-rowbar is-mine"></span></span></span><div class="fx-tree" style="--n:4">
+<div class="fx-level"><span class="fx-cell" data-hot="1">K/4</span><span class="fx-cell" data-hot="1">K/4</span><span class="fx-cell" data-hot="1">K/4</span><span class="fx-cell" data-hot="1">K/4</span></div>
+<div class="fx-level" data-at="1"><span class="fx-j" style="--k:1"><span class="fx-node is-mono">program 0</span></span><span class="fx-j" style="--k:1"><span class="fx-node is-mono">program 1</span></span><span class="fx-j" style="--k:1"><span class="fx-node is-mono">program 2</span></span><span class="fx-j" style="--k:1"><span class="fx-node is-mono">program 3</span></span></div>
+<div class="fx-level" data-at="2" data-hot="4"><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-key">row 0: value A</span></span></div>
+</div></div>
+<div class="fx-row"><span class="fx-label">batch of 64 rows: enough work<span class="fx-batch fx-mini"><span class="fx-rowbar is-mine"></span><span class="fx-rowbar"></span><span class="fx-rowbar"></span><span class="fx-rowbar"></span><span class="fx-rowbar"></span></span></span><div class="fx-tree" style="--n:4">
+<div class="fx-level fx-sweep" data-hot="3"><span class="fx-cell">K/4</span><span class="fx-cell">K/4</span><span class="fx-cell">K/4</span><span class="fx-cell">K/4</span></div>
+<div class="fx-level" data-at="3"><span class="fx-walk" style="--w:4">one program walks all of K in order</span></div>
+<div class="fx-level" data-at="4"><span class="fx-j" style="--w:4;--k:1"><span class="fx-node is-bad">row 0: value B ≠ A</span></span></div>
+</div></div>
 </div>
+</div>
+<ol class="fx-say">
+<li>Row 0 (highlighted) is the same dot product over K in both batches.</li>
+<li data-hold="1.5">Batch of 1: little work, so the library splits K in 4 pieces on 4 programs.</li>
+<li data-hold="1.5">It adds the 4 partial sums: row 0 gets value A.</li>
+<li data-hold="2">Batch of 64: enough work without splitting. One program walks all of K in order.</li>
+<li data-hold="2">Row 0 gets value B ≠ A: the same math, another grouping.</li>
+</ol>
+<figcaption>Figure: the library picks the split of K from the number of rows, so the same row gets other bits in another batch.</figcaption>
 </figure>
 
 With a small batch the library may split K to keep the GPU busy (split-K or

@@ -18,18 +18,30 @@ matrix products, and carries the state from chunk to chunk.
 
 Take ten tokens and chunks of 4:
 
-| Call pattern | How tokens 8 and 9 are grouped |
-|---|---|
-| one prefill of tokens 0–9 | chunks {0–3}, {4–7}, {8–9} |
-| prefill of 0–7, then one decode call per token | {8} on its own, then {9} on its own |
-| aligned: keep the state at token 8, recompute the open chunk | {8–9} again, as in prefill |
+<figure class="fx" data-fig="chunks" aria-label="Where the chunk boundaries fall for three call patterns and the recurrent form">
+<div class="fx-stage">
+<div class="fx-rows" style="--n:10">
+<div class="fx-row"><span class="fx-label">ten tokens, C = 4</span><div class="fx-track"><div class="fx-level"><span class="fx-cell">0</span><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell">4</span><span class="fx-cell">5</span><span class="fx-cell">6</span><span class="fx-cell">7</span><span class="fx-cell">8</span><span class="fx-cell">9</span></div><span class="fx-verdict"></span></div></div>
+<div class="fx-row"><span class="fx-label">one prefill of tokens 0–9</span><div class="fx-track"><div class="fx-level fx-sweep" data-at="1" data-hot="1"><span class="fx-span" style="--w:4">{0–3}</span><span class="fx-span" style="--w:4">{4–7}</span><span class="fx-span" style="--w:2">{8–9}</span></div><span class="fx-verdict"></span></div></div>
+<div class="fx-row"><span class="fx-label">prefill of 0–7, then one decode call per token</span><div class="fx-track"><div class="fx-level" data-at="2" data-hot="3"><span class="fx-span" style="--w:4">{0–3}</span><span class="fx-span" style="--w:4">{4–7}</span><span class="fx-span to-bad" style="--w:1">{8}</span><span class="fx-span to-bad" style="--w:1">{9}</span></div><span class="fx-verdict"><span class="fx-node is-bad" data-at="3">bits follow the call sizes</span></span></div></div>
+<div class="fx-row"><span class="fx-label">aligned: keep the state at token 8, recompute the open chunk</span><div class="fx-track"><div class="fx-swap is-block"><div class="fx-level" data-at="4" data-to="5"><span class="fx-span" style="--w:4">{0–3}</span><span class="fx-span" style="--w:4">{4–7}</span><span class="fx-span" style="--w:1">{8}</span></div><div class="fx-level" data-at="5" data-hot="5"><span class="fx-span" style="--w:4">{0–3}</span><span class="fx-span" style="--w:4">{4–7}</span><span class="fx-span to-ok" style="--w:2">{8–9}</span></div></div><span class="fx-verdict"><span class="fx-node is-ok" data-at="5">same as prefill</span></span></div></div>
+<div class="fx-row"><span class="fx-label">recurrent: one token per step</span><div class="fx-track"><div class="fx-level fx-sweep is-unit" data-at="6" data-hot="6"><span class="fx-span" style="--w:1">0</span><span class="fx-span" style="--w:1">1</span><span class="fx-span" style="--w:1">2</span><span class="fx-span" style="--w:1">3</span><span class="fx-span" style="--w:1">4</span><span class="fx-span" style="--w:1">5</span><span class="fx-span" style="--w:1">6</span><span class="fx-span" style="--w:1">7</span><span class="fx-span" style="--w:1">8</span><span class="fx-span" style="--w:1">9</span></div><span class="fx-verdict"><span class="fx-node is-ok" data-at="6">same bits in every mode</span></span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>Ten tokens, chunks of C = 4. The chunks set how the state's sum is grouped.</li>
+<li>One prefill of tokens 0–9: chunks {0–3}, {4–7}, {8–9}.</li>
+<li data-hold="1.5">Prefill 0–7, then one decode call per token: each call starts its own chunk, {8} and then {9}.</li>
+<li data-hold="1.5">Token 9 is summed in another grouping: its output and the state differ in their last bits.</li>
+<li data-hold="1.5">Aligned: keep the state at token 8, a chunk boundary, and recompute the open chunk when token 9 arrives:</li>
+<li data-hold="1.5">{8–9} again, as in prefill, so the same bits.</li>
+<li data-hold="2">Recurrent: one update per token in every mode, so the same bits for free.</li>
+</ol>
+<figcaption>Figure: chunked forms are mode-invariant only when every chunk starts at an absolute multiple of C; the recurrent form always is.</figcaption>
+</figure>
 
 The second pattern sums the same terms in a different grouping, so token 9's
 output and the state differ in their last bits.
-
-<figure class="fig">
-<div class="fig-chain"><span class="fig-node">state at a chunk boundary</span><span class="fig-arrow" aria-hidden="true"></span><div class="fig-branch"><div class="fig-chain"><span class="fig-node">recurrent: one token per step</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-ok">same bits in every mode</span></div><div class="fig-chain"><span class="fig-node">chunked, aligned: chunks at absolute multiples of C</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-ok">same bits in every mode</span></div><div class="fig-chain"><span class="fig-node">chunked, call-relative: each call starts its own chunk</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-bad">bits follow the call sizes</span></div></div></div>
-</figure>
 
 Three facts follow:
 

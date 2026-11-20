@@ -19,13 +19,14 @@ hide:
 <p class="flows-base" markdown>建立在[第 0 部分：基础](0-foundations/README.md)之上：L1–L5 各个级别，以及在哪里比较、怎样比较。</p>
 <div class="flow-lane" data-lane="pre" data-side="above" markdown>
 <p class="flow-head" markdown><span class="flow-part">第 1 部分</span> [预训练](1-pretraining/README.md) <span class="flow-goal">找到两次运行分开的地方</span></p>
-<ol class="flow-steps" markdown>
+<ol class="flow-steps" style="--steps: 7" markdown>
 <li markdown="span">[确定性与预检](1-pretraining/determinism-and-preflight.md)<span class="flow-desc">打开让运行可重复的设置，并检查两次运行确实都用上了。</span></li>
-<li markdown="span">[训练步](1-pretraining/training-step.md)<span class="flow-desc">让反向、优化器、损失以及从检查点恢复训练逐位重复。</span></li>
-<li markdown="span">[数据并行](1-pretraining/data-parallel.md)<span class="flow-desc">梯度跨 rank 求和或分片时，保持相等。</span></li>
-<li markdown="span">[捕获编译后的代码](1-pretraining/capture-compiled-code.md)<span class="flow-desc">在 hook 看不到的 `torch.compile` 和 CUDA graph 内部取 fingerprint。</span></li>
-<li class="flow-handoff" markdown="span">[用 OpGuard 定位](1-pretraining/localize-with-opguard.md)<span class="flow-desc">找到两次运行第一个出现差别的算子，它就是要修的地方。</span></li>
-<li markdown="span">[SDC](1-pretraining/sdc.md)<span class="flow-desc">排除静默返回错误值的硬件。</span></li>
+<li markdown="span">[数据对齐](1-pretraining/data-alignment.md)<span class="flow-desc">检查两次运行的每个 rank 在每一步拿到的 batch 都相同。</span></li>
+<li class="flow-handoff" markdown="span">[用 OpGuard 定位](1-pretraining/localize-with-opguard.md)<span class="flow-desc">采集两次运行，找到第一个出现差别的算子，从它走到原因，修复并确认。</span></li>
+<li markdown="span">[训练步](1-pretraining/training-step.md)<span class="flow-desc">原因在反向、优化器、损失或恢复训练时：让它们逐位重复。</span></li>
+<li markdown="span">[数据并行](1-pretraining/data-parallel.md)<span class="flow-desc">原因是跨 rank 求和或分片的梯度时：让它保持相等。</span></li>
+<li markdown="span">[编译代码](1-pretraining/capture-compiled-code.md)<span class="flow-desc">作业运行 `torch.compile` 或 CUDA graph 时：在 eager 采集看不到的内部取 fingerprint。</span></li>
+<li markdown="span">[SDC](1-pretraining/sdc.md)<span class="flow-desc">软件已被排除时：找出静默返回错误值的硬件。</span></li>
 </ol>
 </div>
 <div class="flow-lane" data-lane="kernel" data-delay="1" data-target markdown>
@@ -64,12 +65,16 @@ hide:
 
 1. [确定性与预检](1-pretraining/determinism-and-preflight.md)：
    打开让运行可重复的设置，并检查两次运行确实都用上了。
-2. [训练步](1-pretraining/training-step.md)：让反向、优化器、损失以及从检查点恢复训练逐位重复。
-3. [数据并行](1-pretraining/data-parallel.md)：梯度跨 rank 求和或分片时，保持相等。
-4. [捕获编译后的代码](1-pretraining/capture-compiled-code.md)：在 hook 看不到的
-   `torch.compile` 和 CUDA graph 内部取 fingerprint（指纹）。
-5. [用 OpGuard 定位](1-pretraining/localize-with-opguard.md)：找到两次运行第一个出现差别的算子，它就是要修的地方。
-6. [SDC](1-pretraining/sdc.md)：排除静默返回错误值的硬件。
+2. [数据对齐](1-pretraining/data-alignment.md)：检查两次运行的每个 rank 在每一步拿到的 batch 都相同。
+3. [用 OpGuard 定位](1-pretraining/localize-with-opguard.md)：采集两次运行，找到第一个出现差别的算子，从它走到原因，修复并确认。
+
+然后去首个分歧点指向的那一页：
+
+- [训练步](1-pretraining/training-step.md)：让反向、优化器、损失以及从检查点恢复训练逐位重复。
+- [数据并行](1-pretraining/data-parallel.md)：梯度跨 rank 求和或分片时，保持相等。
+- [作业运行编译代码时](1-pretraining/capture-compiled-code.md)：在 eager 采集看不到的
+  `torch.compile` 和 CUDA graph 内部取 fingerprint（指纹）。
+- [SDC](1-pretraining/sdc.md)：静默返回错误值的硬件。
 
 ## 第 2 部分：rollout 与 trainer 不一致
 

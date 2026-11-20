@@ -42,8 +42,25 @@ decision.** It is the controlled experiment of part 1 applied to two
 implementations, and the engine-parity principle that equal results need
 equal arithmetic, not equal formulas.
 
-<figure class="fig">
-<div class="fig-steps"><span class="fig-node">1. Preflight diff</span><span class="fig-node">2. Align data and weights</span><span class="fig-node">3. Capture both</span><span class="fig-node is-key">4. First divergence</span><span class="fig-node">5. Rounding-point table</span><span class="fig-node">6. Decide per difference</span><span class="fig-node">7. Regression</span></div>
+<figure class="fx" data-fig="migration" aria-label="The framework-migration step, on one attention block">
+<div class="fx-stage">
+<div class="fx-steps"><span class="fx-step" data-hot="0">1. Preflight diff</span><span class="fx-step" data-hot="1">2. Align data and weights</span><span class="fx-step" data-hot="2">3. Capture both</span><span class="fx-step is-key" data-hot="3">4. First divergence</span><span class="fx-step" data-hot="4">5. Rounding-point table</span><span class="fx-step" data-hot="5">6. Decide per difference</span><span class="fx-step" data-hot="6">7. Regression</span></div>
+<div class="fx-grid" style="--cols:4">
+<span class="fx-label">stack A</span><span class="fx-node" data-hot="2">RMSNorm</span><span class="fx-node" data-hot="2">q, k, v</span><span class="fx-node" data-hot="3">attention</span><span class="fx-node to-bad" data-hot="3 4">residual add, bf16</span>
+<span></span><span class="fx-pair" data-at="2" style="grid-column: span 2">no shared boundary: not compared</span><span class="fx-pair" data-at="3">shared: paired by content</span><span class="fx-swap fx-pair" data-at="3"><span data-to="4">shared: paired by content</span><span class="fx-pair is-bad" data-at="4">rounding point: bf16 against fp32</span></span>
+<span class="fx-label">stack B</span><span class="fx-node is-ghost" data-hot="2" style="grid-column: span 2">fused norm + packed QKV</span><span class="fx-node" data-hot="3">attention</span><span class="fx-node to-bad" data-hot="3 4">residual add, fp32</span>
+</div>
+</div>
+<ol class="fx-say">
+<li>1. Diff the preflight reports: the two runs differ only in the stack.</li>
+<li>2. Both stacks see the same tokens and start from the same weights.</li>
+<li data-hold="1.5">3. Capture both at the boundaries they share. Stack B fused the norm and the projections, so those are not compared.</li>
+<li data-hold="1.5">4. Pair rows by content at the shared boundaries; take the first where the same input rows give different output rows.</li>
+<li data-hold="1.5">5. Rounding-point table: every difference between the two forwards, such as the residual add in bf16 against fp32.</li>
+<li>6. Decide per difference: a bug to fix, or a choice to keep, with its measured effect.</li>
+<li data-hold="2">7. Keep the pair as a regression check, so the next upgrade shows what moved.</li>
+</ol>
+<figcaption>Figure: compare at boundaries both stacks share, pair rows by content, and turn every remaining difference into a named rounding point with a decision.</figcaption>
 </figure>
 
 ## The step

@@ -270,8 +270,70 @@ def _with_english_ids(text, src_uri, config):
     return "".join(out)
 
 
+# --- section numbers (d2l style: "1." for a part, "1.2." for a page, "1.2.3." for its sections) ---------------------------------
+# Numbers come from the nav order, so reordering pages renumbers them. Heading ids stay
+# those of the unnumbered English text, so #anchor links keep working in both languages.
+
+PART_TITLE = re.compile(r"^(\d+)\b")
+LEADING_NUM = re.compile(r"^\d+(?:\.\d+)*\.?\s+")
+_NUMBERS = {}
+
+
+def _nav_numbers(nav):
+    nums = {}
+    for item in nav or []:
+        if not isinstance(item, dict):
+            continue
+        (title, pages), = item.items()
+        m = PART_TITLE.match(str(title))
+        if not m or not isinstance(pages, list):
+            continue
+        part = m.group(1)
+        for k, entry in enumerate(pages):
+            path = entry if isinstance(entry, str) else next(iter(entry.values()))
+            if isinstance(path, str):
+                nums[path] = (part, k)  # k == 0: the part's own README
+    return nums
+
+
+def _number_headings(text, src_uri, config):
+    base = src_uri[: -len(".zh.md")] + ".md" if src_uri.endswith(".zh.md") else src_uri
+    if base not in _NUMBERS:
+        return text
+    part, k = _NUMBERS[base]
+    en = DOCS / base
+    ids = _english_ids(en, config) if en.exists() else None
+    fences = [(m.start(), m.end()) for m in FENCE.finditer(text)]
+    heads = [m for m in HEADING.finditer(text) if not any(a <= m.start() < b for a, b in fences)]
+    if ids is not None and [len(m.group(1)) for m in heads] != [lvl for lvl, _ in ids]:
+        log.warning(f"{src_uri}: headings do not match {en.name}; not numbered")
+        return text
+    prefix = part if k == 0 else f"{part}.{k}"
+    h2 = h3 = 0
+    out, pos = [], 0
+    for i, m in enumerate(heads):
+        level, title = len(m.group(1)), m.group(2)
+        hid = ids[i][1] if ids is not None else None
+        num = None
+        if level == 1:
+            num, title = prefix, LEADING_NUM.sub("", title)
+        elif k > 0 and level == 2:
+            h2, h3 = h2 + 1, 0
+            num = f"{prefix}.{h2}"
+        out.append(text[pos:m.start()])
+        label = f"{num}. {title}" if num else title
+        out.append(f"{m.group(1)} {label}" + (f" {{#{hid}}}" if hid else (f" {m.group(3)}" if m.group(3) else "")))
+        pos = m.end()
+    out.append(text[pos:])
+    return "".join(out)
+
+
 def on_page_markdown(markdown, page, config, files, **kwargs):
+    global _NUMBERS
+    if not _NUMBERS:
+        _NUMBERS = _nav_numbers(config.get("nav"))
     src_uri = page.file.src_uri
-    if src_uri.endswith(".zh.md"):
-        markdown = _with_english_ids(markdown, src_uri, config)
-    return _rewrite(markdown, src_uri)
+    numbered = _number_headings(markdown, src_uri, config)
+    if numbered is markdown and src_uri.endswith(".zh.md"):
+        numbered = _with_english_ids(markdown, src_uri, config)
+    return _rewrite(numbered, src_uri)

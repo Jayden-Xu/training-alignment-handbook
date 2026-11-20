@@ -12,12 +12,22 @@ GPU 算出一个部分乘积，再由集合通信在通信库内部把部分和�
 求和的 all-reduce 对每个元素在各 GPU 上一次加一项，每加一次舍入一次。用 ring 算法时，消息被
 切成块，每块的求和从不同的 GPU 开始，沿环走一圈：
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">位于 chunk 0 的元素</span><div class="fig-chain"><span class="fig-node">GPU 1</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 2</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 3</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 0</span></div></div>
-<div class="fig-group"><span class="fig-label">位于 chunk 1 的元素</span><div class="fig-chain"><span class="fig-node">GPU 2</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 3</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 0</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">+ GPU 1</span></div></div>
+<figure class="fx" data-fig="ring" aria-label="4 个 GPU 上的 ring all-reduce，两个 chunk">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">位于 chunk 0 的元素</span><div class="fx-chain is-tight"><span class="fx-col"><span class="fx-node" data-hot="1">GPU 1</span><span class="fx-note fx-mono" data-at="1">g1</span></span><span class="fx-arrow" data-hot="2" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="2">+ GPU 2</span><span class="fx-note fx-mono" data-at="2">g1 + g2</span></span><span class="fx-arrow" data-hot="3" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="3">+ GPU 3</span><span class="fx-note fx-mono" data-at="3">(g1 + g2) + g3</span></span><span class="fx-arrow" data-hot="4" aria-hidden="true"></span><span class="fx-col"><span class="fx-node to-key" data-hot="4 5">+ GPU 0</span><span class="fx-note fx-mono" data-at="4">(…) + g0</span></span></div></div>
+<div class="fx-row"><span class="fx-label">位于 chunk 1 的元素</span><div class="fx-chain is-tight"><span class="fx-col"><span class="fx-node" data-hot="1">GPU 2</span><span class="fx-note fx-mono" data-at="1">g2</span></span><span class="fx-arrow" data-hot="2" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="2">+ GPU 3</span><span class="fx-note fx-mono" data-at="2">g2 + g3</span></span><span class="fx-arrow" data-hot="3" aria-hidden="true"></span><span class="fx-col"><span class="fx-node" data-hot="3">+ GPU 0</span><span class="fx-note fx-mono" data-at="3">(g2 + g3) + g0</span></span><span class="fx-arrow" data-hot="4" aria-hidden="true"></span><span class="fx-col"><span class="fx-node to-key" data-hot="4 5">+ GPU 1</span><span class="fx-note fx-mono" data-at="4">(…) + g1</span></span></div></div>
 </div>
-<figcaption>4 个 GPU 上的 ring all-reduce：每个 chunk 的和从不同的 GPU 开始。</figcaption>
+</div>
+<ol class="fx-say">
+<li>4 个 GPU 各持有每个元素的一个值 g。ring 把消息切成 chunk。</li>
+<li>每个 chunk 的和从不同的 GPU 开始：chunk 0 从 GPU 1 开始，chunk 1 从 GPU 2 开始。</li>
+<li>每一步加上下一个 GPU 的值并舍入，</li>
+<li>再把部分和沿 ring 传下去。</li>
+<li data-hold="1.5">加 3 次之后，每个 chunk 都有了自己的和，各按自己的顺序。</li>
+<li data-hold="2">元素落在哪个 chunk 取决于它的偏移和消息大小：batch 变大会把它挪走，它的位也跟着变。</li>
+</ol>
+<figcaption>图：4 个 GPU 上的 ring all-reduce：每个 chunk 的和从不同的 GPU 开始。</figcaption>
 </figure>
 
 一个元素落在哪一块，取决于它的偏移和消息大小。在 TP 层中，消息是整个批的输出，所以当批变大

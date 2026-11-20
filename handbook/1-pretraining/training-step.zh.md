@@ -2,7 +2,7 @@
 
 ## 我们在哪里
 
-本页服务于[预训练工作流](README.md)的两个步骤。在第 2 步（控制），它列出训练 step 中要固定什么，才能让两个 trainer 一致。在第 5 步（分类），它告诉你 step 的哪个部分可能产生首个分歧点：某个 backward 算子、loss 归约、优化器、AMP、梯度累加或检查点恢复。[预检](determinism-and-preflight.md)检查的是设置；本页讲的是设置背后的算术。
+你已经能采集一对运行，并从首个分歧点走到原因（[用 OpGuard 定位](localize-with-opguard.md)）。当这条路走进训练 step 时，就用本页，对应[预训练工作流](README.md)的第 5 步（分类）：某个 backward 算子、loss 归约、优化器、AMP、梯度累加或检查点恢复。本页也列出训练 step 中要固定什么，才能让两个 trainer 一致，这属于第 2 步（控制）：在采集新的一对运行之前先读。[预检](determinism-and-preflight.md)检查的是设置；本页讲的是设置背后的算术。
 
 ## 思路：step 中每个浮点和都需要一个写明的顺序
 

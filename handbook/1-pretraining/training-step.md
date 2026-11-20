@@ -2,12 +2,15 @@
 
 ## Where we are
 
-This page serves two steps of the [pre-training workflow](README.md). In step 2
-(control) it lists what to pin in a training step so two trainers agree. In
-step 5 (classify) it tells you which part of a step can make the first
-divergence: a backward op, the loss reduction, the optimizer, AMP, gradient
-accumulation or checkpoint resume. The [preflight](determinism-and-preflight.md)
-checks settings; this page is about the arithmetic behind them.
+You can capture a pair and walk from the first divergence to a cause
+([Localize with OpGuard](localize-with-opguard.md)). This page is for when that
+walk leads into the training step, at step 5 (classify) of the
+[pre-training workflow](README.md): a backward op, the loss reduction, the
+optimizer, AMP, gradient accumulation or checkpoint resume. It also lists what
+to pin in a training step so two trainers agree, which belongs to step 2
+(control): read it before you capture a new pair. The
+[preflight](determinism-and-preflight.md) checks settings; this page is about
+the arithmetic behind them.
 
 ## The idea: every float sum in a step needs one written order
 

@@ -17,8 +17,23 @@ sequences. The engine runs one token per step (decode) from a KV cache, inside
 a batch whose members join and leave at every step; it may also chunk the
 prompt, reuse a cached prefix or verify speculative tokens.
 
-<figure class="fig">
-<div class="fig-chain"><span class="fig-node">one sequence: prompt + sampled tokens</span><span class="fig-arrow" aria-hidden="true"></span><div class="fig-join"><div class="fig-branch"><div class="fig-chain"><span class="fig-node"><b>trainer</b> prefill: all tokens at once, in a batch of B</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">logprobs</span></div><div class="fig-chain"><span class="fig-node"><b>engine</b> decode: one token per step, the batch changes every step</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">logprobs</span></div></div><span class="fig-bracket">bitwise equal?</span></div></div>
+<figure class="fx" data-fig="prefill-decode" aria-label="One sequence computed by prefill in the trainer and by decode in the engine">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label"><b>trainer</b> prefill: all tokens at once, in a batch of B</span><div class="fx-col is-wide"><div class="fx-batch"><span class="fx-rowbar"></span><span class="fx-rowbar"></span><div class="fx-cells" style="--n:6"><span class="fx-cell" data-hot="1">p</span><span class="fx-cell" data-hot="1">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="1">t2</span><span class="fx-cell is-mine" data-hot="1">t3</span><span class="fx-cell is-mine" data-hot="1">t4</span></div><span class="fx-rowbar"></span></div><div class="fx-cells fx-lp" style="--n:6"><span></span><span></span><span class="fx-chip" data-at="2">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="2">ℓ3</span><span class="fx-chip" data-at="2">ℓ4</span></div></div></div>
+<div class="fx-row"><span class="fx-label"><b>engine</b> decode: one token per step, the batch changes every step</span><div class="fx-col is-wide"><div class="fx-batch"><span class="fx-rowbar" data-at="1" data-to="3"></span><span class="fx-rowbar" data-at="1" data-to="2"></span><div class="fx-cells" style="--n:6"><span class="fx-cell">p</span><span class="fx-cell">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="2">t2</span><span class="fx-cell is-mine" data-hot="3">t3</span><span class="fx-cell is-mine" data-hot="4">t4</span></div><span class="fx-rowbar" data-at="2" data-to="3"></span><span class="fx-rowbar" data-at="4"></span><span class="fx-rowbar" data-at="4"></span></div><div class="fx-cells fx-lp" style="--n:6"><span></span><span></span><span class="fx-chip" data-at="1">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="3">ℓ3</span><span class="fx-chip" data-at="4">ℓ4</span></div></div></div>
+</div>
+<div class="fx-chain is-tight"><span class="fx-node is-decision" data-at="5">logprobs ℓ1–ℓ4: bitwise equal?</span></div>
+</div>
+<ol class="fx-say">
+<li>One sequence: a prompt (p) and four sampled tokens, t1 to t4. Grey bars are other sequences in the batch.</li>
+<li data-hold="1.5">Trainer: one prefill computes every token at once, in a batch of B. Engine: decode computes t1, with two other requests.</li>
+<li data-hold="1.5">Trainer: a logprob for every token. Engine: t2; one request left, another joined.</li>
+<li>Engine: t3, now alone in the batch.</li>
+<li>Engine: t4, with two new requests.</li>
+<li data-hold="2">Same tokens, other shapes and other batches. The step makes the logprobs bitwise equal.</li>
+</ol>
+<figcaption>Figure: the trainer and the engine compute the same tokens in different shapes: one prefill in a fixed batch against one decode step at a time in a changing batch.</figcaption>
 </figure>
 
 A floating-point sum depends on its order. Add 1e8, -1e8 and 1 in fp32: left

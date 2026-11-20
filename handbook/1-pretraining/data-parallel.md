@@ -2,8 +2,9 @@
 
 ## Where we are
 
-This page serves step 2 (control) and step 5 (classify) of the
-[pre-training workflow](README.md) when the run uses data parallelism. The
+This page serves step 5 (classify) of the [pre-training workflow](README.md)
+when the first divergence points to a gradient that ranks sum together, and
+step 2 (control) for any run that uses data parallelism. The
 [training step](training-step.md) is pinned on one rank; what is still open is
 the sum across ranks. DDP all-reduces the gradient in buckets, FSDP and ZeRO
 reduce-scatter a flat copy of it, and both reduce a gradient norm and a loss
@@ -34,12 +35,34 @@ backward over 8 sequences and two partial gradients are added. At d = 4, four
 partials of 4 sequences. These are different sums, not the same sum in another
 order. No collective setting can fix that.
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">d = 2</span><div class="fig-chain"><div class="fig-stack"><span class="fig-node">backward over s0..s7</span><span class="fig-node">backward over s8..s15</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-op">+</span></div></div>
-<div class="fig-group"><span class="fig-label">logical shards, any d</span><div class="fig-chain"><div class="fig-stack"><div class="fig-chain"><div class="fig-stack"><span class="fig-node">s0</span><span class="fig-node">s1</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-op">+</span></div><div class="fig-chain"><div class="fig-stack"><span class="fig-node">s2</span><span class="fig-node">s3</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-op">+</span></div></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">+ … one fixed tree over 16 shards</span></div></div>
+<figure class="fx" data-fig="dp-tree" aria-label="A gradient summed at degree 2 and 4, per rank and with logical shards">
+<div class="fx-stage">
+<div class="fx-head"><span class="fx-label">16 sequences, data-parallel degree</span><span class="fx-swap"><span class="fx-chip" data-at="1" data-to="3">d = 2</span><span class="fx-chip is-key" data-at="3">d = 4</span></span></div>
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">per-rank backward</span><div class="fx-tree" style="--n:16">
+<div class="fx-swap is-block"><div class="fx-level" data-at="1" data-to="3"><span class="fx-band" data-c="0" style="--w:8">rank 0</span><span class="fx-band" data-c="1" style="--w:8">rank 1</span></div><div class="fx-level" data-at="3"><span class="fx-band" data-c="0" style="--w:4">rank 0</span><span class="fx-band" data-c="1" style="--w:4">rank 1</span><span class="fx-band" data-c="2" style="--w:4">rank 2</span><span class="fx-band" data-c="3" style="--w:4">rank 3</span></div></div>
+<div class="fx-level"><span class="fx-cell">0</span><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell">4</span><span class="fx-cell">5</span><span class="fx-cell">6</span><span class="fx-cell">7</span><span class="fx-cell">8</span><span class="fx-cell">9</span><span class="fx-cell">10</span><span class="fx-cell">11</span><span class="fx-cell">12</span><span class="fx-cell">13</span><span class="fx-cell">14</span><span class="fx-cell">15</span></div>
+<div class="fx-swap is-block"><div class="fx-level" data-at="1" data-to="3"><span class="fx-j" style="--w:8;--k:8"><span class="fx-node is-mono">Σ 0–7</span></span><span class="fx-j" style="--w:8;--k:8"><span class="fx-node is-mono">Σ 8–15</span></span></div><div class="fx-level" data-at="3"><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-mono">Σ 0–3</span></span><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-mono">Σ 4–7</span></span><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-mono">Σ 8–11</span></span><span class="fx-j" style="--w:4;--k:4"><span class="fx-node is-mono">Σ 12–15</span></span></div></div>
+<div class="fx-swap is-block"><div class="fx-level" data-at="2" data-to="3"><span class="fx-j" style="--w:16"><span class="fx-node is-mono is-key">x₂</span></span></div><div class="fx-level" data-at="4"><span class="fx-j" style="--w:16;--k:4"><span class="fx-node is-mono is-bad">x₄ ≠ x₂</span></span></div></div>
+</div></div>
+<div class="fx-row"><span class="fx-label">logical shards, any d</span><div class="fx-tree" style="--n:16">
+<div class="fx-swap is-block"><div class="fx-level" data-at="1" data-to="3"><span class="fx-band" data-c="0" style="--w:8">rank 0</span><span class="fx-band" data-c="1" style="--w:8">rank 1</span></div><div class="fx-level" data-at="3"><span class="fx-band" data-c="0" style="--w:4">rank 0</span><span class="fx-band" data-c="1" style="--w:4">rank 1</span><span class="fx-band" data-c="2" style="--w:4">rank 2</span><span class="fx-band" data-c="3" style="--w:4">rank 3</span></div></div>
+<div class="fx-level"><span class="fx-cell">0</span><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell">4</span><span class="fx-cell">5</span><span class="fx-cell">6</span><span class="fx-cell">7</span><span class="fx-cell">8</span><span class="fx-cell">9</span><span class="fx-cell">10</span><span class="fx-cell">11</span><span class="fx-cell">12</span><span class="fx-cell">13</span><span class="fx-cell">14</span><span class="fx-cell">15</span></div>
+<div class="fx-level" data-at="1" data-hot="3"><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-op">+</span></span></div>
+<div class="fx-level" data-at="1" data-hot="3"><span class="fx-j" style="--w:4"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:4"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:4"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:4"><span class="fx-node is-op">+</span></span></div>
+<div class="fx-level" data-at="1" data-hot="4"><span class="fx-j" style="--w:8"><span class="fx-node is-op">+</span></span><span class="fx-j" style="--w:8"><span class="fx-node is-op">+</span></span></div>
+<div class="fx-level" data-at="2" data-hot="4"><span class="fx-j" style="--w:16"><span class="fx-node is-mono is-ok">x</span></span></div>
+</div></div>
 </div>
-<figcaption>At d = 2 the two partial sums depend on the degree. With logical shards the same tree is summed at every degree.</figcaption>
+</div>
+<ol class="fx-say">
+<li>16 sequences in one global batch.</li>
+<li data-hold="2">d = 2: each rank owns 8 sequences. Per rank: one backward, one partial. Logical shards: each rank sums its subtree of one fixed tree.</li>
+<li data-hold="1.5">The partials are added across ranks: x₂. The logical shards finish the same tree: x.</li>
+<li data-hold="2">d = 4: each rank owns 4 sequences. Per rank: four partials, other sums. Logical shards: the same tree, smaller subtrees per rank.</li>
+<li data-hold="2">Per rank: x₄ ≠ x₂, the result follows the degree. Logical shards: the same tree, the same bits x.</li>
+</ol>
+<figcaption>Figure: at d = 2 and d = 4 the per-rank partial sums depend on the degree. With logical shards the same tree is summed at every degree.</figcaption>
 </figure>
 
 **Rule.** The order of a cross-rank sum must be a function of the element and of

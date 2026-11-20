@@ -1,0 +1,656 @@
+/* Animated figures on topic pages (figure.fx, driven by figs.js). Pages hold declarative
+   markup: building blocks below, timed with data-at / data-to / data-hot, and one <li> per
+   frame in .fx-say. Colours come from Material's variables plus the tokens below, redefined
+   for the dark (slate) scheme. Without the script, or under prefers-reduced-motion, the last
+   frame is shown with every description. */
+
+:root {
+  --fx-accent: #3f51b5;
+  --fx-ok: #2e7d32;
+  --fx-bad: #c62828;
+  --fx-warn: #b26a00;
+  --fx-r0: #3f51b5;
+  --fx-r1: #00796b;
+  --fx-r2: #b26a00;
+  --fx-r3: #8e24aa;
+}
+[data-md-color-scheme="slate"] {
+  --fx-accent: #9fa8da;
+  --fx-ok: #81c784;
+  --fx-bad: #ef9a9a;
+  --fx-warn: #ffb74d;
+  --fx-r0: #9fa8da;
+  --fx-r1: #4db6ac;
+  --fx-r2: #ffb74d;
+  --fx-r3: #ce93d8;
+}
+
+/* ============================== the figure ============================== */
+
+.md-typeset figure.fx {
+  container: fx / inline-size;
+  display: block;
+  width: auto;
+  max-width: 100%;
+  margin: 1.5em 0;
+  padding: 0.9rem 1rem 0.75rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.6rem;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  text-align: left;
+  --fx-line: var(--md-default-fg-color--lighter);
+  --fx-tint: color-mix(in srgb, var(--fx-accent) 12%, var(--md-default-bg-color));
+}
+.md-typeset figure.fx p { margin: 0; }
+.md-typeset .fx-stage { display: grid; gap: 0.8rem; }
+.md-typeset figure.fx > figcaption {
+  margin: 0.6rem 0 0;
+  max-width: none;
+  font-size: 0.66rem;
+  font-style: normal;
+  text-align: left;
+  color: var(--md-default-fg-color--light);
+}
+
+/* timing: hidden before data-at and from data-to on */
+.md-typeset .fx [data-at],
+.md-typeset .fx [data-to] {
+  transition: opacity 0.45s ease, transform 0.45s ease, border-color 0.35s ease,
+    background-color 0.35s ease, box-shadow 0.35s ease, color 0.35s ease;
+}
+.md-typeset .fx.is-live [data-at]:not(.is-on),
+.md-typeset .fx.is-live [data-to]:not(.is-on) {
+  opacity: 0;
+  transform: translateY(0.3rem);
+  pointer-events: none;
+}
+.md-typeset .fx:not(.is-live) [data-to] { visibility: hidden; }
+
+/* ======================= controls and description ======================= */
+
+.md-typeset .fx-foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem 0.8rem;
+  margin-top: 0.85rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--md-default-fg-color--lightest);
+}
+.md-typeset .fx-ctl { display: flex; flex-wrap: wrap; gap: 0.25rem; flex: none; max-width: 55%; }
+.md-typeset .fx-ctl button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1px solid var(--md-default-fg-color--lighter);
+  border-radius: 50%;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color--light);
+  font: 600 0.58rem/1 var(--md-text-font-family, sans-serif);
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+.md-typeset .fx-ctl button:hover { border-color: var(--fx-accent); color: var(--md-default-fg-color); }
+.md-typeset .fx-ctl button:focus-visible { outline: 2px solid var(--fx-accent); outline-offset: 2px; }
+.md-typeset .fx-ctl .fx-dot[aria-current] {
+  border-color: var(--fx-accent);
+  background: var(--fx-accent);
+  color: var(--md-default-bg-color);
+}
+.md-typeset .fx-ctl .fx-play { border-radius: 0.35rem; }
+.md-typeset .fx-ctl .fx-play::before {
+  content: "";
+  width: 0.42rem;
+  height: 0.5rem;
+  border-left: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+}
+.md-typeset .fx-ctl .fx-play.is-paused::before {
+  width: 0;
+  height: 0;
+  margin-left: 0.12rem;
+  border: 0;
+  border-left: 0.42rem solid currentColor;
+  border-top: 0.27rem solid transparent;
+  border-bottom: 0.27rem solid transparent;
+}
+.md-typeset .fx-ctl .fx-play[hidden] { display: none; }
+
+/* the description of the current frame; every frame's text stays in the list for readers */
+.md-typeset ol.fx-say {
+  display: grid;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--md-default-fg-color);
+  font-size: 0.68rem;
+}
+.md-typeset ol.fx-say > li {
+  grid-area: 1 / 1;
+  margin: 0;
+  padding: 0.1rem 0 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.md-typeset ol.fx-say > li.is-now { opacity: 1; pointer-events: auto; transition: opacity 0.35s ease; }
+/* no script, or reduced motion: the whole list */
+.md-typeset .fx:not(.is-live) ol.fx-say,
+.md-typeset .fx.is-still ol.fx-say {
+  display: block;
+  margin: 0.8rem 0 0;
+  padding-left: 1.2rem;
+  list-style: decimal;
+  color: var(--md-default-fg-color--light);
+}
+.md-typeset .fx.is-still ol.fx-say { margin: 0; }
+.md-typeset .fx:not(.is-live) ol.fx-say > li,
+.md-typeset .fx.is-still ol.fx-say > li { opacity: 1; margin: 0 0 0.15rem; padding: 0; }
+.md-typeset .fx.is-still ol.fx-say > li.is-now { color: var(--md-default-fg-color); font-weight: 600; }
+
+/* ============================== layout blocks ============================== */
+
+/* labelled rows: a label on the left, a diagram on the right */
+.md-typeset .fx-rows { display: grid; gap: 0.75rem; }
+.md-typeset .fx-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 8.5rem) minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+}
+.md-typeset .fx-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--md-default-fg-color--light);
+}
+.md-typeset .fx-note {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 400;
+  color: var(--md-default-fg-color--light);
+}
+.md-typeset .fx-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.6rem; }
+
+/* a chain of nodes joined by arrows */
+.md-typeset .fx-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.35rem;
+}
+/* a column: a node with something under it */
+.md-typeset .fx-col { display: inline-flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.md-typeset .fx-col > .fx-chip { padding: 0.08rem 0.25rem; font-size: 0.58rem; }
+.md-typeset .fx-chain.is-tight { column-gap: 0.25rem; }
+
+/* nodes */
+.md-typeset .fx-node {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--fx-line);
+  border-radius: 0.45rem;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.md-typeset .fx-node a { color: inherit; font-weight: 600; text-decoration: underline; text-decoration-color: var(--md-default-fg-color--lighter); text-underline-offset: 0.15em; }
+.md-typeset .fx-node a:hover,
+.md-typeset .fx-node a:focus-visible { color: var(--fx-accent); }
+.md-typeset .fx-node .fx-note { margin-top: 0.1rem; }
+.md-typeset .fx-mono,
+.md-typeset .fx-node.is-mono,
+.md-typeset .fx-chip { font-family: var(--md-code-font-family, monospace); font-size: 0.64rem; }
+.md-typeset .fx-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.4rem;
+  border: 1px solid var(--fx-line);
+  border-radius: 0.3rem;
+  background: var(--md-code-bg-color);
+  color: var(--md-default-fg-color);
+  white-space: nowrap;
+}
+.md-typeset .fx-node.is-op { width: 2rem; padding: 0; border-radius: 50%; font-weight: 700; }
+.md-typeset .fx-node.is-decision { border: 1.5px solid var(--fx-accent); border-radius: 1rem; font-weight: 600; }
+.md-typeset .fx-node.is-ghost { border-style: dashed; color: var(--md-default-fg-color--light); }
+.md-typeset .fx-node.is-empty { border-style: dashed; border-color: var(--md-default-fg-color--lightest); background: none; }
+
+/* states; to-bad / to-ok / to-key take the state from the frame they are first hot on */
+.md-typeset :is(.fx-node, .fx-chip, .fx-cell, .fx-step).is-key,
+.md-typeset .fx:not(.is-live) .to-key,
+.md-typeset .to-key.is-seen {
+  border-color: var(--fx-accent);
+  background: var(--fx-tint);
+}
+.md-typeset :is(.fx-node, .fx-chip, .fx-cell, .fx-step).is-ok,
+.md-typeset .fx:not(.is-live) .to-ok,
+.md-typeset .to-ok.is-seen {
+  border-color: var(--fx-ok);
+  background: color-mix(in srgb, var(--fx-ok) 12%, var(--md-default-bg-color));
+}
+.md-typeset :is(.fx-node, .fx-chip, .fx-cell, .fx-step).is-bad,
+.md-typeset .fx:not(.is-live) .to-bad,
+.md-typeset .to-bad.is-seen {
+  border-color: var(--fx-bad);
+  background: color-mix(in srgb, var(--fx-bad) 12%, var(--md-default-bg-color));
+}
+.md-typeset :is(.fx-node, .fx-chip, .fx-cell, .fx-step).is-warn,
+.md-typeset .fx:not(.is-live) .to-warn,
+.md-typeset .to-warn.is-seen {
+  border-color: var(--fx-warn);
+  background: color-mix(in srgb, var(--fx-warn) 12%, var(--md-default-bg-color));
+}
+.md-typeset .fx-node.is-ok::before,
+.md-typeset .fx-node.is-bad::before { font-weight: 700; }
+
+/* the current beat: a ring around what just appeared or is being worked on */
+.md-typeset :is(.fx-node, .fx-chip, .fx-step, .fx-cell).is-now {
+  border-color: var(--fx-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-accent) 28%, transparent);
+}
+.md-typeset :is(.fx-node, .fx-chip, .fx-cell).is-now:is(.is-bad, .to-bad) {
+  border-color: var(--fx-bad);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-bad) 28%, transparent);
+}
+.md-typeset :is(.fx-node, .fx-chip, .fx-cell).is-now:is(.is-ok, .to-ok) {
+  border-color: var(--fx-ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-ok) 28%, transparent);
+}
+.md-typeset .fx-label.is-now,
+.md-typeset .fx-note.is-now { color: var(--fx-accent); }
+
+/* arrows; a dot travels along an arrow on its beat */
+.md-typeset .fx-arrow {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 1.4rem;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.6rem;
+  line-height: 1.2;
+  text-align: center;
+}
+.md-typeset .fx-arrow::after { content: "\2192"; font-size: 0.95rem; line-height: 1; }
+.md-typeset .fx-chain.is-tight > .fx-arrow { min-width: 1.1rem; }
+.md-typeset .fx-arrow.is-down { flex-direction: row-reverse; gap: 0.35rem; min-width: 0; }
+.md-typeset .fx-arrow.is-down::after { content: "\2193"; }
+.md-typeset .fx-arrow::before {
+  content: "";
+  position: absolute;
+  bottom: 0.42rem;
+  left: 0;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-left: -0.2rem;
+  border-radius: 50%;
+  background: var(--fx-accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.md-typeset .fx-arrow.is-now { color: var(--fx-accent); }
+.md-typeset .fx-arrow.is-now::before { animation: fx-hop 0.7s ease-in-out 0.1s both; }
+.md-typeset .fx-arrow.is-down.is-now::before { animation-name: fx-drop; left: auto; right: 0.25rem; bottom: auto; top: 0; }
+@keyframes fx-hop {
+  0% { opacity: 0; left: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; left: 100%; }
+}
+@keyframes fx-drop {
+  0% { opacity: 0; top: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; top: 100%; }
+}
+
+/* several inputs merge into the next node: a bracket on the right */
+.md-typeset .fx-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding-right: 0.45rem;
+  border-right: 2px solid var(--fx-line);
+  border-radius: 0 0.4rem 0.4rem 0;
+}
+/* one node splits into several paths: a bracket on the left, one chain per path */
+.md-typeset .fx-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-left: 0.45rem;
+  border-left: 2px solid var(--fx-line);
+  border-radius: 0.4rem 0 0 0.4rem;
+}
+.md-typeset .fx-chain + .fx-branch { margin: 0.6rem 0 0 1.2rem; }
+/* a path back to an earlier step */
+.md-typeset .fx-back {
+  margin-top: 0.2rem;
+  padding-top: 0.35rem;
+  border-top: 1.5px dashed var(--fx-line);
+  color: var(--md-default-fg-color--light);
+  font-size: 0.62rem;
+}
+.md-typeset .fx-back::before { content: "\21BA  "; }
+.md-typeset .fx-back.is-now { border-top-color: var(--fx-accent); color: var(--fx-accent); }
+
+/* content that changes in place: the children share one cell, the tallest sets the size */
+.md-typeset .fx-swap { display: inline-grid; align-items: center; }
+.md-typeset .fx-swap.is-block { display: grid; }
+.md-typeset .fx-swap > * { grid-area: 1 / 1; }
+
+/* a labelled outline around a group (a kernel, a graph, a rank) */
+.md-typeset .fx-box {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.35rem 0.45rem 0.4rem;
+  border: 1.5px dashed var(--fx-line);
+  border-radius: 0.5rem;
+}
+.md-typeset .fx-box > .fx-note:first-child { font-weight: 700; }
+.md-typeset .fx-box.is-now,
+.md-typeset .fx-box.to-key.is-seen,
+.md-typeset .fx:not(.is-live) .fx-box.to-key { border-style: solid; border-color: var(--fx-accent); background: color-mix(in srgb, var(--fx-accent) 6%, transparent); }
+
+/* children pulse one after another on the beat (a walk, a fold, a sweep) */
+.md-typeset .fx-sweep.is-now > * { animation: fx-pulse 0.55s ease both; animation-delay: calc(var(--i, 0) * 0.22s); }
+@keyframes fx-pulse {
+  0%, 100% { box-shadow: none; }
+  45% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-accent) 40%, transparent); border-color: var(--fx-accent); }
+}
+
+/* ===================== grids: cells, spans, bands, trees ===================== */
+
+/* --n columns; a child spans --w of them */
+.md-typeset .fx-cells,
+.md-typeset .fx-level {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr));
+  gap: 0.2rem;
+  min-width: 0;
+}
+.md-typeset .fx-cells > *,
+.md-typeset .fx-level > * { grid-column: span var(--w, 1); min-width: 0; }
+/* cells inside a chain keep one width (--cw) so rows line up */
+.md-typeset :is(.fx-chain, .fx-box) > .fx-cells { grid-template-columns: repeat(var(--n, 4), minmax(0, var(--cw, 2.6rem))); min-width: 0; }
+.md-typeset .fx-tree { display: grid; gap: 0.55rem; min-width: 0; }
+.md-typeset .fx-tree > .fx-swap > * { min-width: 0; }
+
+.md-typeset .fx-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.45rem;
+  padding: 0 0.1rem;
+  border: 1px solid var(--fx-line);
+  border-radius: 0.25rem;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  font-family: var(--md-code-font-family, monospace);
+  font-size: 0.58rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.md-typeset .fx-cell.is-pad {
+  border-style: dashed;
+  color: var(--md-default-fg-color--light);
+  background: repeating-linear-gradient(135deg, transparent 0 4px, var(--md-default-fg-color--lightest) 4px 5px);
+}
+.md-typeset .fx-cell.is-mine { border-color: var(--fx-accent); background: var(--fx-tint); font-weight: 700; }
+.md-typeset .fx-cell.is-dim { background: var(--md-default-fg-color--lightest); border-color: transparent; color: transparent; }
+
+/* a bracket under (or, with .is-over, over) the cells it spans, with a label */
+.md-typeset .fx-span {
+  --c: var(--md-default-fg-color--light);
+  position: relative;
+  padding: 0.4rem 0.1rem 0;
+  color: var(--c);
+  font-size: 0.6rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.md-typeset .fx-span::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0.15rem;
+  right: 0.15rem;
+  height: 0.3rem;
+  border: 1.5px solid var(--c);
+  border-top: 0;
+  border-radius: 0 0 0.3rem 0.3rem;
+}
+.md-typeset .fx-span.is-over { padding: 0 0.1rem 0.4rem; }
+.md-typeset .fx-span.is-over::before { top: auto; bottom: 0; border-top: 1.5px solid var(--c); border-bottom: 0; border-radius: 0.3rem 0.3rem 0 0; }
+.md-typeset .fx-span.is-now { --c: var(--fx-accent); font-weight: 700; }
+.md-typeset .fx-span.is-ok, .md-typeset .fx-span.to-ok.is-seen { --c: var(--fx-ok); }
+.md-typeset .fx-span.is-bad, .md-typeset .fx-span.to-bad.is-seen,
+.md-typeset .fx:not(.is-live) .fx-span.to-bad { --c: var(--fx-bad); }
+
+/* a band: which rank (or call) owns the cells under it */
+.md-typeset .fx-band {
+  --c: var(--fx-r0);
+  position: relative;
+  margin: 0 0.1rem 0.3rem;
+  padding: 0.12rem 0.2rem;
+  border-radius: 0.3rem;
+  background: color-mix(in srgb, var(--c) 16%, var(--md-default-bg-color));
+  color: var(--md-default-fg-color);
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.md-typeset .fx-band::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.3rem;
+  height: 0.3rem;
+  border: 1.5px solid var(--c);
+  border-bottom: 0;
+  border-radius: 0.3rem 0.3rem 0 0;
+  opacity: 0.7;
+}
+.md-typeset .fx-band[data-c="1"] { --c: var(--fx-r1); }
+.md-typeset .fx-band[data-c="2"] { --c: var(--fx-r2); }
+.md-typeset .fx-band[data-c="3"] { --c: var(--fx-r3); }
+.md-typeset .fx-band.is-now { box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 45%, transparent); }
+
+/* a join in a tree: a bracket from the centres of its --k children down to the node */
+.md-typeset .fx-j {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.md-typeset .fx-j::before {
+  content: "";
+  position: absolute;
+  top: -0.55rem;
+  left: calc(50% / var(--k, 2));
+  right: calc(50% / var(--k, 2));
+  height: 0.55rem;
+  border: 1.5px solid var(--fx-line);
+  border-top: 0;
+  border-radius: 0 0 0.35rem 0.35rem;
+}
+.md-typeset .fx-j.is-now::before { border-color: var(--fx-accent); }
+.md-typeset .fx-j > .fx-node { min-height: 1.5rem; padding: 0.1rem 0.4rem; font-size: 0.62rem; }
+.md-typeset .fx-j > .fx-node.is-op { width: 1.5rem; min-height: 1.5rem; }
+.md-typeset .fx-j.is-now > .fx-node {
+  border-color: var(--fx-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-accent) 28%, transparent);
+}
+.md-typeset .fx-j.is-now > .fx-node:is(.is-bad, .to-bad) { border-color: var(--fx-bad); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-bad) 28%, transparent); }
+.md-typeset .fx-j.is-now > .fx-node:is(.is-ok, .to-ok) { border-color: var(--fx-ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fx-ok) 28%, transparent); }
+
+/* a batch: rows stacked, one of them ours */
+.md-typeset .fx-batch { display: grid; gap: 0.18rem; min-width: 0; }
+.md-typeset .fx-rowbar {
+  height: 0.45rem;
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--md-default-fg-color--lighter) 60%, transparent);
+}
+
+/* aligned sequences compared column by column: a label column, then --cols columns */
+.md-typeset .fx-grid {
+  display: grid;
+  grid-template-columns: auto repeat(var(--cols, 5), minmax(0, 1fr));
+  gap: 0.35rem 0.45rem;
+  align-items: center;
+}
+.md-typeset .fx-grid > .fx-node { width: 100%; min-height: 1.8rem; }
+.md-typeset .fx-th { font-size: 0.6rem; font-weight: 700; color: var(--md-default-fg-color--light); }
+.md-typeset .fx-pair { text-align: center; font-size: 0.6rem; line-height: 1.25; color: var(--md-default-fg-color--light); }
+.md-typeset .fx-pair.is-ok { color: var(--fx-ok); }
+.md-typeset .fx-pair.is-bad { color: var(--fx-bad); font-weight: 700; }
+
+/* a batch drawn beside a label, and one batch per row of a figure */
+.md-typeset .fx-col.is-wide { display: flex; align-items: stretch; width: 100%; max-width: 24rem; }
+.md-typeset .fx-batch.fx-mini { display: grid; width: 3.2rem; margin-top: 0.3rem; gap: 2px; }
+.md-typeset .fx-batch.fx-mini .fx-rowbar { height: 0.3rem; }
+.md-typeset .fx-rowbar.is-mine { background: var(--fx-accent); }
+.md-typeset .fx-lp > .fx-chip { justify-content: center; padding: 0.08rem 0; font-size: 0.58rem; }
+
+/* one pass along the cells above: a line with an arrow head and a label */
+.md-typeset .fx-walk {
+  position: relative;
+  padding: 0.15rem 0 0;
+  border-top: 1.5px solid var(--fx-line);
+  color: var(--md-default-fg-color--light);
+  font-size: 0.6rem;
+  text-align: center;
+}
+.md-typeset .fx-walk::after {
+  content: "";
+  position: absolute;
+  top: -0.3rem;
+  right: -1px;
+  border-left: 0.45rem solid var(--fx-line);
+  border-top: 0.25rem solid transparent;
+  border-bottom: 0.25rem solid transparent;
+}
+.md-typeset .fx-walk.is-now,
+.md-typeset .is-now > .fx-walk { border-top-color: var(--fx-accent); color: var(--fx-accent); }
+
+/* a row of cells or spans with a verdict after it */
+.md-typeset .fx-track { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.6rem; }
+.md-typeset .fx-track > .fx-level,
+.md-typeset .fx-track > .fx-swap { flex: 1 1 10rem; min-width: 0; }
+.md-typeset .fx-verdict { flex: 0 0 8.5rem; display: flex; }
+.md-typeset .fx-verdict > .fx-node { min-height: 1.6rem; font-size: 0.62rem; }
+
+/* a short outcome under a step */
+.md-typeset .fx-step .fx-swap { display: grid; margin-top: 0.15rem; }
+.md-typeset .fx-fail { color: var(--fx-bad); font-weight: 700; }
+.md-typeset .fx-pass { color: var(--fx-ok); font-weight: 700; }
+.md-typeset .fx-chain > .fx-step { flex: 1 1 6.5rem; }
+
+/* ============================ process steps ============================ */
+
+/* numbered steps in reading order; the current one lights up, visited ones stay tinted */
+.md-typeset .fx-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.2rem, 1fr));
+  gap: 0.45rem;
+  counter-reset: none;
+}
+.md-typeset .fx-step {
+  display: block;
+  min-height: 2.1rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--fx-line);
+  border-radius: 0.45rem;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  font-size: 0.66rem;
+  line-height: 1.3;
+  transition: border-color 0.35s ease, background-color 0.35s ease, box-shadow 0.35s ease;
+}
+.md-typeset .fx-step a { color: inherit; font-weight: 600; text-decoration: underline; text-decoration-color: var(--md-default-fg-color--lighter); text-underline-offset: 0.15em; }
+.md-typeset .fx-step a:hover,
+.md-typeset .fx-step a:focus-visible { color: var(--fx-accent); }
+.md-typeset .fx.is-live .fx-step.is-seen:not(.is-now) { background: color-mix(in srgb, var(--fx-accent) 5%, var(--md-default-bg-color)); }
+.md-typeset .fx-step.is-now { background: var(--fx-tint); }
+
+/* a main path that runs down, with exits to the side */
+.md-typeset .fx-spine {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.3rem 0.4rem;
+  align-items: center;
+  justify-items: start;
+}
+.md-typeset .fx-spine > .fx-arrow.is-down { grid-column: 1; margin-left: 1rem; }
+.md-typeset .fx-spine > .fx-side { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; max-width: 100%; }
+
+/* a bar split into parts (--a, --b as fractions of the whole) */
+.md-typeset .fx-split {
+  display: flex;
+  width: 16rem;
+  max-width: 100%;
+  gap: 2px;
+  font-size: 0.6rem;
+}
+.md-typeset .fx-split > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.4rem;
+  padding: 0 0.3rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  color: var(--md-default-fg-color);
+}
+.md-typeset .fx-split > .is-whole { flex: 1; background: color-mix(in srgb, var(--fx-accent) 20%, var(--md-default-bg-color)); }
+.md-typeset .fx-split > .is-a { flex: var(--a, 1); min-width: 4.2rem; background: color-mix(in srgb, var(--fx-bad) 22%, var(--md-default-bg-color)); }
+.md-typeset .fx-split > .is-b { flex: var(--b, 1); background: color-mix(in srgb, var(--fx-r1) 22%, var(--md-default-bg-color)); }
+
+/* ============================== narrow screens ============================== */
+
+@container fx (max-width: 28rem) {
+  .md-typeset .fx-row { grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  .md-typeset .fx-chain:not(.is-tight) { flex-direction: column; align-items: flex-start; }
+  .md-typeset .fx-chain:not(.is-tight) > .fx-arrow { flex-direction: row-reverse; gap: 0.35rem; margin-left: 0.8rem; min-width: 0; }
+  .md-typeset .fx-chain:not(.is-tight) > .fx-arrow::after { content: "\2193"; }
+  .md-typeset .fx-chain:not(.is-tight) > .fx-arrow::before { animation-name: fx-drop; left: auto; right: 0.25rem; bottom: auto; top: 0; }
+  .md-typeset .fx-chain + .fx-branch { margin-left: 0.8rem; }
+  .md-typeset .fx-branch > .fx-chain > .fx-arrow:first-child { margin-left: 0; }
+  .md-typeset .fx-spine { grid-template-columns: minmax(0, 1fr); }
+  .md-typeset .fx-spine > .fx-side { margin: 0 0 0.2rem 0.8rem; }
+  .md-typeset .fx-foot { flex-direction: column; }
+  .md-typeset .fx-ctl { max-width: none; }
+  .md-typeset .fx-steps { grid-template-columns: minmax(0, 1fr); gap: 0.3rem; }
+  .md-typeset .fx-step { min-height: 0; }
+  .md-typeset .fx-cell { font-size: 0.52rem; }
+  .md-typeset .fx-span, .md-typeset .fx-band { font-size: 0.54rem; }
+  .md-typeset .fx-verdict { flex-basis: 100%; }
+  .md-typeset .fx-chain:not(.is-tight) > .fx-step { flex: none; width: 100%; }
+}
+
+/* ============================== reduced motion ============================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .md-typeset .fx *,
+  .md-typeset .fx *::before,
+  .md-typeset .fx *::after { transition: none !important; animation: none !important; }
+}

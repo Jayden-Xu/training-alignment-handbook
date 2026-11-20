@@ -40,8 +40,31 @@ Localization walks the data flow, not the trace order. Start from a slot both
 sides agree on, such as the embedding output, and follow each tensor to its
 consumer until the first pair with equal input and different output.
 
-<figure class="fig">
-<div class="fig-spine"><span class="fig-node">records (online)</span><span class="fig-arrow" aria-hidden="true"></span><div class="fig-chain"><span class="fig-node is-decision">weights match?</span><span class="fig-arrow">no</span><span class="fig-node is-bad">fix the sync; stop</span></div><span class="fig-arrow">yes</span><div class="fig-chain"><span class="fig-node">split each token: numeric, staleness</span><span class="fig-arrow">numeric = 0</span><span class="fig-node is-ok">infrastructure exonerated</span></div><span class="fig-arrow">numeric ≠ 0</span><div class="fig-chain"><span class="fig-node">recapture both sides, walk the data flow</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-key">classify the cause, test the smallest fix</span></div></div>
+<figure class="fx" data-fig="rl-triage" aria-label="Triage of a gap in a running RL loop">
+<div class="fx-stage">
+<div class="fx-spine">
+<span class="fx-node" data-hot="0">records (online)</span><span></span>
+<span class="fx-arrow is-down" data-hot="1" aria-hidden="true"></span><span></span>
+<span class="fx-node is-decision" data-hot="1">weights match?</span><span class="fx-side" data-at="2"><span class="fx-arrow">no</span><span class="fx-node is-bad">fix the sync; stop</span></span>
+<span class="fx-arrow is-down" data-hot="3">yes</span><span></span>
+<span class="fx-node" data-hot="3 4">split each token: numeric, staleness</span><span class="fx-side"><span class="fx-swap is-block" data-at="3"><span class="fx-split" data-to="4"><span class="is-whole">gap 0.15</span></span><span class="fx-split" data-at="4" style="--a:1;--b:14"><span class="is-a">numeric 0.01</span><span class="is-b">staleness 0.14</span></span></span></span>
+<span class="fx-arrow is-down" data-hot="6">numeric ≠ 0</span><span class="fx-side" data-at="5"><span class="fx-arrow">numeric = 0</span><span class="fx-node is-ok">infrastructure exonerated</span></span>
+<span class="fx-node" data-at="6">recapture both sides, walk the data flow</span><span></span>
+<span class="fx-arrow is-down" data-at="7" aria-hidden="true"></span><span></span>
+<span class="fx-node is-key" data-at="7">classify the cause, test the smallest fix</span><span></span>
+</div>
+</div>
+<ol class="fx-say">
+<li>Records come from the running loop, with a fingerprint of the weights each batch used.</li>
+<li>First: did the engine hold the weights the trainer had at that version?</li>
+<li>If not, every comparison at that version is meaningless: fix the sync and stop.</li>
+<li>If so, take each token's gap; here 0.15.</li>
+<li data-hold="2">A replay at the rollout's own version splits it exactly: numeric 0.01 plus staleness 0.14.</li>
+<li data-hold="1.5">Had numeric been 0, the gap would be policy lag alone: the infrastructure exonerated.</li>
+<li data-hold="1.5">numeric ≠ 0: recapture both sides and walk the data flow, not the trace order.</li>
+<li data-hold="2">Classify the cause and test the smallest fix.</li>
+</ol>
+<figcaption>Figure: check the weights first, split every gap at the rollout's version, and localize only a nonzero numeric error.</figcaption>
 </figure>
 
 ## The step
@@ -86,7 +109,7 @@ without applying a tolerance. The protocol and every field are in OpGuard's
      `vectors.compare`, starting from an agreed anchor and walking the data
      flow. Engines running compiled code or CUDA graphs are fingerprinted with
      [tools/graph_probe.py](../../tools/graph_probe.py)
-     ([capture compiled code](../1-pretraining/capture-compiled-code.md)).
+     ([when the job runs compiled code](../1-pretraining/capture-compiled-code.md)).
    - Success: a paired candidate: same input row, different output row, on
      both sides.
 5. **Classify and test the cause.**

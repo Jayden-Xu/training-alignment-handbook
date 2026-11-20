@@ -10,8 +10,23 @@
 
 这个工作流把你从症状带到经过确认的修复，再到一个回归检查。它就是 OpGuard 的方法，[pretraining-alignment skill](../../skills/pretraining-alignment/SKILL.md) 以 agent 的方式执行它。
 
-<figure class="fig">
-<div class="fig-steps"><span class="fig-node">1. 选择参照运行</span><span class="fig-node">2. 预检与对照</span><span class="fig-node">3. 捕获：eager 或编译后</span><span class="fig-node">4. 第一个分歧</span><span class="fig-node is-key">5. 分类<span class="fig-note">⇢ 硬件: SDC 扫描</span></span><span class="fig-node">6. 修复</span><span class="fig-node">7. 确认</span><span class="fig-node">8. 回归</span></div>
+<figure class="fx" data-fig="pre-workflow" aria-label="预训练工作流" markdown>
+<div class="fx-stage" markdown>
+<div class="fx-steps" markdown="span"><span class="fx-step" data-hot="0">[1. 选择参考运行](#step-1-pick-a-reference-run)</span><span class="fx-step" data-hot="1">[2. 预检与控制](#step-2-preflight-and-control)</span><span class="fx-step" data-hot="2">[3. 采集](#step-3-capture)</span><span class="fx-step" data-hot="3">[4. 首个分歧点](#step-4-take-the-first-divergence)</span><span class="fx-step is-key" data-hot="4">[5. 分类](#step-5-classify)</span><span class="fx-step" data-hot="6">[6. 修复](#step-6-fix)</span><span class="fx-step" data-hot="7">[7. 确认](#step-7-confirm)</span><span class="fx-step" data-hot="8">[8. 回归](#step-8-keep-it-as-a-regression-check)</span></div>
+<div class="fx-chain" markdown="span"><span class="fx-node is-key" data-hot="4">5. 分类</span><span class="fx-arrow" data-hot="5" aria-hidden="true"></span><span class="fx-branch"><span class="fx-chain"><span class="fx-arrow" data-hot="5">backward、优化器、loss、恢复训练</span><span class="fx-node" data-hot="5 6">[训练 step](training-step.md)</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="5">梯度集合通信</span><span class="fx-node" data-hot="5 6">[数据并行](data-parallel.md)</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="5">融合代码、graph 分桶</span><span class="fx-node" data-hot="2 5 6">[编译代码](capture-compiled-code.md)</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="5">设备本身</span><span class="fx-node" data-hot="5 6">[SDC](sdc.md)</span></span></span></div>
+</div>
+<ol class="fx-say">
+<li>1. 选择参考运行：它决定这次比较回答哪个问题。</li>
+<li>2. 预检与控制：两次运行只在被测的那一件事上不同。</li>
+<li data-hold="1.5">3. 在两次运行的每个边界上采集 fingerprint。如果作业运行编译代码，先读它那一页。</li>
+<li>4. 取第一个比特不同的边界。</li>
+<li>5. 分类：首个分歧点指向一个原因。</li>
+<li data-hold="1.5">常见的原因各有一页。</li>
+<li>6. 在那里修复，用能消除原因的最小改动。</li>
+<li>7. 确认：重新采集这一对，处处一致。</li>
+<li data-hold="2">8. 把这一对留在回归套件里，让它一直保持一致。</li>
+</ol>
+<figcaption>图：第 1 到第 8 步是主线。到第 5 步，首个分歧点指向一个原因，常见的原因各有一页；在那里修复，然后确认（第 7 步）。编译代码也是一种采集情形：如果生产作业运行编译代码，在第 3 步之前先读它那一页。</figcaption>
 </figure>
 
 | 步骤 | 解决什么 | 页面 |
@@ -19,23 +34,39 @@
 | 1. 选择参考运行 | 这次比较回答哪个问题 | 本页 |
 | 2. 预检与控制 | 两次运行只在待测的那一点上不同 | [确定性与预检](determinism-and-preflight.md)；训练 step 见[训练 step](training-step.md)；梯度集合通信见[数据并行](data-parallel.md) |
 | 2. 预检与控制：数据 | 每个 rank 在每一步看到的 token 比特都相同 | [数据对齐](data-alignment.md) |
-| 3. 采集 | 每个模型级边界的 fingerprint，eager 或编译 | [用 OpGuard 定位](localize-with-opguard.md)；编译代码：[采集编译代码](capture-compiled-code.md) |
+| 3. 采集 | 两次运行中每个模型级边界的 fingerprint | [用 OpGuard 定位](localize-with-opguard.md)；如果作业运行 `torch.compile` 或 CUDA graph，再看[作业运行编译代码时](capture-compiled-code.md) |
 | 4. 首个分歧点 | 比特第一次不同的边界 | [用 OpGuard 定位](localize-with-opguard.md) |
-| 5. 分类 | 原因属于哪一类：设置、训练 step 的某部分、集合通信、编译代码、kernel、硬件 | 本页，然后去该类的页面 |
-| 6. 修复 | 消除原因的最小改动 | 该类的页面；kernel 见[第 3 部分](../3-kernels/README.md) |
+| 5. 分类 | 原因属于哪一类：设置、训练 step 的某部分、集合通信、编译代码、kernel、硬件 | 本页，然后去该原因的页面 |
+| 6. 修复 | 消除原因的最小改动 | 该原因的页面；kernel 见[第 3 部分](../3-kernels/README.md) |
 | 7. 确认 | 重新采集这一对，处处一致 | [用 OpGuard 定位](localize-with-opguard.md) |
 | 8. 回归 | 这一对留在测试集里并持续一致 | [回归](../4-operations/regression.md) |
+
+本部分的页面按工作流排列。先是第 2 步：[确定性与预检](determinism-and-preflight.md)，然后是[数据对齐](data-alignment.md)。接着是核心循环[用 OpGuard 定位](localize-with-opguard.md)：采集、首个分歧点、向外追溯、修复、确认。它之后的页面对应首个分歧点指向的地方：[训练 step](training-step.md)（backward、优化器、loss、恢复训练）、[数据并行](data-parallel.md)（梯度集合通信）、[作业运行编译代码时](capture-compiled-code.md)（`torch.compile` 或 CUDA graph）和 [SDC](sdc.md)（硬件）。
 
 ## 思路：两次运行，一处差异
 
 除一个声明过的差异外，其余全部保持相同，那么第一个逐位差异要么就是这个差异，要么是一个故障。一个小例子：两次运行完全相同，只是 suspect 的 norm 在舍入到 bf16 之前先乘权重。它们按调用顺序的边界 fingerprint：
 
-| 边界 | 参考 | suspect | 相等？ |
-|---|---|---|---|
-| token embedding | e | e | 是 |
-| attention norm | n | n′ | **否：首个分歧点** |
-| q 投影 | q | q′ | 否 |
-| … 之后的每个边界 | | | 否 |
+<figure class="fx" data-fig="first-divergence" aria-label="两次运行逐个边界比较">
+<div class="fx-stage">
+<div class="fx-grid" style="--cols:3">
+<span class="fx-th">边界</span><span class="fx-th">参考</span><span class="fx-th">suspect</span><span class="fx-th">相等？</span>
+<span class="fx-label" data-hot="1">token embedding</span><span class="fx-node is-mono" data-hot="1">e</span><span class="fx-node is-mono" data-hot="1">e</span><span class="fx-pair is-ok" data-at="1">是</span>
+<span class="fx-label" data-hot="2 5">attention norm</span><span class="fx-node is-mono" data-hot="2 5">n</span><span class="fx-node is-mono to-bad" data-hot="2 5">n′</span><span class="fx-pair is-bad" data-at="2">否：首个分歧点</span>
+<span class="fx-label" data-hot="3">q 投影</span><span class="fx-node is-mono" data-hot="3">q</span><span class="fx-node is-mono to-bad" data-hot="3">q′</span><span class="fx-pair" data-at="3">否</span>
+<span class="fx-label" data-hot="4">… 之后的每个边界</span><span class="fx-node is-mono" data-hot="4">…</span><span class="fx-node is-mono to-bad" data-hot="4">…</span><span class="fx-pair" data-at="4">否</span>
+</div>
+</div>
+<ol class="fx-say">
+<li>两次运行完全相同，只是 suspect 的 norm 乘权重的位置不同。按调用顺序的 fingerprint。</li>
+<li>token embedding 在两次运行上相等。</li>
+<li data-hold="1.5">attention norm 不同：首个分歧点。</li>
+<li>q 投影也不同，因为它的输入不同了。</li>
+<li>之后的每个边界也都不同。</li>
+<li data-hold="2">只读第一个差异，然后从它向外走到原因。</li>
+</ol>
+<figcaption>图：除一个声明过的差异外其余全部相同，第一个逐位差异要么就是这个差异，要么是一个故障。</figcaption>
+</figure>
 
 norm 之后的一切也都不同，因为它的输入不同了。所以只读第一个差异，然后从它向外走到原因。
 
@@ -72,7 +103,7 @@ norm 之后的一切也都不同，因为它的输入不同了。所以只读第
 
 **目标：** 两次运行中每个模型级边界输入和输出的 fingerprint，在算子所在的 stream 上计算，不增加同步。
 
-**做法：** [opguard_bridge.py](../../tools/opguard_bridge.py) 让两边都走 OpGuard 的 harness：发现、计划、采集、比较。对 `torch.compile` 或 CUDA graph 下的代码，eager 采集看不到生产实际算出的比特；用 [graph_probe.py](../../tools/graph_probe.py)（[采集编译代码](capture-compiled-code.md)）。
+**做法：** [opguard_bridge.py](../../tools/opguard_bridge.py) 让两边都走 OpGuard 的 harness：发现、计划、采集、比较。对 `torch.compile` 或 CUDA graph 下的代码，eager 采集看不到生产实际算出的比特；用 [graph_probe.py](../../tools/graph_probe.py)（[作业运行编译代码时](capture-compiled-code.md)）。
 
 | 选项 | 给出什么 | 代价等级 | 何时选择 |
 |---|---|---|---|
@@ -102,7 +133,7 @@ norm 之后的一切也都不同，因为它的输入不同了。所以只读第
 | 有竞争或非确定的 kernel | `torch.embedding` 的 backward、融合的 embedding backward、缺少屏障的 Triton kernel | [训练 step](training-step.md)；[第 3 部分](../3-kernels/README.md) |
 | 状态记录 | 恢复训练时优化器的 step 变量被覆盖 | [训练 step](training-step.md) |
 | 依赖拓扑的归约 | 不同 NCCL 拓扑下的 reduce-scatter | [数据并行](data-parallel.md) |
-| 编译代码 | 融合或 graph 分桶改变了一个归约 | [采集编译代码](capture-compiled-code.md) |
+| 编译代码 | 融合或 graph 分桶改变了一个归约 | [作业运行编译代码时](capture-compiled-code.md) |
 | stream 误用 | fp32 RMSNorm 的 stream 竞争、激活 offload | [用 OpGuard 定位](localize-with-opguard.md) |
 | 布局假设 | QKV 投影依赖隐式的连续性 | [用 OpGuard 定位](localize-with-opguard.md) |
 | MoE 路由 | 直方图分箱不匹配导致路由漂移 | [第 3 部分：MoE](../3-kernels/moe.md) |

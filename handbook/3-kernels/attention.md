@@ -16,11 +16,30 @@ A query's output is a weighted sum over keys. Kernels visit keys in blocks and
 keep a running maximum and sum (online softmax), so the block boundaries are
 the grouping of the reduction. If the boundaries move, the bits move.
 
-<figure class="fig">
-<div class="fig-rows">
-<div class="fig-group"><span class="fig-label">fixed blocks from position 0</span><div class="fig-chain"><span class="fig-node">keys 0–63</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">keys 64–127</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node">keys 128–t</span></div></div>
-<div class="fig-group"><span class="fig-label">split-KV decode: splits chosen from the batch</span><div class="fig-chain"><div class="fig-stack"><span class="fig-node">keys 0–t/2</span><span class="fig-node">keys t/2–t</span></div><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-bad">merge two partials</span></div></div>
+<figure class="fx" data-fig="kv-split" aria-label="One query's keys walked in fixed blocks and in split-KV decode">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">fixed blocks from position 0</span><div class="fx-tree" style="--n:10">
+<div class="fx-level"><span class="fx-cell" style="--w:4" data-hot="1">keys 0–63</span><span class="fx-cell" style="--w:4" data-hot="2">keys 64–127</span><span class="fx-cell" style="--w:2" data-hot="3">128–t</span></div>
+<div class="fx-level" data-at="1"><span class="fx-walk" style="--w:10">one walk, a running max and sum</span></div>
+<div class="fx-level" data-at="3"><span class="fx-j" style="--w:10;--k:1"><span class="fx-node is-ok">the same sums in every mode</span></span></div>
+</div></div>
+<div class="fx-row"><span class="fx-label">split-KV decode: splits chosen from the batch</span><div class="fx-tree" style="--n:10">
+<div class="fx-swap is-block"><div class="fx-level" data-to="6"><span class="fx-cell" style="--w:5" data-hot="4">keys 0–t/2</span><span class="fx-cell" style="--w:5" data-hot="4">keys t/2–t</span></div><div class="fx-level" data-at="6"><span class="fx-cell" style="--w:3">0–t/3</span><span class="fx-cell" style="--w:3">t/3–2t/3</span><span class="fx-cell" style="--w:4">2t/3–t</span></div></div>
+<div class="fx-swap is-block"><div class="fx-level" data-at="5" data-to="6"><span class="fx-j" style="--w:10"><span class="fx-node is-bad">merge two partials</span></span></div><div class="fx-level" data-at="6"><span class="fx-j" style="--w:10;--k:3"><span class="fx-node is-bad">merge three partials</span></span></div></div>
+</div></div>
 </div>
+</div>
+<ol class="fx-say">
+<li>One query at position t sums over keys 0 to t, with a running max and sum.</li>
+<li>Fixed blocks counted from position 0: keys 0–63 first,</li>
+<li>then keys 64–127,</li>
+<li data-hold="1.5">then 128–t. Prefill, decode and chunked prefill all walk these blocks.</li>
+<li data-hold="1.5">Split-KV decode: the batch size and core count set the number of splits; here two, summed at once.</li>
+<li data-hold="1.5">The two partials are merged: another grouping of the same sum.</li>
+<li data-hold="2">Another batch, three splits: the boundaries move, and so do the bits.</li>
+</ol>
+<figcaption>Figure: the block boundaries are the grouping of the reduction. If the boundaries move, the bits move.</figcaption>
 </figure>
 
 Three things move the boundaries:

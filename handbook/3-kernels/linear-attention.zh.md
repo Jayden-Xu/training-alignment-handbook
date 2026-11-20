@@ -14,17 +14,29 @@
 
 取十个 token、每块 4 个：
 
-| 调用方式 | token 8 和 9 如何分组 |
-|---|---|
-| 一次 prefill token 0–9 | 块 {0–3}、{4–7}、{8–9} |
-| prefill 0–7，然后每个 token 一次 decode 调用 | {8} 单独一块，然后 {9} 单独一块 |
-| 对齐：在 token 8 处保留状态，重算未满的块 | 又是 {8–9}，与 prefill 相同 |
+<figure class="fx" data-fig="chunks" aria-label="三种调用方式和循环形式下块边界的位置">
+<div class="fx-stage">
+<div class="fx-rows" style="--n:10">
+<div class="fx-row"><span class="fx-label">十个 token，C = 4</span><div class="fx-track"><div class="fx-level"><span class="fx-cell">0</span><span class="fx-cell">1</span><span class="fx-cell">2</span><span class="fx-cell">3</span><span class="fx-cell">4</span><span class="fx-cell">5</span><span class="fx-cell">6</span><span class="fx-cell">7</span><span class="fx-cell">8</span><span class="fx-cell">9</span></div><span class="fx-verdict"></span></div></div>
+<div class="fx-row"><span class="fx-label">一次 prefill token 0–9</span><div class="fx-track"><div class="fx-level fx-sweep" data-at="1" data-hot="1"><span class="fx-span" style="--w:4">{0–3}</span><span class="fx-span" style="--w:4">{4–7}</span><span class="fx-span" style="--w:2">{8–9}</span></div><span class="fx-verdict"></span></div></div>
+<div class="fx-row"><span class="fx-label">prefill 0–7，然后每个 token 一次 decode 调用</span><div class="fx-track"><div class="fx-level" data-at="2" data-hot="3"><span class="fx-span" style="--w:4">{0–3}</span><span class="fx-span" style="--w:4">{4–7}</span><span class="fx-span to-bad" style="--w:1">{8}</span><span class="fx-span to-bad" style="--w:1">{9}</span></div><span class="fx-verdict"><span class="fx-node is-bad" data-at="3">位随调用大小变化</span></span></div></div>
+<div class="fx-row"><span class="fx-label">对齐：在 token 8 处保留状态，重算未满的块</span><div class="fx-track"><div class="fx-swap is-block"><div class="fx-level" data-at="4" data-to="5"><span class="fx-span" style="--w:4">{0–3}</span><span class="fx-span" style="--w:4">{4–7}</span><span class="fx-span" style="--w:1">{8}</span></div><div class="fx-level" data-at="5" data-hot="5"><span class="fx-span" style="--w:4">{0–3}</span><span class="fx-span" style="--w:4">{4–7}</span><span class="fx-span to-ok" style="--w:2">{8–9}</span></div></div><span class="fx-verdict"><span class="fx-node is-ok" data-at="5">与 prefill 相同</span></span></div></div>
+<div class="fx-row"><span class="fx-label">循环形式：每步一个 token</span><div class="fx-track"><div class="fx-level fx-sweep is-unit" data-at="6" data-hot="6"><span class="fx-span" style="--w:1">0</span><span class="fx-span" style="--w:1">1</span><span class="fx-span" style="--w:1">2</span><span class="fx-span" style="--w:1">3</span><span class="fx-span" style="--w:1">4</span><span class="fx-span" style="--w:1">5</span><span class="fx-span" style="--w:1">6</span><span class="fx-span" style="--w:1">7</span><span class="fx-span" style="--w:1">8</span><span class="fx-span" style="--w:1">9</span></div><span class="fx-verdict"><span class="fx-node is-ok" data-at="6">每种模式下位都相同</span></span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li>十个 token，每块 C = 4 个。块决定状态的和如何分组。</li>
+<li>一次 prefill token 0–9：块 {0–3}、{4–7}、{8–9}。</li>
+<li data-hold="1.5">prefill 0–7，然后每个 token 一次 decode 调用：每次调用开始自己的块，先是 {8}，然后是 {9}。</li>
+<li data-hold="1.5">token 9 以另一种分组求和：它的输出和状态在最后几位上不同。</li>
+<li data-hold="1.5">对齐：在 token 8（一个块边界）处保留状态，token 9 到来时重算未满的块：</li>
+<li data-hold="1.5">又是 {8–9}，与 prefill 相同，所以位相同。</li>
+<li data-hold="2">循环形式：每种模式下每个 token 更新一次，位天然相同。</li>
+</ol>
+<figcaption>图：分块形式只有在每个块都从 C 的绝对整数倍开始时才满足模式不变性；循环形式总是满足。</figcaption>
+</figure>
 
 第二种方式以不同的分组对相同的项求和，所以 token 9 的输出和状态在最后几位上不同。
-
-<figure class="fig">
-<div class="fig-chain"><span class="fig-node">分块边界处的状态</span><span class="fig-arrow" aria-hidden="true"></span><div class="fig-branch"><div class="fig-chain"><span class="fig-node">循环形式：每步一个 token</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-ok">每种模式下位都相同</span></div><div class="fig-chain"><span class="fig-node">分块，对齐：chunk 位于 C 的绝对整数倍</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-ok">每种模式下位都相同</span></div><div class="fig-chain"><span class="fig-node">分块，相对于调用：每次调用开始自己的 chunk</span><span class="fig-arrow" aria-hidden="true"></span><span class="fig-node is-bad">位随调用大小变化</span></div></div></div>
-</figure>
 
 由此得出三点：
 
