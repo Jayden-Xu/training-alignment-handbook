@@ -1,4 +1,4 @@
-# Where the trainer (model.py) and vLLM can round differently
+# Where the trainer and vLLM round differently
 
 This page lists every place in a Llama/Qwen2-style decoder where the trainer
 and the engine can round differently, and what each side does there.

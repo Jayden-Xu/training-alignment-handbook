@@ -1,4 +1,4 @@
-# 用了 torch.compile 或 CUDA graph 时怎样采集
+# torch.compile 与 CUDA graph
 
 ## 我们在哪里
 

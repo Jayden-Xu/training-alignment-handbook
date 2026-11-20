@@ -1,4 +1,4 @@
-# 1. 预训练：找出两次运行从哪里开始出错
+# 1. 预训练对齐
 
 ## 我们在哪里
 
@@ -34,14 +34,14 @@
 | 1. 选参考运行 | 这次比较要回答哪个问题 | 本页 |
 | 2. 预检与控制 | 两次运行只在你要测试的那一点上不同 | [确定性与预检](determinism-and-preflight.md)；训练 step 的各个部分见[训练 step](training-step.md)；对梯度求和的集合通信见[数据并行](data-parallel.md) |
 | 2. 预检与控制（数据部分） | 每个 rank 在每一步拿到的 token 逐 bit 一致 | [数据对齐](data-alignment.md) |
-| 3. 采集 | 两次运行在每个模型级边界上都有 fingerprint | [用 OpGuard 定位](localize-with-opguard.md)；如果训练任务用了 `torch.compile` 或 CUDA graph，还要看[用了 torch.compile 或 CUDA graph 时怎样采集](capture-compiled-code.md) |
+| 3. 采集 | 两次运行在每个模型级边界上都有 fingerprint | [用 OpGuard 定位](localize-with-opguard.md)；如果训练任务用了 `torch.compile` 或 CUDA graph，还要看[torch.compile 与 CUDA graph](capture-compiled-code.md) |
 | 4. 首个分歧点 | 第一个结果不同的边界是哪一个 | [用 OpGuard 定位](localize-with-opguard.md) |
 | 5. 判断原因类别 | 原因属于哪一类：设置、训练 step 的某个部分、集合通信、torch.compile 或 CUDA graph、kernel，还是硬件 | 先看本页，再去这类原因对应的那一页 |
 | 6. 修复 | 能消除原因的最小改动 | 这类原因对应的那一页；如果是 kernel，见[第 3 部分](../3-kernels/README.md) |
 | 7. 确认 | 重新采集这一对运行后，处处一致 | [用 OpGuard 定位](localize-with-opguard.md) |
 | 8. 回归检查 | 这一对运行留在回归套件里，并且一直保持一致 | [回归](../4-operations/regression.md) |
 
-这一部分的各页按流程的顺序排列。最先做的是第 2 步，分成[确定性与预检](determinism-and-preflight.md)和[数据对齐](data-alignment.md)两页。接下来是核心循环[用 OpGuard 定位](localize-with-opguard.md)：采集两次运行，找到首个分歧点，从它追到原因，修复，再确认修复有效。后面几页对应首个分歧点最常指向的地方：[训练 step](training-step.md) 讲反向、优化器、loss 和恢复训练；[数据并行](data-parallel.md)讲对梯度求和的集合通信；[用了 torch.compile 或 CUDA graph 时怎样采集](capture-compiled-code.md)讲怎样在 `torch.compile` 生成的代码和 CUDA graph 重放内部取 fingerprint；[SDC](sdc.md) 讲硬件。
+这一部分的各页按流程的顺序排列。最先做的是第 2 步，分成[确定性与预检](determinism-and-preflight.md)和[数据对齐](data-alignment.md)两页。接下来是核心循环[用 OpGuard 定位](localize-with-opguard.md)：采集两次运行，找到首个分歧点，从它追到原因，修复，再确认修复有效。后面几页对应首个分歧点最常指向的地方：[训练 step](training-step.md) 讲反向、优化器、loss 和恢复训练；[数据并行](data-parallel.md)讲对梯度求和的集合通信；[torch.compile 与 CUDA graph](capture-compiled-code.md)讲怎样在 `torch.compile` 生成的代码和 CUDA graph 重放内部取 fingerprint；[SDC](sdc.md) 讲硬件。
 
 ## 思路：让两次运行只差一件事
 
@@ -103,7 +103,7 @@ norm 之后的所有边界也都不同，因为它们的输入已经变了。所
 
 **目标：** 在两次运行的每个模型级边界上，记录输入和输出的 fingerprint。fingerprint 在算子自己的 stream 上计算，不会额外引入同步。
 
-**做法：** [opguard_bridge.py](../../tools/opguard_bridge.py) 让两次运行都经过 OpGuard 的 harness：先发现边界，再规划在哪里插桩，然后采集并比较。如果代码跑在 `torch.compile` 或 CUDA graph 下，eager 采集看不到生产环境实际算出的结果；这时改用 [graph_probe.py](../../tools/graph_probe.py)（见[用了 torch.compile 或 CUDA graph 时怎样采集](capture-compiled-code.md)）。
+**做法：** [opguard_bridge.py](../../tools/opguard_bridge.py) 让两次运行都经过 OpGuard 的 harness：先发现边界，再规划在哪里插桩，然后采集并比较。如果代码跑在 `torch.compile` 或 CUDA graph 下，eager 采集看不到生产环境实际算出的结果；这时改用 [graph_probe.py](../../tools/graph_probe.py)（见[torch.compile 与 CUDA graph](capture-compiled-code.md)）。
 
 | 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -133,7 +133,7 @@ norm 之后的所有边界也都不同，因为它们的输入已经变了。所
 | kernel 有竞争或本身不确定 | `torch.embedding` 的反向、融合过的 embedding 反向、缺少 barrier 的 Triton kernel | [训练 step](training-step.md)；[第 3 部分](../3-kernels/README.md) |
 | 状态没有正确恢复 | 恢复训练时，优化器的 step 变量被覆盖了 | [训练 step](training-step.md) |
 | 归约结果依赖拓扑 | NCCL 拓扑不同时，reduce-scatter 的结果不同 | [数据并行](data-parallel.md) |
-| torch.compile 或 CUDA graph | 融合或 graph 分桶改变了某个归约 | [用了 torch.compile 或 CUDA graph 时怎样采集](capture-compiled-code.md) |
+| torch.compile 或 CUDA graph | 融合或 graph 分桶改变了某个归约 | [torch.compile 与 CUDA graph](capture-compiled-code.md) |
 | stream 用错了 | fp32 RMSNorm 里的 stream 竞争；activation offload | [用 OpGuard 定位](localize-with-opguard.md) |
 | 对内存布局的错误假设 | QKV 投影想当然地认为张量是连续的 | [用 OpGuard 定位](localize-with-opguard.md) |
 | MoE 路由 | 直方图分箱对不上，导致路由慢慢漂移 | [第 3 部分：MoE](../3-kernels/moe.md) |

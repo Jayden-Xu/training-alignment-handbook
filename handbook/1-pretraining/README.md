@@ -1,4 +1,4 @@
-# 1. Pre-training: finding where a run went wrong
+# 1. Pre-training alignment
 
 ## Where we are
 
@@ -41,7 +41,7 @@ lets an agent carry it out.
 | 1. Choose the reference run | Which question the comparison answers | this page |
 | 2. Preflight and control | That the two runs differ only in the one thing you are testing | [Determinism and preflight](determinism-and-preflight.md); for the parts of a training step, [Training step](training-step.md); for the collectives that sum gradients, [Data parallel](data-parallel.md) |
 | 2. Preflight and control, for the data | That every rank sees the same token bits at every step | [Data alignment](data-alignment.md) |
-| 3. Capture | That both runs have fingerprints at every model-level boundary | [Localize with OpGuard](localize-with-opguard.md); if the job runs `torch.compile` or CUDA graphs, also [When the job runs compiled code](capture-compiled-code.md) |
+| 3. Capture | That both runs have fingerprints at every model-level boundary | [Localize with OpGuard](localize-with-opguard.md); if the job runs `torch.compile` or CUDA graphs, also [Compiled code and CUDA graphs](capture-compiled-code.md) |
 | 4. First divergence | Which boundary is the first whose bits differ | [Localize with OpGuard](localize-with-opguard.md) |
 | 5. Classify | Which kind of cause it is: a setting, a part of the training step, a collective, compiled code, a kernel or the hardware | this page, then the page for that kind of cause |
 | 6. Fix | The smallest change that removes the cause | the page for that kind of cause, or [part 3](../3-kernels/README.md) for a kernel |
@@ -57,7 +57,7 @@ the fix. The pages after it cover the places a first divergence most often
 points to: [Training step](training-step.md) for the backward pass, the
 optimizer, the loss and resume; [Data parallel](data-parallel.md) for the
 collectives that sum gradients;
-[When the job runs compiled code](capture-compiled-code.md) for
+[Compiled code and CUDA graphs](capture-compiled-code.md) for
 `torch.compile` and CUDA graphs; and [SDC](sdc.md) for the hardware.
 
 ## The idea: make the two runs differ in exactly one thing {#the-idea-two-runs-one-difference}
@@ -147,7 +147,7 @@ through OpGuard's harness, which discovers the boundaries, plans where to
 instrument, captures and compares. If the code runs under `torch.compile` or
 CUDA graphs, an eager capture does not show the bits that production
 computes; use [graph_probe.py](../../tools/graph_probe.py) instead
-([When the job runs compiled code](capture-compiled-code.md)).
+([Compiled code and CUDA graphs](capture-compiled-code.md)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
@@ -190,7 +190,7 @@ classes:
 | A racy or nondeterministic kernel | the backward of `torch.embedding`, a fused embedding backward, a Triton kernel that lacks a barrier | [Training step](training-step.md); [part 3](../3-kernels/README.md) |
 | State that is restored wrongly | an optimizer's step variable overwritten on resume | [Training step](training-step.md) |
 | A reduction that depends on the topology | a reduce-scatter under a different NCCL topology | [Data parallel](data-parallel.md) |
-| Compiled code | a fusion or a graph bucket that changes a reduction | [When the job runs compiled code](capture-compiled-code.md) |
+| Compiled code | a fusion or a graph bucket that changes a reduction | [Compiled code and CUDA graphs](capture-compiled-code.md) |
 | Streams used wrongly | a stream race in an fp32 RMSNorm; activation offload | [Localize with OpGuard](localize-with-opguard.md) |
 | A wrong assumption about layout | QKV projections that silently assume a contiguous tensor | [Localize with OpGuard](localize-with-opguard.md) |
 | MoE routing | mismatched histogram bins that make the routing drift | [part 3: MoE](../3-kernels/moe.md) |

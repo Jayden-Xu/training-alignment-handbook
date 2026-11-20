@@ -1,4 +1,4 @@
-# 监控运行中的 RL 训练循环，并定位出错的地方
+# 监控 RL 训练循环
 
 ## 我们在哪里
 
@@ -97,7 +97,7 @@ embedding 的输出，跟着每个张量走到使用它的那个算子，直到�
      `rl.forwards` 列出各次前向；再用 `vectors.describe`、`vectors.lookup`、
      `vectors.coverage` 和 `vectors.compare` 查询，从两端一致的锚点出发，沿数据流往下走。
      如果引擎用了 torch.compile 或 CUDA graph，就用 [tools/graph_probe.py](../../tools/graph_probe.py)
-     取 fingerprint（见[用了 torch.compile 或 CUDA graph 时怎样采集](../1-pretraining/capture-compiled-code.md)）。
+     取 fingerprint（见[torch.compile 与 CUDA graph](../1-pretraining/capture-compiled-code.md)）。
    - 成功标准：找到一对候选：同样的输入行在两端给出了不同的输出行。
 5. **判定原因类别，并检验它。**
    - 目标：得到一个原因类别，并用一次干预确认它。

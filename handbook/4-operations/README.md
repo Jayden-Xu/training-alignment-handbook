@@ -1,4 +1,4 @@
-# 4. Operations: keeping the results valid when your stack changes
+# 4. Operations
 
 You now have a stack on which the workflows of parts 1–3 hold: the settings
 have been checked, the operators are invariant, and the two sides agree. This

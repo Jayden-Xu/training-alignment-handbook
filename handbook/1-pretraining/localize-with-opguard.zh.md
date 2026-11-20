@@ -14,7 +14,7 @@
 - **它交给你的是一条事实，而不是一份日志。** 它先确认前面一段完全相同，再报告这之后的第一个差异。你或你的 agent 只需要读一个事件，而不是几千行日志；它的 agent harness 通过工具提供这些事实，判断则留给 skill。
 - **它是为多节点的大规模训练任务做的，也确实在上面用过。** 它采集每一个 rank，给记录排序时不往训练任务里加时钟同步或 barrier，而且先写到节点本地的磁盘，再在后台同步到共享存储（见下一节）。据作者报告，它已经用在大规模 GPU 集群上的生产 LLM 训练中，找到了二十多个问题的根因，其中有 kernel 里的竞态，也有静默数据损坏（SDC），把排查时间从几天缩短到了几分钟（[OSDI '26 论文](https://www.usenix.org/conference/osdi26/presentation/zhou-ziming)）。
 
-### 大规模训练任务：先写本地磁盘，再定期同步 {#periodic-sync}
+### 大规模训练任务的定期同步 {#periodic-sync}
 
 一个大规模训练任务有几千个 rank。如果每个 rank 都把自己的 trace 文件直接写到共享存储上，共享存储会在同一时刻收到大量的小文件写入，训练任务也只能等着它。OpGuard 的本地暂存（local staging）就是为了避免这种情况：每个 rank 以本地磁盘的速度写到自己所在的节点上，每个节点再由一个上传进程按固定间隔，把新增的数据打成一个包（bundle），拷到共享存储上。
 
@@ -86,7 +86,7 @@ OpGuard 在两次运行的每个模型级边界上记录 fingerprint，把两份
 
 **目标：** 两次运行在每个计划好的边界上都有 fingerprint。
 
-**做法：** 调用 [opguard_bridge.py](../../tools/opguard_bridge.py) 里的 `opguard_bridge.run_pair(reference, suspect, ...)`，让两次运行都经过 OpGuard 的 harness：发现边界，规划插桩，采集，然后比较。发现和采集两个阶段，各自会把两次运行都启动一遍。在多节点的训练任务上，采集之前先打开[本地暂存](#periodic-sync)。如果生产环境的训练任务用了 `torch.compile` 或 CUDA graph，这次采集会改用 eager 模式运行它，于是可能看不到生产环境实际算出的结果，见[用了 torch.compile 或 CUDA graph 时怎样采集](capture-compiled-code.md)。
+**做法：** 调用 [opguard_bridge.py](../../tools/opguard_bridge.py) 里的 `opguard_bridge.run_pair(reference, suspect, ...)`，让两次运行都经过 OpGuard 的 harness：发现边界，规划插桩，采集，然后比较。发现和采集两个阶段，各自会把两次运行都启动一遍。在多节点的训练任务上，采集之前先打开[本地暂存](#periodic-sync)。如果生产环境的训练任务用了 `torch.compile` 或 CUDA graph，这次采集会改用 eager 模式运行它，于是可能看不到生产环境实际算出的结果，见[torch.compile 与 CUDA graph](capture-compiled-code.md)。
 
 **成功标准：** 两份 trace 都已生成，摘要里统计了相等和不相等的事件各有多少。
 
@@ -154,4 +154,4 @@ OpGuard 在两次运行的每个模型级边界上记录 fingerprint，把两份
 - [报告：OpGuard 演练](../../examples/pretraining_e2e/REPORT.md)：实验配置、OpGuard 对每一对运行报告了什么、修复和重跑、每次排查的代价、覆盖范围，以及对 fingerprint 的检查。
 - 代码：[pretraining_e2e.py](../../examples/pretraining_e2e/pretraining_e2e.py) 和 [opguard_bridge.py](../../tools/opguard_bridge.py)。
 - [pretraining-alignment skill](../../skills/pretraining-alignment/SKILL.md)。
-- [用了 torch.compile 或 CUDA graph 时怎样采集](capture-compiled-code.md)：训练任务用了 `torch.compile` 或 CUDA graph 时该怎么办。
+- [torch.compile 与 CUDA graph](capture-compiled-code.md)：训练任务用了 `torch.compile` 或 CUDA graph 时该怎么办。

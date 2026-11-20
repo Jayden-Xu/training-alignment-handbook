@@ -52,7 +52,7 @@ After that, read the page for the place the first divergence points to:
   repeat bit for bit.
 - [Data parallel](handbook/1-pretraining/data-parallel.md) shows how to keep
   gradients equal when ranks sum them together or shard them.
-- [When the job runs compiled code](handbook/1-pretraining/capture-compiled-code.md)
+- [Compiled code and CUDA graphs](handbook/1-pretraining/capture-compiled-code.md)
   shows how to take fingerprints inside `torch.compile` and CUDA graphs, where
   an eager capture cannot see.
 - [SDC](handbook/1-pretraining/sdc.md) shows how to find hardware that silently

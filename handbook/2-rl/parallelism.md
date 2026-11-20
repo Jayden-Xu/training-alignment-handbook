@@ -1,4 +1,4 @@
-# Getting the same result at any tensor-parallel degree (L5)
+# Any tensor-parallel degree (L5)
 
 ## Where we are
 

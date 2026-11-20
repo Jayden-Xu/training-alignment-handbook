@@ -1,4 +1,4 @@
-# Softmax attention: the forward pass, the backward pass and serving
+# Softmax attention
 
 ## Where we are
 

@@ -1,4 +1,4 @@
-# When the job runs compiled code
+# Compiled code and CUDA graphs
 
 ## Where we are
 

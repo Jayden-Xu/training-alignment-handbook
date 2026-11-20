@@ -50,7 +50,7 @@ avoid both, and that is why this part of the handbook is organized around it.
   data corruption among them, and cut investigations from days to minutes
   ([OSDI '26 paper](https://www.usenix.org/conference/osdi26/presentation/zhou-ziming)).
 
-### Large jobs: stage traces on local disks and sync them periodically {#periodic-sync}
+### Periodic sync for large jobs {#periodic-sync}
 
 A large job runs thousands of ranks. If each of them wrote its trace files
 straight to shared storage, the storage would get a flood of small writes at
@@ -161,7 +161,7 @@ sides once. On a multi-node job, turn on [local staging](#periodic-sync)
 before you capture. If the production job runs `torch.compile` or CUDA graphs, this
 capture runs it in eager mode instead, and it may not show the bits that
 production computes; see
-[When the job runs compiled code](capture-compiled-code.md).
+[Compiled code and CUDA graphs](capture-compiled-code.md).
 
 **Success:** both traces exist, and the summary counts the events that are
 equal and the events that differ.
@@ -272,5 +272,5 @@ known-answer demonstration, not a blind evaluation.
 - The code is in [pretraining_e2e.py](../../examples/pretraining_e2e/pretraining_e2e.py)
   and [opguard_bridge.py](../../tools/opguard_bridge.py).
 - [pretraining-alignment skill](../../skills/pretraining-alignment/SKILL.md).
-- [When the job runs compiled code](capture-compiled-code.md) covers runs that
+- [Compiled code and CUDA graphs](capture-compiled-code.md) covers runs that
   use `torch.compile` or CUDA graphs.

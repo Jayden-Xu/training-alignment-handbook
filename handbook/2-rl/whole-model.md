@@ -1,4 +1,4 @@
-# Making the whole model invariant on one side (L1–L3)
+# Whole-model invariance (L1–L3)
 
 ## Where we are
 

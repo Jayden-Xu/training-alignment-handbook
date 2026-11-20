@@ -1,4 +1,4 @@
-# trainer（model.py）和 vLLM 可能在哪些地方舍入不同
+# trainer 与 vLLM 舍入不同的地方
 
 本页列出 Llama/Qwen2 风格的 decoder 里，trainer 和引擎可能舍入不同的每一个地方，
 以及两端在那里各自怎么做。这里的“Trainer”指

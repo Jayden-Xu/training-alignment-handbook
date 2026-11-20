@@ -1,4 +1,4 @@
-# Scanning GPUs for silent data corruption
+# Silent data corruption
 
 ## Where we are
 

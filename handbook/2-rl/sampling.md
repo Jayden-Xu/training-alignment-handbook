@@ -1,4 +1,4 @@
-# Sampling tokens that can be replayed exactly
+# Replayable sampling
 
 ## Where we are
 

@@ -1,4 +1,4 @@
-# MoE：让路由、expert 的 GEMM 和 combine 都不随 batch 变化
+# MoE
 
 ## 我们在哪里
 

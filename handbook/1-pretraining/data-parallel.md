@@ -1,4 +1,4 @@
-# Keeping gradients identical under data parallelism and FSDP-style sharding
+# Data parallelism and FSDP
 
 ## Where we are
 

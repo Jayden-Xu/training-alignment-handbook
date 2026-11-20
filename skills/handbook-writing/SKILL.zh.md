@@ -54,11 +54,11 @@ handbook 教三条工作流程：找到两次预训练从哪里开始分开（�
 像一位细心的工程师给同事讲解那样写，而不是把笔记压缩成摘要。每个标题和句子都读出声来；
 如果读者需要"解码"才能看懂，就重写。
 
-- **标题用平实的话说清这一页讲什么**，不要压缩成公式。
-  "LoRA: one adapter per training batch, many per serving batch" →
-  "LoRA: matching training and serving when one batch mixes many adapters"。
-  "Parallelism: same bits at every TP size (L5)" →
-  "Getting the same result at any tensor-parallel degree (L5)"。
+- **标题要短、要平实**，像书的目录条目：几个词的名词短语（英文大约不超过六个词，中文大约不超过十五个字），
+  不写成句子，也不压缩成公式。其余的话留给这一页的开头一段。
+  "LoRA：训练批次里一个适配器，服务批次里多个"和"LoRA：训练时只有一个 adapter，推理时一个 batch 混着多个 adapter"
+  都改成"LoRA：多 adapter 混合 batch"；"换 TP 规模，结果仍逐 bit 一致（L5）"改成"任意 TP 规模（L5）"。
+  小节标题也照此办理。
 - **不写残句、不堆名词短语、不用一串冒号。** 用有主语、有动词的完整句子。
 - **说清楚谁做了什么。** 写"引擎把共用同一个适配器的 token 分成一组"，不要写"引擎的适配器分组"。
 - **一个概念只用一个词，并且只解释一次。** 同一个意思不要混用 "bits"、"位"、"比特"；用术语表里的词。
@@ -97,12 +97,12 @@ bit-equal 统一写"逐 bit 一致"；步骤里统一用"目标""做法""成功�
 
 改写示例：
 
-| 机器翻译腔 | 通顺的中文 |
+| 机器翻译腔，或者太长 | 简短通顺的中文 |
 |---|---|
-| 并行度：每个 TP 大小下位都相同（L5） | 换 TP 规模，结果仍逐 bit 一致（L5） |
-| 作业运行编译代码时 | 用了 torch.compile 或 CUDA graph 时怎样采集 |
-| LoRA：训练批次里一个适配器，服务批次里多个 | LoRA：训练时只有一个 adapter，推理时一个 batch 混着多个 adapter |
-| 让单侧不变：整个模型 | 先让一端自己不变：整个模型 |
+| 并行度：每个 TP 大小下位都相同（L5） | 任意 TP 规模（L5） |
+| 作业运行编译代码时 | torch.compile 与 CUDA graph |
+| LoRA：训练时只有一个 adapter，推理时一个 batch 混着多个 adapter | LoRA：多 adapter 混合 batch |
+| 让单侧不变：整个模型 | 整个模型的不变性（L1–L3） |
 
 ## 诚实
 

@@ -1,4 +1,4 @@
-# 离线后训练：预先算好的参考 logprob 和 teacher logits
+# 离线后训练
 
 ## 我们在哪里
 

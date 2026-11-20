@@ -1,6 +1,6 @@
 # Fingerprints inside torch.compile and CUDA graphs: lab report
 
-This is the full record behind the handbook page [When the job runs compiled code](../../handbook/1-pretraining/capture-compiled-code.md). The page teaches the idea and the step; this report keeps the setup, every configuration, every table, the limits and how the case was built.
+This is the full record behind the handbook page [Compiled code and CUDA graphs](../../handbook/1-pretraining/capture-compiled-code.md). The page teaches the idea and the step; this report keeps the setup, every configuration, every table, the limits and how the case was built.
 
 ## Summary
 

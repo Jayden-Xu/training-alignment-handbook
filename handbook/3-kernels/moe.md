@@ -1,4 +1,4 @@
-# MoE: making routing, the expert GEMMs and the combine invariant
+# MoE
 
 ## Where we are
 

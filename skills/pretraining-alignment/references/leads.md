@@ -1,4 +1,4 @@
-# What the leads from `suggest` mean and how to confirm them
+# The leads from `suggest`
 
 `opguard_bridge.suggest(facts, preflight)` returns a ranked list of leads.
 Each lead has a `kind`, the evidence it rests on, a `check` to run, and a

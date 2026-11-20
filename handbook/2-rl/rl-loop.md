@@ -1,4 +1,4 @@
-# Watching the running RL loop and localizing what goes wrong
+# Monitoring the RL loop
 
 ## Where we are
 

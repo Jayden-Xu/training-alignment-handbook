@@ -1,4 +1,4 @@
-# 让 trainer 的 logprob 与引擎逐 bit 一致（L4）
+# 与 vLLM 逐 bit 一致（L4）
 
 ## 我们在哪里
 

@@ -1,4 +1,4 @@
-# `suggest` 给出的线索是什么意思，怎样确认
+# `suggest` 给出的线索
 
 `opguard_bridge.suggest(facts, preflight)` 返回一组按优先级排好的线索。每条线索都带
 一个 `kind`、它所依据的证据、一个要运行的 `check`，以及一处手册引用。在被某个干预

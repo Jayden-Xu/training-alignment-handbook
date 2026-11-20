@@ -1,4 +1,4 @@
-# LoRA：训练时只有一个 adapter，推理时一个 batch 混着多个 adapter
+# LoRA：多 adapter 混合 batch
 
 ## 我们在哪里
 

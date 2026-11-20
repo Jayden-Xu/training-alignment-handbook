@@ -1,4 +1,4 @@
-# Offline post-training with precomputed reference logprobs and teacher logits
+# Offline post-training
 
 ## Where we are
 

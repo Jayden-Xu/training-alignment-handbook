@@ -1,4 +1,4 @@
-# LoRA: matching training and serving when one batch mixes many adapters
+# LoRA with mixed-adapter batches
 
 ## Where we are
 

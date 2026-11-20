@@ -1,4 +1,4 @@
-# Making the trainer agree with the engine bit for bit (L4)
+# Matching vLLM bit for bit (L4)
 
 ## Where we are
 

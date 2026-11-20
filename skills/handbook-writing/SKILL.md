@@ -66,11 +66,15 @@ Write as a careful engineer explains to a colleague, not as a summary of
 notes. Read every title and sentence aloud; if a reader would have to decode
 it, rewrite it.
 
-- **Titles say what the page is about in plain words**, not a compressed
-  formula. "LoRA: one adapter per training batch, many per serving batch" →
-  "LoRA: matching training and serving when one batch mixes many adapters".
-  "Parallelism: same bits at every TP size (L5)" → "Getting the same result
-  at any tensor-parallel degree (L5)".
+- **Titles are short and plain**, like entries in a book's table of
+  contents: a noun phrase of a few words (at most about six English words or
+  fifteen Chinese characters), not a sentence and not a compressed formula.
+  The page's opening paragraph says the rest. "LoRA: one adapter per
+  training batch, many per serving batch" and "LoRA: matching training and
+  serving when one batch mixes many adapters" both become "LoRA with
+  mixed-adapter batches"; "Getting the same result at any tensor-parallel
+  degree (L5)" becomes "Any tensor-parallel degree (L5)". Section headings
+  follow the same rule.
 - **No fragments, no stacked noun phrases, no colon chains.** Full sentences
   with a subject and a verb. Avoid "X: Y, Z" headlines inside prose.
 - **Say who does what.** "The engine groups the tokens that share an adapter"
@@ -108,12 +112,12 @@ rollout 端 / trainer 端 / 两端, not 侧.
 
 Rewrites of titles that read as machine translation:
 
-| Machine-translated | Natural Chinese |
+| Machine-translated, or too long | Short, natural Chinese |
 |---|---|
-| 并行度：每个 TP 大小下位都相同（L5） | 换 TP 规模，结果仍逐 bit 一致（L5） |
-| 作业运行编译代码时 | 用了 torch.compile 和 CUDA graph 之后怎么抓取 |
-| LoRA：训练批次里一个适配器，服务批次里多个 | LoRA：训练时只有一个 adapter，推理时一个 batch 混着多个 adapter |
-| 让单侧不变：整个模型 | 先让一端自己不变：整个模型 |
+| 并行度：每个 TP 大小下位都相同（L5） | 任意 TP 规模（L5） |
+| 作业运行编译代码时 | torch.compile 与 CUDA graph |
+| LoRA：训练时只有一个 adapter，推理时一个 batch 混着多个 adapter | LoRA：多 adapter 混合 batch |
+| 让单侧不变：整个模型 | 整个模型的不变性（L1–L3） |
 
 ## Honesty
 

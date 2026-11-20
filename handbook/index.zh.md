@@ -67,7 +67,7 @@ hide:
 
 - [训练 step](1-pretraining/training-step.md)讲怎样让反向传播、优化器、loss 计算以及从 checkpoint 恢复训练都逐 bit 可重复。
 - [数据并行](1-pretraining/data-parallel.md)讲梯度在多个 rank 之间求和或分片时，怎样让结果保持不变。
-- [用了 torch.compile 或 CUDA graph 时怎样采集](1-pretraining/capture-compiled-code.md)讲怎样在 `torch.compile` 和 CUDA graph 内部取 fingerprint（指纹），因为 eager 采集看不到那里。
+- [torch.compile 与 CUDA graph](1-pretraining/capture-compiled-code.md)讲怎样在 `torch.compile` 和 CUDA graph 内部取 fingerprint（指纹），因为 eager 采集看不到那里。
 - [SDC](1-pretraining/sdc.md)讲怎样找出悄悄返回错误数值的硬件。
 
 ## 第 2 部分：rollout 引擎和 trainer 结果不一致

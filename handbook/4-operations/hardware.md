@@ -1,4 +1,4 @@
-# Hardware coverage: what can change the bits, and how to qualify new hardware
+# Hardware coverage
 
 Every bitwise claim in this handbook holds on the stack it was shown on. When
 you move to other GPUs, another driver or other libraries, the

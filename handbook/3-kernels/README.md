@@ -1,4 +1,4 @@
-# 3. Batch-invariant kernels: making one operator independent of the batch
+# 3. Batch-invariant kernels
 
 ## Where we are
 

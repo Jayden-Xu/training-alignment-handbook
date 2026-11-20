@@ -1,4 +1,4 @@
-# 3. Batch-invariant kernel：让一个算子的结果不随 batch 变化
+# 3. Batch-invariant kernel
 
 ## 我们在哪里
 

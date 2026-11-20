@@ -1,4 +1,4 @@
-# Making the training step repeat bit for bit
+# The training step
 
 ## Where we are
 

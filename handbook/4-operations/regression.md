@@ -1,4 +1,4 @@
-# Regression: re-checking the verified results after the stack changes
+# Regression checks
 
 You have a stack on which the handbook's checks hold, and something in it is
 about to change: torch, Triton, NCCL, the driver, the CUDA build or the GPUs.
