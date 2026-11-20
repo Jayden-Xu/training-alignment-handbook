@@ -88,15 +88,14 @@ L2, and a different kernel for each serving mode breaks L3 (measured: see
 
 ### 1. Find what makes the result vary {#1-locate-the-variance}
 
-- **Goal:** find the choice inside the operator that depends on something
-  other than the length of the element's own sum.
-- **How:** run `bi_check.check_batch` from
-  [tools/bi_check.py](../../tools/bi_check.py), and also `check_modes` if the
-  operator behaves like attention. Then read the code that launches the kernel
-  and picks its configuration. If you are starting from a whole model,
-  [tools/bi_audit.py](../../tools/bi_audit.py) names the first module whose
-  output changes with the batch.
-- **Success:** you have a failing pattern and one mechanism that explains it.
+Look for the choice inside the operator that depends on something other
+than the length of the element's own sum. Run `bi_check.check_batch` from
+[tools/bi_check.py](../../tools/bi_check.py), and also `check_modes` if the
+operator behaves like attention, then read the code that launches the kernel
+and picks its configuration; from a whole model,
+[tools/bi_audit.py](../../tools/bi_audit.py) names the first module whose
+output changes with the batch. You are done when you have a failing pattern
+and one mechanism that explains it.
 
 | Where the variance hides | Example |
 |---|---|
@@ -113,12 +112,10 @@ lists the common failure patterns and the mechanism behind each one.
 
 ### 2. Choose the cheapest fix that removes it {#2-choose-the-cheapest-strategy-that-holds}
 
-- **Goal:** remove the dependence with the smallest change and the lowest
-  cost.
-- **How:** try the options in the order of the table below. The
-  [skill](../../skills/batch-invariant-kernel/SKILL.md#2-choose-the-cheapest-strategy-that-holds)
-  explains each one in detail.
-- **Success:** you have a candidate kernel, which step 4 then verifies.
+Try the options in the order of the table below, which runs from the
+smallest change to the largest; the
+[skill](../../skills/batch-invariant-kernel/SKILL.md#2-choose-the-cheapest-strategy-that-holds)
+explains each one. The result is a candidate kernel, which step 4 verifies.
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
@@ -131,13 +128,12 @@ lists the common failure patterns and the mechanism behind each one.
 
 ### 3. Round in the same places as the side you must match {#3-keep-the-rounding-points}
 
-- **Goal:** make the invariant kernel round in the same places as the side it
-  has to match. That means the same casts, the same fusion, the same
-  accumulator dtype and the same order of operations in the epilogue.
-- **How:** before you edit anything, write down in order where the reference
-  rounds; see [rounding points](../../skills/engine-parity/references/rounding-points.md).
-- **Success:** on a batch where the old kernel did not yet vary, the new
-  kernel is bitwise equal to it; otherwise both sides change together.
+Keep the same casts, the same fusion, the same accumulator dtype and the
+same order of operations in the epilogue. Before you edit anything, write
+down in order where the reference rounds
+([rounding points](../../skills/engine-parity/references/rounding-points.md)).
+On a batch where the old kernel did not yet vary, the new kernel must be
+bitwise equal to it; otherwise both sides change together.
 
 A kernel can be batch-invariant and still round in one place differently
 from the other engine. It then passes L2 and fails L4
@@ -145,27 +141,23 @@ from the other engine. It then passes L2 and fails L4
 
 ### 4. Verify bitwise across the whole test matrix {#4-verify-the-matrix}
 
-- **Goal:** get evidence that the kernel is invariant, rather than an argument
-  from reading the code.
-- **How:** run the [verification matrix](../../skills/batch-invariant-kernel/references/verification.md).
-  It varies the batch size around every threshold, the row's position, the
-  content of the other rows in the batch (random, zeros, large values), the
-  mode, the layout, repeated runs, the backward pass, the parallel degree,
-  deployment under a compiler and CUDA graphs, and the engine.
-- **Success:** there are no mismatches. Compare bitwise through integer views,
-  so that `-0.0` and `+0.0` count as different, and allow no tolerance.
+Run the [verification matrix](../../skills/batch-invariant-kernel/references/verification.md),
+because reading the code is an argument, not evidence. It varies the batch
+size around every threshold, the row's position, the content of the other
+rows (random, zeros, large values), the mode, the layout, repeated runs, the
+backward pass, the parallel degree, deployment under a compiler and CUDA
+graphs, and the engine. It passes when there are no mismatches, compared
+bitwise through integer views (so `-0.0` and `+0.0` differ) with no
+tolerance.
 
 ### 5. Put the verified kernel into the real code path {#5-integrate}
 
-- **Goal:** make sure the verified kernel is the one that actually runs, and
-  know what it costs.
-- **How:** register it as an opaque custom op, so that a compiler cannot fuse
-  it with its neighbours again, and put it behind a flag. Measure throughput
-  at prefill and decode batch sizes and compare it with the baseline. Then
-  write the report entry that the
-  [skill](../../skills/batch-invariant-kernel/SKILL.md#6-report) asks for.
-- **Success:** the deployed code path passes the same matrix, and the cost is
-  recorded.
+Register it as an opaque custom op behind a flag, so that a compiler cannot
+fuse it with its neighbours again. Measure throughput at prefill and decode
+batch sizes against the baseline, and write the report entry the
+[skill](../../skills/batch-invariant-kernel/SKILL.md#6-report) asks for. You
+are done when the deployed code path passes the same matrix and the cost is
+recorded.
 
 ## The operator classes, from the simplest to the hardest
 

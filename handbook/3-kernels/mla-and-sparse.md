@@ -50,28 +50,26 @@ returned them.
 
 ### 1. Make every GEMM invariant, especially those whose row count changes between steps
 
-- **Goal:** the projections, the decompression and the per-head absorption
-  see a different number of rows in prefill, in chunks and in decode, so each
-  of them must be invariant in M.
-- **How:** use the one-configuration GEMM from the
-  [GEMM page](gemm-and-quantized.md), and a grouped one-configuration GEMM for
-  the per-head products.
-- **Success:** `check_batch` passes on each piece. This was shown on one GPU
-  type, where an invariant attention core surrounded by library GEMMs still
-  failed ([report](../../examples/mla_sparse/REPORT.md#what-this-shows)).
+The projections, the decompression and the per-head absorption see a
+different number of rows in prefill, in chunks and in decode, so each must be
+invariant in M. Use the one-configuration GEMM from the
+[GEMM page](gemm-and-quantized.md), and a grouped one-configuration GEMM for
+the per-head products, until `check_batch` passes on each piece. This was
+shown on one GPU type, where an invariant attention core surrounded by
+library GEMMs still failed
+([report](../../examples/mla_sparse/REPORT.md#what-this-shows)).
 
 ### 2. Use one MLA form in every mode and on both sides
 
-- **Goal:** the prompt, the generated tokens and the trainer all use the same
-  form.
-- **How:** use an attention core that computes the chosen form with a fixed
-  walk over the latent cache, as in
-  [recipe 5](../../skills/batch-invariant-kernel/references/operator-recipes.md#5-mla-latent-attention)
-  and [mla_sparse_kernels.py](../../examples/mla_sparse/mla_sparse_kernels.py).
-- **Success:** within the chosen form, all modes and batches are bitwise
-  equal, and an engine run equals a trainer run. This was shown on one GPU
-  type, with one layer and with two stacked layers
-  ([report](../../examples/mla_sparse/REPORT.md#part-a-mla-absorbed-vs-explicit)).
+The prompt, the generated tokens and the trainer must all use the same form.
+Use an attention core that computes the chosen form with a fixed walk over
+the latent cache, as in
+[recipe 5](../../skills/batch-invariant-kernel/references/operator-recipes.md#5-mla-latent-attention)
+and [mla_sparse_kernels.py](../../examples/mla_sparse/mla_sparse_kernels.py).
+Within that form all modes and batches are then bitwise equal, and an engine
+run equals a trainer run; this was shown on one GPU type, with one layer and
+with two stacked layers
+([report](../../examples/mla_sparse/REPORT.md#part-a-mla-absorbed-vs-explicit)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
@@ -82,17 +80,15 @@ returned them.
 
 ### 3. Make the selection of keys stable
 
-- **Goal:** the set of selected keys and the output do not change with the
-  batch or the mode.
-- **How:** follow
-  [recipe 6](../../skills/batch-invariant-kernel/references/operator-recipes.md#6-sparse-attention-with-selection-indexer-plus-top-k).
-  Make the projection and indexer GEMMs invariant, sum over the indexer's
-  heads in a fixed order, use a stable top-k ordered by score descending and
-  then index ascending, sort the selected indices in ascending order, and let
-  attention visit them in that order.
-- **Success:** first, no position changes its selected set; then, no output
-  element changes. This was shown on one GPU type
-  ([report](../../examples/mla_sparse/REPORT.md#part-b-sparse-attention-with-selection-dsa-like)).
+Follow
+[recipe 6](../../skills/batch-invariant-kernel/references/operator-recipes.md#6-sparse-attention-with-selection-indexer-plus-top-k):
+make the projection and indexer GEMMs invariant, sum over the indexer's heads
+in a fixed order, use a stable top-k ordered by score descending and then
+index ascending, sort the selected indices in ascending order, and let
+attention visit them in that order. It works when, across batches and modes,
+first no position changes its selected set and then no output element
+changes; this was shown on one GPU type
+([report](../../examples/mla_sparse/REPORT.md#part-b-sparse-attention-with-selection-dsa-like)).
 
 | Piece | Option | Cost class |
 |---|---|---|

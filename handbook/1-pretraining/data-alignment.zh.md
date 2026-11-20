@@ -35,17 +35,11 @@
 
 ### 2c. 固定数据源和 tokenizer
 
-**目标：** 两次运行读的是同样的文件，并且把它们切成同样的 token id。
-
-**做法：** 对数据文件和 tokenizer 分别做哈希（tokenizer 要连同调用它时的参数一起），把两个哈希都存进 fingerprint 记录的头部（[data_fingerprint.py](../../tools/data_fingerprint.py) 里的 `source_fingerprint` 和 `tokenizer_fingerprint`）。如果像 Megatron-LM 的预处理那样离线做分词，tokenizer 的输出就直接固定在文件里了。
-
-**成功标准：** 两次运行的头部一致，或者只在声明过的差异上不同。
+两次运行要读同样的文件，并且把它们切成同样的 token id。对数据文件和 tokenizer 分别做哈希（tokenizer 要连同调用它时的参数一起），把两个哈希都存进 fingerprint 记录的头部（[data_fingerprint.py](../../tools/data_fingerprint.py) 里的 `source_fingerprint` 和 `tokenizer_fingerprint`）；两次运行的头部应该一致，或者只在声明过的差异上不同。如果像 Megatron-LM 的预处理那样离线做分词，tokenizer 的输出就直接固定在文件里了。
 
 ### 2d. 在 batch 离开 loader 时取 fingerprint
 
-**目标：** 记下每个 rank 在每一步消费了什么数据。
-
-**做法：** 在训练循环里加两行，每个 rank 都加，作用在 loader 刚返回、还没被改动过的 batch 上：
+为了记下每个 rank 在每一步消费了什么数据，在训练循环里加两行，每个 rank 都加，作用在 loader 刚返回、还没被改动过的 batch 上：
 
 ```python
 import data_fingerprint as dfp
@@ -58,30 +52,22 @@ for step, batch in enumerate(loader):
     ...
 ```
 
-每个张量字段都会被记录：token id、attention mask、position id，以及 labels 或 loss mask。加上 `opguard=` 后，recorder 还会按 OpGuard 的采集格式写出记录，这样 OpGuard 的 `first_diff` 会先看到数据这个边界，再看到模型的各个边界（[用 OpGuard 定位](localize-with-opguard.md)）。恢复训练时要传 `append=True`。
-
-**成功标准：** 两次运行在每个 step、每个 rank 上都各有一条记录。
+每个张量字段都会被记录：token id、attention mask、position id，以及 labels 或 loss mask。加上 `opguard=` 后，recorder 还会按 OpGuard 的采集格式写出记录，这样 OpGuard 的 `first_diff` 会先看到数据这个边界，再看到模型的各个边界（[用 OpGuard 定位](localize-with-opguard.md)）。恢复训练时要传 `append=True`。最后两次运行在每个 step、每个 rank 上都各有一条记录。
 
 ### 2e. 比较两次运行
 
-**目标：** 找出第一个结果不同的 (step, rank, 字段)。
-
-**做法：**
+找出第一个结果不同的 (step, rank, 字段)：
 
 ```bash
 python tools/data_fingerprint.py compare fp/run_a fp/run_b
 python tools/data_fingerprint.py compare fp/run_a fp/run_b --global
 ```
 
-比较是精确的，没有任何容差。第二种写法会先把每一步各个 rank 的数据拼起来再比较；两次运行的DP 规模不同时，就要用这种写法。
-
-**成功标准：** 没有任何记录不同。这时数据已经对齐，这一对运行可以去采集了（[用 OpGuard 定位](localize-with-opguard.md)）。
+比较是精确的，没有任何容差。第二种写法会先把每一步各个 rank 的数据拼起来再比较；两次运行的 DP 规模不同时，就要用这种写法。如果没有任何记录不同，数据就已经对齐，这一对运行可以去采集了（[用 OpGuard 定位](localize-with-opguard.md)）。
 
 ### 2f. 判断差异属于哪一类
 
-**目标：** 说出差异属于哪一类，因为每一类都有自己的修法。
-
-**做法：** compare 命令会给首个差异标上类别，并统计所有 step 上每一类各出现了多少次：
+每一类差异都有自己的修法。compare 命令会给首个差异标上类别，并统计所有 step 上每一类各出现了多少次；最后要得到一个类别，以及一个明确的原因。
 
 | 类别 | 含义 | 常见原因 |
 |---|---|---|
@@ -92,13 +78,9 @@ python tools/data_fingerprint.py compare fp/run_a fp/run_b --global
 
 头部的差异会最先报告。tokenizer 换了，会在头部显示出来；除非只改了调用参数，而这些参数又没有被记录。
 
-**成功标准：** 得到一个类别，以及一个明确的原因。
-
 ### 2g. 修复差异
 
-**目标：** 每个 step、每个 rank 上的 fingerprint 都相等。
-
-**做法：** 按问题选修法。表里提到的库在设计上都解决了对应的问题，但每个库只在它自己的前提条件下才成立（[调研](../../examples/data_alignment/REPORT.md#existing-work)）。
+按问题选修法，修完再比较一次：每个 step、每个 rank 上都不能有任何记录不同。表里提到的库在设计上都解决了对应的问题，但每个库只在它自己的前提条件下才成立（[调研](../../examples/data_alignment/REPORT.md#existing-work)）。
 
 | 问题 | 修法 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|---|
@@ -108,8 +90,6 @@ python tools/data_fingerprint.py compare fp/run_a fp/run_b --global
 | shuffle buffer 用进程的随机状态设种子 | 用 seed、epoch 和 worker id 一起设种子，或者给 loader 一个独立的生成器；Hugging Face datasets 可以传入 seed 和 epoch | buffer 的顺序不再受其他随机抽取的影响 | 免费 | 任何流式 shuffle |
 | packing 方式不同 | 两次运行用同样的 collate 函数、行长和 packing 规则 | 同样的行 | 免费 | 只有一次运行做 packing，或者换了 packing 的实现 |
 | tokenizer 不同 | 固定 tokenizer 文件和它的调用参数，或者离线分词 | 同样的 token id | 免费 | 升级了 tokenizer，或者新增了特殊 token |
-
-**成功标准：** 再比较一次，没有任何记录不同。
 
 ## 可能出错的地方
 

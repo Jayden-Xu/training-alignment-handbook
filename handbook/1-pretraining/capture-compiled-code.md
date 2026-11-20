@@ -156,10 +156,9 @@ measures.
 
 ### Place probes in the compiled code, and compare the runs with OpGuard
 
-**Goal:** fingerprints of chosen tensors inside compiled code and inside
-graph replays, in a form that OpGuard's harness can read.
-
-**How:** use [graph_probe.py](../../tools/graph_probe.py).
+Use [graph_probe.py](../../tools/graph_probe.py) to fingerprint chosen
+tensors inside compiled code and inside graph replays, in a form that
+OpGuard's harness can read.
 
 1. Build lazy caches (RoPE tables and the like) in eager mode before you
    compile.
@@ -183,10 +182,10 @@ graph replays, in a form that OpGuard's harness can read.
 | A graph probe under `torch.compile` without CUDA graphs | The bits that compiled code produces | large: the custom operator's Python body runs for every probe | Compile without graphs, and probe only a few tensors |
 | Every rounding operator made opaque (custom operators in the style of `bi_opaque_all`) | Compiled bits equal to eager bits | not measured here | You need compiled code to equal eager, not just a capture |
 
-**Success:** the probe's records equal `opguard_bridge.xor_signature` on the
-same tensors; the outputs with and without probes are equal bit for bit; and
-OpGuard's pivot on the exported pair is the same as a direct comparison of the
-records.
+The probes work when their records equal `opguard_bridge.xor_signature` on
+the same tensors, the outputs with and without probes are equal bit for bit,
+and OpGuard's pivot on the exported pair is the same as a direct comparison of
+the records.
 
 This was shown on one GPU type, with a decode step of a small model. The
 probe's fingerprints matched both the bridge and OpGuard's own function,

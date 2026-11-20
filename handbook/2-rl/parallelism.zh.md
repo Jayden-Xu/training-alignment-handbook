@@ -63,26 +63,19 @@ fp32；随后各 rank 交换子树，每个 rank 都完成同一棵树，最后�
 
 ## 步骤
 
-1. **让每个行并行求和都使用逻辑 TP 规模。**
-   - 目标：o_proj、down_proj 以及其他所有行并行层，在每种 TP 规模下都给出逐 bit 一致的结果。
-   - 做法：使用 [tp_model.py](../../examples/whole_model_tp/tp_model.py) 中按 TP 切分的模型
-     （变体 `inv`）；单个 GEMM 的方案见[集合通信](../3-kernels/collectives.md)。
-   - 成功标准：TP t 下的 logits 与 TP 1 下的逐 bit 一致。
-2. **让词表并行的 log_softmax 按固定顺序计算。**
-   - 目标：每种 TP 规模下，采样出的 token 的 logprob 都相等。
-   - 做法：最大值用 all-reduce 求，它在任何顺序下都是精确的；指数和按固定的词表块计算，
-     再用一棵固定的树把各块加起来。
-   - 成功标准：结果等于把 logits 收集到一个 GPU 上再做 log_softmax 的结果。
-3. **用同样的办法修好反向。**
-   - 目标：每种 TP 规模下激活梯度都相等。
-   - 做法：列并行层的输入梯度也使用逻辑 TP 归约。
-   - 成功标准：在每个层边界上，输入梯度都等于 TP 1 下的输入梯度。
-4. **检查 TP 下引擎的各种推理模式，以及 KV cache 的交接。**
-   - 目标：L2、L3 和 L5 同时成立。
-   - 做法：[whole_model_tp.py](../../examples/whole_model_tp/whole_model_tp.py)
-     在 TP 2 和 4 下，在不断变化的 batch 里跑 decode 和 chunked prefill，还会在一种 TP 规模下
-     做 prefill、在另一种 TP 规模下接着 decode。
-   - 成功标准：每种模式都等于 TP 1 下 trainer 的前向；收到的 KV cache 与发出的完全相同。
+1. **让每个行并行求和都使用逻辑 TP 规模**，这样 o_proj、down_proj 以及其他所有行并行层，在每种 TP
+   规模下都给出逐 bit 一致的结果。使用 [tp_model.py](../../examples/whole_model_tp/tp_model.py)
+   中按 TP 切分的模型（变体 `inv`）；单个 GEMM 的方案见[集合通信](../3-kernels/collectives.md)。
+   TP t 下的 logits 要与 TP 1 下的逐 bit 一致。
+2. **让词表并行的 log_softmax 按固定顺序计算**，这样每种 TP 规模下，采样出的 token 的 logprob 都相等。
+   最大值用 all-reduce 求，它在任何顺序下都是精确的；指数和按固定的词表块计算，再用一棵固定的树把各块加起来。
+   结果要等于把 logits 收集到一个 GPU 上再做 log_softmax 的结果。
+3. **用同样的办法修好反向**：列并行层的输入梯度也使用逻辑 TP 归约。在每个层边界上，输入梯度都要等于
+   TP 1 下的输入梯度，这样每种 TP 规模下激活梯度都相等。
+4. **检查 TP 下引擎的各种推理模式，以及 KV cache 的交接**，确认 L2、L3 和 L5 同时成立。
+   [whole_model_tp.py](../../examples/whole_model_tp/whole_model_tp.py)
+   在 TP 2 和 4 下，在不断变化的 batch 里跑 decode 和 chunked prefill，还会在一种 TP 规模下做 prefill、
+   在另一种 TP 规模下接着 decode。每种模式都要等于 TP 1 下 trainer 的前向，收到的 KV cache 要与发出的完全相同。
 
 | 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|

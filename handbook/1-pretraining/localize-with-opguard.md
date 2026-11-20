@@ -141,55 +141,47 @@ the producers localizes the cause.
 
 ### 1. Check that the region you suspect is captured
 
-**Goal:** the region you care about is captured.
-
-**How:** `opguard_bridge.coverage(run)` reads OpGuard's discovery and plan
-files, and lists which boundaries were discovered and which were planned for
-capture.
-
-**Success:** the operators you suspect, GEMMs included, are planned.
+`opguard_bridge.coverage(run)` reads OpGuard's discovery and plan files, and
+lists which boundaries were discovered and which were planned for capture. The
+operators you suspect, GEMMs included, must be planned.
 
 ### 2. Capture both runs
 
-**Goal:** fingerprints of both runs at every planned boundary.
-
-**How:** `opguard_bridge.run_pair(reference, suspect, ...)` in
-[opguard_bridge.py](../../tools/opguard_bridge.py) runs both sides through
+To get fingerprints of both runs at every planned boundary, call
+`opguard_bridge.run_pair(reference, suspect, ...)` in
+[opguard_bridge.py](../../tools/opguard_bridge.py). It runs both sides through
 OpGuard's harness, which discovers the boundaries, plans the
 instrumentation, captures and compares. Discovery and capture each launch both
-sides once. On a multi-node job, turn on [local staging](#periodic-sync)
+sides once. Both traces should exist afterwards, and the summary counts the
+events that are equal and the events that differ.
+
+On a multi-node job, turn on [local staging](#periodic-sync)
 before you capture. If the production job runs `torch.compile` or CUDA graphs, this
 capture runs it in eager mode instead, and it may not show the bits that
 production computes; see
 [Compiled code and CUDA graphs](capture-compiled-code.md).
 
-**Success:** both traces exist, and the summary counts the events that are
-equal and the events that differ.
-
 ### 3. Collect the facts about the first divergence
 
-**Goal:** everything that is known about the pivot.
-
-**How:** `opguard_bridge.first_divergence(export, ...)` calls the harness's
+To gather everything that is known about the pivot,
+`opguard_bridge.first_divergence(export, ...)` calls the harness's
 `trace_summary`, `first_diff`, `inspect_event`, `compare_events` and
 `trace_neighbors`. It returns the operator, the source line, the call number,
 which fields differ, the inputs and outputs on both sides, the regions that
 differ, the unaligned events before the pivot, and the status of every call at
-the pivot's call site. It makes no judgment of its own.
-
-**Success:** you have a pivot whose `unaligned_before` is zero.
+the pivot's call site. It makes no judgment of its own. Go on only with a
+pivot whose `unaligned_before` is zero.
 
 ### 4. Trace from the pivot to the cause, and test it
 
-**Goal:** the cause, with the evidence for it.
-
-**How:** use OpGuard's harness skills. `investigate-first-diff` owns the
+Find the cause and the evidence for it with OpGuard's harness skills. `investigate-first-diff` owns the
 boundary and the record of the evidence, `trace-upstream` follows the
 producers when the inputs already differ, and `validate-hypothesis` tests one
 cause. `opguard_bridge.suggest(facts)` maps the pivot onto the handbook's
 operator classes and
 [recipes](../../skills/batch-invariant-kernel/references/operator-recipes.md),
-and gives each lead with its reason.
+and gives each lead with its reason. You are done when you have one
+hypothesis and a single intervention confirms it.
 
 | Evidence | What it tells you | Cost class | When to use it |
 |---|---|---|---|
@@ -200,18 +192,12 @@ and gives each lead with its reason.
 | A recapture of one region's full tensors | The values, to see how they differ | large (2x or more) for that region | A fingerprint is equal but you suspect a collision, or you need the size of the difference |
 | Repeating one operator on fixed inputs | Whether that operator is nondeterministic | small | Your hypothesis is a nondeterministic kernel |
 
-**Success:** you have one hypothesis, and a single intervention confirms it.
-
 ### 5. Fix the cause and confirm the fix
 
-**Goal:** show that the fix, and nothing else, makes the runs agree.
-
-**How:** apply the fix (a setting, a part of the training step, or a kernel
-through the
-[batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md)),
-then call `run_pair` again.
-
-**Success:** every event is equal, no event is unaligned, and the final
+Apply the fix (a setting, a part of the training step, or a kernel through
+the [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md)),
+then call `run_pair` again to show that the fix, and nothing else, makes the
+runs agree: every event is equal, no event is unaligned, and the final
 parameters are bit-identical.
 
 In a known-answer walkthrough with three planted causes (a moved rounding

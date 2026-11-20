@@ -38,13 +38,13 @@ RoPE 约定把行重新排了序。这是位置问题，需要第二项检查：
 
 ## 步骤
 
-1. **写映射。**
-   - 目标：对每个逻辑参数，写明每种布局是怎样存储它的。
-   - 做法：为 [ckpt_compare.py](../../tools/ckpt_compare.py) 写一个 `ckpt-map-v1` 格式的 JSON
-     文件，每个逻辑参数、每种布局各一条。张量名里用 `{i}` 表示层号，用 `{r}` 表示 rank；
-     `cat` 把各 rank 的分段拼起来，`part` 从融合张量里取出某一组，`slice` 去掉 padding，
-     `replicated` 声明必须逐 bit 一致的副本，`"dim": -1` 把行并行的分段拼回整行。
-     [示例映射](../../examples/ckpt_conversion/mcore_map.json)描述了一种 Megatron 风格的布局：
+1. **写映射。**对每个逻辑参数，写明每种布局是怎样存储它的：为
+   [ckpt_compare.py](../../tools/ckpt_compare.py) 写一个 `ckpt-map-v1` 格式的 JSON 文件，
+   每个逻辑参数、每种布局各一条。张量名里用 `{i}` 表示层号，用 `{r}` 表示 rank；`cat` 把各 rank
+   的分段拼起来，`part` 从融合张量里取出某一组，`slice` 去掉 padding，`replicated` 声明必须逐 bit
+   一致的副本，`"dim": -1` 把行并行的分段拼回整行。加上 `--strict` 运行时源端的每个张量都被映射
+   用到了，映射才算写全。[示例映射](../../examples/ckpt_conversion/mcore_map.json)描述了一种
+   Megatron 风格的布局：
 
      ```json
      "model.layers.{i}.self_attn.q_proj.weight": {
@@ -57,10 +57,7 @@ RoPE 约定把行重新排了序。这是位置问题，需要第二项检查：
        "mcore": {"cat": {"over": "r", "each":
          "mp_rank_{r:02d}/model.decoder.layers.{i}.self_attention.linear_proj.weight"}, "dim": -1}}
      ```
-   - 成功标准：加上 `--strict` 运行时，源端的每个张量都被映射用到了。
-2. **比较行。**
-   - 目标：每个逻辑参数的每一行都能配上对。
-   - 做法：在两个 checkpoint 上运行这个工具，指明映射里的两种布局和目标的 TP 规模：
+2. **比较行。**在两个 checkpoint 上运行这个工具，指明映射里的两种布局和目标的 TP 规模：
 
      ```bash
      python tools/ckpt_compare.py SRC_DIR DST_DIR --map map.json --layouts hf mcore --set b:r=2
@@ -74,19 +71,18 @@ RoPE 约定把行重新排了序。这是位置问题，需要第二项检查：
        B 1 of 64 rows unmatched: row 8 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[40]
      NOT all rows matched
      ```
-   - 成功标准：工具输出 "all rows matched"，退出码为 0。每一处 dtype 变化都会按参数报告出来：
-     变宽（bf16 到 fp32）是精确的，行在变宽之后再比较；变窄则会指出每一个丢了 bit 的行。
-3. **在目标布局上跑一次前向。**
-   - 目标：确认每一行都放在目标代码读取它的位置上。
-   - 做法：把转换后的 checkpoint 加载进目标端的模型代码，使用目标布局，输入固定的 token id，
-     再把 logits 与**使用相同归约**的源模型比较。TP 2 下的行并行层要把两个部分和相加，所以即使
-     每个权重都对，结果也不会和 TP 1 逐 bit 一致（[并行](../2-rl/parallelism.md)）。示例
-     [ckpt_conversion.py](../../examples/ckpt_conversion/ckpt_conversion.py) 在 CPU 上演示了这种做法。
-   - 成功标准：logits 逐 bit 一致。
-4. **把检查保留下来。**
-   - 目标：以后转换器有改动，或者换了新模型，都用同样的方式检查。
-   - 做法：把这一对转换结果连同植入的故障，作为一个[回归](../4-operations/regression.md)条目保存。
-   - 成功标准：回归套件报告正确的那一对一致，并指出每一个植入的故障。
+
+     工具输出 "all rows matched"、退出码为 0，就说明每个逻辑参数的每一行都配上了对。每一处
+     dtype 变化都会按参数报告出来：变宽（bf16 到 fp32）是精确的，行在变宽之后再比较；变窄则会
+     指出每一个丢了 bit 的行。
+3. **在目标布局上跑一次前向**，确认每一行都放在目标代码读取它的位置上。把转换后的 checkpoint
+   加载进目标端的模型代码，使用目标布局，输入固定的 token id，再把 logits 与**使用相同归约**的
+   源模型比较，两者必须逐 bit 一致。TP 2 下的行并行层要把两个部分和相加，所以即使每个权重都对，
+   结果也不会和 TP 1 逐 bit 一致（[并行](../2-rl/parallelism.md)）。示例
+   [ckpt_conversion.py](../../examples/ckpt_conversion/ckpt_conversion.py) 在 CPU 上演示了这种做法。
+4. **把检查保留下来**，以后转换器有改动或者换了新模型，都用同样的方式检查。把这一对转换结果连同
+   植入的故障，作为一个[回归](../4-operations/regression.md)条目保存；回归套件应当报告正确的那一对
+   一致，并指出每一个植入的故障。
 
 用什么作为行的键：
 

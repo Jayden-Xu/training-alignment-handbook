@@ -71,28 +71,25 @@ order in which the scales are applied. Both are part of the reduction.
 
 ### 1. Find the GEMM shapes whose result changes with the batch
 
-- **Goal:** know which GEMM shapes in your model give different bits when M
-  changes.
-- **How:** for each shape (K, N) that the model runs, call
-  `bi_check.check_batch` from [tools/bi_check.py](../../tools/bi_check.py).
-  Use batch sizes around powers of two and around multiples of the tile size,
-  and fill the other rows with random values, zeros and large values.
-- **Success:** you have a list of the shapes and sizes that fail. Measured:
-  the library GEMM failed on every shape tested, often already with 2 rows
-  ([report](../../examples/moe_combine/REPORT.md#1-locate-the-variance)).
+For each shape (K, N) that the model runs, call `bi_check.check_batch` from
+[tools/bi_check.py](../../tools/bi_check.py) with batch sizes around powers
+of two and around multiples of the tile size, filling the other rows with
+random values, zeros and large values. The result is a list of the shapes and
+sizes whose bits change with M. Measured: the library GEMM failed on every
+shape tested, often already with 2 rows
+([report](../../examples/moe_combine/REPORT.md#1-locate-the-variance)).
 
 ### 2. Use one configuration for every batch size
 
-- **Goal:** every element is summed by the same reduction tree, whatever M is.
-- **How:** use the one-configuration GEMM `mm_one_config` in
-  [tools/bi_kernels.py](../../tools/bi_kernels.py), or write your own kernel
-  from [recipe 2](../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16).
-  When several heads or experts need a GEMM, run the same kernel body in a
-  loop or pass it a head index
-  ([recipe 3](../../skills/batch-invariant-kernel/references/operator-recipes.md#3-batched-and-grouped-gemm-moe-experts-bmm-vs-mm)).
-- **Success:** `check_batch` passes at every size. This was shown on three
-  shapes, on one GPU type
-  ([report](../../examples/moe_combine/REPORT.md#1-locate-the-variance)).
+Then every element is summed by the same reduction tree, whatever M is. Use
+the one-configuration GEMM `mm_one_config` in
+[tools/bi_kernels.py](../../tools/bi_kernels.py), or write your own kernel
+from [recipe 2](../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16);
+when several heads or experts need a GEMM, run the same kernel body in a loop
+or pass it a head index
+([recipe 3](../../skills/batch-invariant-kernel/references/operator-recipes.md#3-batched-and-grouped-gemm-moe-experts-bmm-vs-mm)).
+`check_batch` must pass at every size; this was shown on three shapes, on one
+GPU type ([report](../../examples/moe_combine/REPORT.md#1-locate-the-variance)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
@@ -106,14 +103,13 @@ same way for each element and uses the same instructions.
 
 ### 3. Compute the quantization scales from each row alone
 
-- **Goal:** a row's quantized values depend only on that row.
-- **How:** use per-token or per-block activation scales, or static scales
-  ([recipe 9](../../skills/batch-invariant-kernel/references/operator-recipes.md#9-quantized-gemm-fp8-block-scaled-mxfp8-nvfp4)).
-  The GEMM itself then follows step 2, with a fixed promotion interval and a
-  fixed order for applying the scales.
-- **Success:** `check_batch` passes when the other rows hold large values.
-  This was shown with emulated FP8 numerics
-  ([report](../../examples/kernel_cases/REPORT.md#fp8-activation-scales-l2)).
+Use per-token or per-block activation scales, or static scales
+([recipe 9](../../skills/batch-invariant-kernel/references/operator-recipes.md#9-quantized-gemm-fp8-block-scaled-mxfp8-nvfp4)),
+so that a row's quantized values depend only on that row. The GEMM itself
+then follows step 2, with a fixed promotion interval and a fixed order for
+applying the scales. `check_batch` must pass when the other rows hold large
+values; this was shown with emulated FP8 numerics
+([report](../../examples/kernel_cases/REPORT.md#fp8-activation-scales-l2)).
 
 | Activation scale | L2 | Cost class | When to choose it |
 |---|---|---|---|

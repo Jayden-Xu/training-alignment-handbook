@@ -76,33 +76,21 @@ OpGuard 在两次运行的每个模型级边界上记录 fingerprint，把两份
 
 ### 1. 确认要查的区域已经被采集
 
-**目标：** 你关心的区域已经被采集。
-
-**做法：** `opguard_bridge.coverage(run)` 读取 OpGuard 的发现文件和计划文件，列出哪些边界被发现了、哪些被计划采集。
-
-**成功标准：** 你怀疑的算子，包括其中的 GEMM，都在采集计划里。
+`opguard_bridge.coverage(run)` 读取 OpGuard 的发现文件和计划文件，列出哪些边界被发现了、哪些被计划采集。你怀疑的算子，包括其中的 GEMM，都必须在采集计划里。
 
 ### 2. 采集两次运行
 
-**目标：** 两次运行在每个计划好的边界上都有 fingerprint。
+为了让两次运行在每个计划好的边界上都有 fingerprint，调用 [opguard_bridge.py](../../tools/opguard_bridge.py) 里的 `opguard_bridge.run_pair(reference, suspect, ...)`，让两次运行都经过 OpGuard 的 harness：发现边界，规划插桩，采集，然后比较。发现和采集两个阶段，各自会把两次运行都启动一遍。完成后两份 trace 都应已生成，摘要里统计了相等和不相等的事件各有多少。
 
-**做法：** 调用 [opguard_bridge.py](../../tools/opguard_bridge.py) 里的 `opguard_bridge.run_pair(reference, suspect, ...)`，让两次运行都经过 OpGuard 的 harness：发现边界，规划插桩，采集，然后比较。发现和采集两个阶段，各自会把两次运行都启动一遍。在多节点的训练任务上，采集之前先打开[本地暂存](#periodic-sync)。如果生产环境的训练任务用了 `torch.compile` 或 CUDA graph，这次采集会改用 eager 模式运行它，于是可能看不到生产环境实际算出的结果，见[torch.compile 与 CUDA graph](capture-compiled-code.md)。
-
-**成功标准：** 两份 trace 都已生成，摘要里统计了相等和不相等的事件各有多少。
+在多节点的训练任务上，采集之前先打开[本地暂存](#periodic-sync)。如果生产环境的训练任务用了 `torch.compile` 或 CUDA graph，这次采集会改用 eager 模式运行它，于是可能看不到生产环境实际算出的结果，见[torch.compile 与 CUDA graph](capture-compiled-code.md)。
 
 ### 3. 收集首个分歧点的全部事实
 
-**目标：** 把关于 pivot 能知道的事实全部拿到。
-
-**做法：** `opguard_bridge.first_divergence(export, ...)` 依次调用 harness 的 `trace_summary`、`first_diff`、`inspect_event`、`compare_events` 和 `trace_neighbors`，返回：算子、源码行、调用序号、哪些字段不同、两次运行的输入和输出、不同的区间、pivot 之前未对齐的事件，以及 pivot 所在调用点上每次调用的状态。它本身不做任何判断。
-
-**成功标准：** 拿到一个 `unaligned_before` 为零的 pivot。
+为了把关于 pivot 能知道的事实全部拿到，`opguard_bridge.first_divergence(export, ...)` 依次调用 harness 的 `trace_summary`、`first_diff`、`inspect_event`、`compare_events` 和 `trace_neighbors`，返回：算子、源码行、调用序号、哪些字段不同、两次运行的输入和输出、不同的区间、pivot 之前未对齐的事件，以及 pivot 所在调用点上每次调用的状态。它本身不做任何判断。只有 `unaligned_before` 为零的 pivot，才值得往下查。
 
 ### 4. 从 pivot 追到原因，并检验它
 
-**目标：** 找到原因，并拿到支持它的证据。
-
-**做法：** 用 OpGuard harness 里的几个 skill：`investigate-first-diff` 负责检查这个边界并记下证据；输入已经不同时，`trace-upstream` 沿着上游算子往回追；`validate-hypothesis` 每次检验一个原因。`opguard_bridge.suggest(facts)` 会把 pivot 对应到本手册的算子类别和[recipe](../../skills/batch-invariant-kernel/references/operator-recipes.md)，每条线索都附有理由。
+用 OpGuard harness 里的几个 skill 找到原因和支持它的证据：`investigate-first-diff` 负责检查这个边界并记下证据；输入已经不同时，`trace-upstream` 沿着上游算子往回追；`validate-hypothesis` 每次检验一个原因。`opguard_bridge.suggest(facts)` 会把 pivot 对应到本手册的算子类别和[recipe](../../skills/batch-invariant-kernel/references/operator-recipes.md)，每条线索都附有理由。得到一个假设、而且一次干预就能确认它，这一步就完成了。
 
 | 证据 | 能告诉你什么 | 代价等级 | 什么时候用 |
 |---|---|---|---|
@@ -113,15 +101,9 @@ OpGuard 在两次运行的每个模型级边界上记录 fingerprint，把两份
 | 重新采集某个区域的完整张量 | 数值本身，可以看出它们差在哪里 | 对这个区域来说大（2 倍或更多） | fingerprint 相等但怀疑是碰撞，或者需要知道差异有多大 |
 | 在固定输入上反复运行同一个算子 | 这个算子是不是不确定的 | 小 | 你怀疑原因是某个不确定的 kernel |
 
-**成功标准：** 得到一个假设，而且一次干预就能确认它。
-
 ### 5. 修复原因，并确认修复有效
 
-**目标：** 证明是这个修复、而不是别的东西，让两次运行变得一致。
-
-**做法：** 应用修复（改一个设置、改训练 step 的某个部分，或者按 [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md) 改写某个 kernel），然后再调用一次 `run_pair`。
-
-**成功标准：** 每个事件都相等，没有未对齐的事件，最终参数逐 bit 一致。
+应用修复（改一个设置、改训练 step 的某个部分，或者按 [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md) 改写某个 kernel），然后再调用一次 `run_pair`，证明是这个修复、而不是别的东西让两次运行变得一致：每个事件都相等，没有未对齐的事件，最终参数逐 bit 一致。
 
 在一次已知答案的演练里，我们预先植入了三个原因：norm 的舍入点被挪动、注意力的反向跑在 `warn_only` 下、恢复训练时没有恢复优化器的 step 计数器。在一块 GPU、一个 rank 上，OpGuard 找到的每个首个差异之前都没有未对齐的事件；三个 pivot 里有两个并不是原因本身；每次修复后重跑，结果处处相等，最终参数逐 bit 一致（[报告](../../examples/pretraining_e2e/REPORT.md#what-this-shows)）。这是一次已知答案的演示，不是盲测评估。
 

@@ -38,9 +38,7 @@ step 的每个部分在什么情况下会出问题，以及怎么修：
 
 ### 把训练 step 的每个部分都固定下来
 
-**目标：** 两个 trainer，或者同一个 trainer 跑两次，做的算术完全相同。
-
-**做法：** 对照下面的清单逐项检查。固定顺序的 kernel 都在 [ts_kernels.py](../../examples/training_step/ts_kernels.py) 里：`seg_sum` 负责所有 scatter 类求和（先按目标位置做稳定排序，再按源位置升序在 fp32 里把各行加起来，只舍入一次），`seq_cumsum` 是从左到右的 scan，`tree_mean_loss` 负责 loss 归约。
+要让两个 trainer，或者同一个 trainer 跑两次，做的算术完全相同，就对照下面的清单逐项检查。固定顺序的 kernel 都在 [ts_kernels.py](../../examples/training_step/ts_kernels.py) 里：`seg_sum` 负责所有 scatter 类求和（先按目标位置做稳定排序，再按源位置升序在 fp32 里把各行加起来，只舍入一次），`seq_cumsum` 是从左到右的 scan，`tree_mean_loss` 负责 loss 归约。
 
 - [ ] **所有浮点求和都不用原子操作。** 打开严格模式并设 `warn_only=False`，或者改用固定顺序的 kernel。严格模式遇到浮点 `cumsum`、带权重的 `bincount` 和 `histc` 会直接报错，所以先把这三个换掉。
 - [ ] **要让不同框架一致，所有 scatter 类求和都用同一个写明的顺序：** 按源位置升序，在 fp32 里累加，只舍入一次。
@@ -59,15 +57,13 @@ step 的每个部分在什么情况下会出问题，以及怎么修：
 | 只给注意力换固定顺序的 kernel | 在模型实际出现变化的地方满足 L1 | 小（百分之几） | 模型里破坏 L1 的只有注意力 |
 | 给注意力、embedding 和 loss 都换固定顺序的 kernel | 满足 L1，而且求和顺序能被另一个框架复现（L4） | 中等（不到 2 倍） | 两个框架或两套代码必须一致 |
 
-**成功标准：** 在不同进程里跑的两次运行，每一步的 loss 逐 bit 一致，梯度的 fingerprint 相等，权重也相等；从 checkpoint 恢复的运行和一直没停的运行，每一步都相同。
+做到了的标志是：在不同进程里跑的两次运行，每一步的 loss 逐 bit 一致，梯度的 fingerprint 相等，权重也相等；从 checkpoint 恢复的运行和一直没停的运行，每一步都相同。
 
 这一点在一种 GPU、一个 torch 构建上得到了证明：在测试的步数内，上面每种设置跑出的两次运行都一致；固定的 scatter 顺序和按同一个定义写出的 NumPy 循环逐 bit 一致，覆盖了不同的行宽、索引个数和 dtype（[报告](../../examples/training_step/REPORT.md#the-fix-one-written-order-for-every-scatter-style-sum)）。
 
 ### 判断 step 内的首个分歧点指向哪个部分
 
-**目标：** 把 step 里的 pivot 对应到上表中的某个部分。
-
-**做法：** 看 pivot 落在哪里。
+看 pivot 落在哪里，把它对应到上表中的某个部分。指出了一个部分、并且有一个只改动这个部分的检验，这一步就完成了。
 
 | pivot 落在哪里 | 最可能是哪个部分 |
 |---|---|
@@ -76,8 +72,6 @@ step 的每个部分在什么情况下会出问题，以及怎么修：
 | loss，而每个 token 的 loss 都相等 | loss 归约 |
 | 恢复训练后紧接着的 embedding 查表，而 token id 相等 | 恢复出来的权重或优化器状态 |
 | 恢复训练后，在 dropout 或重新 shuffle 处的 loss | 某一项 RNG 或 sampler 状态 |
-
-**成功标准：** 指出了一个部分，并且有一个只改动这个部分的检验。
 
 ## 可能出错的地方
 

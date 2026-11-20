@@ -50,9 +50,8 @@ claim written out explicitly.
 
 ## Reward models and evaluation
 
-**Goal:** a reward model gives a (prompt, response) pair the same score in any
-batch, and an evaluation gives the same number when it is run again.
-
+Here you want a reward model to give a (prompt, response) pair the same score
+in any batch, and an evaluation to give the same number when it is run again.
 A reward model is a whole model with a scalar head, so its output depends on
 the batch and the mode in the same ways as a policy's does. What differs is how
 the output is used. A score is compared with a threshold, ranked against other
@@ -62,55 +61,52 @@ signal or the number you report.
 
 How to apply the existing pages:
 
-1. Make the reward model invariant like any other model. Audit its operators
+1. **Make the reward model invariant** like any other model. Audit its operators
    with [bi_audit.py](../../tools/bi_audit.py), and compare one pair scored
    alone with the same pair scored inside batches, padded and packed
    ([whole model](../2-rl/whole-model.md)).
-2. If the score is computed in an engine and recomputed by the trainer, you
-   are at L4: follow [engine parity](../2-rl/engine-parity-vllm.md).
-3. If the evaluation samples, make its tokens replayable from the logits and a
+2. **Match the engine, if there is one.** If the score is computed in an
+   engine and recomputed by the trainer, you are at L4: follow [engine parity](../2-rl/engine-parity-vllm.md).
+3. **Make sampling replayable.** If the evaluation samples, make its tokens replayable from the logits and a
    seed ([sampling](../2-rl/sampling.md), [bi_sampling.py](../../tools/bi_sampling.py)).
-4. Keep a fixed evaluation set and its scores as a
+4. **Keep a fixed evaluation set** and its scores as a
    [regression](../4-operations/regression.md) entry.
 
-**Success:** every pair gets the same score bits at every batch size, and a
-rerun with a different batch composition gives the same evaluation result.
+You are done when every pair gets the same score bits at every batch size, and
+a rerun with a different batch composition gives the same evaluation result.
 
 Not yet shown: no reward model or evaluation harness has been measured here.
 
 ## Deterministic serving
 
-**Goal:** a request's tokens and logprobs depend neither on which other
+Here you want a request's tokens and logprobs to depend neither on which other
 requests share its batch (L2) nor on how the server chunks, caches or decodes
-it (L3).
-
-This is the engine side of the [whole-model step](../2-rl/whole-model.md), as
+it (L3). This is the engine side of the [whole-model step](../2-rl/whole-model.md), as
 a user experiences it: two identical requests at temperature 0 get different
 answers because the server happened to be busy in different ways. The causes
 and the fixes are the same.
 
 How to apply the existing pages:
 
-1. Audit the served model, and test every mode a request can run into: a
+1. **Audit the served model**, and test every mode a request can run into: a
    decode batch that keeps changing, chunked prefill, a prefix-cache hit, and
    preemption ([whole model](../2-rl/whole-model.md)).
-2. Replace every operator that varies with the batch by an invariant kernel
+2. **Replace every operator that varies** with the batch by an invariant kernel
    ([part 3](../3-kernels/README.md)), and keep the sampler replayable
    ([sampling](../2-rl/sampling.md)).
-3. Measure the cost at your decode batch sizes. If it is too high, offer the
+3. **Measure the cost** at your decode batch sizes. If it is too high, offer the
    invariant path only to the requests that need it, not to all of them.
 
-**Success:** each request's logprobs are bit-equal whether it is served alone
-or under load, in every mode the server uses.
+You are done when each request's logprobs are bit-equal whether it is served
+alone or under load, in every mode the server uses.
 
 Not yet shown: a production server under real traffic, and serving across
 several nodes.
 
 ## Speculative decoding and MTP
 
-**Goal:** a decoder that uses speculation or multi-token prediction (MTP)
-emits exactly the tokens and logprobs that the target model emits on its own.
-
+Here you want a decoder that uses speculation or multi-token prediction (MTP)
+to emit exactly the tokens and logprobs that the target model emits on its own.
 Verification runs the target model over several draft tokens at once, much
 like a short prefill, while plain decoding runs one token at a time. If the
 two paths round differently, an accepted token's logprob differs from the one
@@ -120,28 +116,26 @@ compares against the target model's own sample.
 
 How to apply the existing pages:
 
-1. Make the target model's verification forward equal its decode forward. A
+1. **Make the target model's verification forward equal its decode forward.** A
    chunk against a single token is the L3 case of the
    [whole model](../2-rl/whole-model.md), and attention must split the keys
    the same way in prefill and decode ([attention](../3-kernels/attention.md)).
-2. Make acceptance replayable. When drafts are verified by exact equality,
+2. **Make acceptance replayable.** When drafts are verified by exact equality,
    speculative decoding gives the same tokens as decoding without a draft
    ([sampling](../2-rl/sampling.md), [bi_sampling.py](../../tools/bi_sampling.py)).
-3. Treat MTP heads that serve as drafts in the same way. An MTP loss used in
+3. **Treat MTP heads that serve as drafts in the same way.** An MTP loss used in
    pre-training belongs to the training step instead
    ([part 1](../1-pretraining/README.md)).
 
-**Success:** the tokens and the logprob bits are the same with and without
-speculation, at every draft length.
+You are done when the tokens and the logprob bits are the same with and
+without speculation, at every draft length.
 
 Not yet shown: a real engine's speculative decoding, and MTP heads.
 
 ## Hardware migration and mixed fleets
 
-**Goal:** know which results carry over to new GPUs, and when two machines
-disagree, find where they part.
-
-Bitwise equality is not expected across GPU generations, because libraries
+Here you want to know which results carry over to new GPUs, and, when two
+machines disagree, to find where they part. Bitwise equality is not expected across GPU generations, because libraries
 choose different kernels and accumulation orders for each architecture
 ([hardware](../4-operations/hardware.md)). The goal therefore changes from
 equality to localization. The first operator whose bits differ should be a
@@ -150,24 +144,25 @@ a finding.
 
 How to apply the existing pages:
 
-1. Qualify the new hardware: run the regression suite against the committed
+1. **Qualify the new hardware**: run the regression suite against the committed
    baselines, and run the SDC scan across groups of devices
    ([hardware](../4-operations/hardware.md),
    [bi_suite.py](../../tools/bi_suite.py), [sdc_scan.py](../../tools/sdc_scan.py)).
-2. Within one GPU generation and one software stack, compare devices bit for
-   bit. A disagreement there is a fault ([SDC](../1-pretraining/sdc.md)).
-3. Across generations, capture both runs with OpGuard on the same inputs and
+2. **Compare devices bit for bit** within one GPU generation and one
+   software stack. A disagreement there is a fault ([SDC](../1-pretraining/sdc.md)).
+3. **Localize across generations.** Capture both runs with OpGuard on the same inputs and
    take the first divergence ([localize with OpGuard](../1-pretraining/localize-with-opguard.md)).
    Then classify it: either a kernel choice that depends on the architecture,
    which is expected, or anything else, which you should report.
-4. For RL with the trainer and the engine on different GPU generations, only
+4. **Handle RL across generations.** With the trainer and the engine on
+   different GPU generations, only
    kernels whose reduction order is written into their source code can carry
    over, and even that is untested across architectures. Otherwise, measure
    the numeric gap and record it as a decision, the way
    [engine parity](../2-rl/engine-parity-vllm.md) handles differences that
    neither side can remove.
 
-**Success:** every difference between generations is classified, and the
+You are done when every difference between generations is classified, and the
 expected ones are recorded together with the stack they belong to.
 
 Not yet shown: the handbook's kernels on other GPU architectures, and an RL

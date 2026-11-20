@@ -63,24 +63,23 @@ Three facts follow from this:
 
 ### 1. Confirm that the layer is batch-invariant
 
-- **Goal:** rule out the cheap failure first.
-- **How:** run `bi_check.check_batch` from
-  [tools/bi_check.py](../../tools/bi_check.py) on a sequence whose last chunk
-  is only partly filled and whose initial state is not zero.
-- **Success:** both forms pass. This was shown on one GPU type
-  ([report](../../examples/linear_attention/REPORT.md#results)).
+Rule out the cheap failure first: run `bi_check.check_batch` from
+[tools/bi_check.py](../../tools/bi_check.py) on a sequence whose last chunk
+is only partly filled and whose initial state is not zero. Both forms should
+pass, as they did on one GPU type
+([report](../../examples/linear_attention/REPORT.md#results)).
 
 ### 2. Choose one form that the trainer and the engine both use
 
-- **Goal:** the forward pass uses the same arithmetic on both sides.
-- **How:** use the recurrent and chunked kernels in
-  [gdn_kernels.py](../../examples/linear_attention/gdn_kernels.py), and the
-  aligned chunk wrapper `AlignedChunked` in
-  [gdn_bi.py](../../examples/linear_attention/gdn_bi.py); see
-  [recipe 7](../../skills/batch-invariant-kernel/references/operator-recipes.md#7-linear-attention-and-ssms-gdn-mamba-style).
-- **Success:** decode and every chunk size give an output and a state that
-  are bitwise equal to those of a full prefill. This was shown on one GPU type
-  ([report](../../examples/linear_attention/REPORT.md#recommendation-with-the-measured-cost-of-each-option)).
+Pick one of the options below so that the forward pass uses the same
+arithmetic on both sides. The recurrent and chunked kernels are in
+[gdn_kernels.py](../../examples/linear_attention/gdn_kernels.py), and the
+aligned chunk wrapper `AlignedChunked` is in
+[gdn_bi.py](../../examples/linear_attention/gdn_bi.py); see
+[recipe 7](../../skills/batch-invariant-kernel/references/operator-recipes.md#7-linear-attention-and-ssms-gdn-mamba-style).
+Decode and every chunk size must then give an output and a state bitwise
+equal to those of a full prefill; this was shown on one GPU type
+([report](../../examples/linear_attention/REPORT.md#recommendation-with-the-measured-cost-of-each-option)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
@@ -93,14 +92,12 @@ time between the trainer's forward pass and rollout decode.
 
 ### 3. Use the same kernel configuration on both sides
 
-- **Goal:** the kernel uses the same internal reduction tree in the trainer
-  and in the engine.
-- **How:** for the recurrent kernel, use the same tile width and warp count
-  on both sides; for the chunked kernel, use the same chunk size and the same
-  precision for the products.
-- **Success:** the kernels on the two sides give the same bits on the same
-  input. Different recurrent configurations each pass L1–L3 but differ from
-  each other ([report](../../examples/linear_attention/REPORT.md#what-this-shows)).
+The configuration sets the kernel's internal reduction tree. For the
+recurrent kernel, use the same tile width and warp count in the trainer and
+in the engine; for the chunked kernel, the same chunk size and the same
+precision for the products. The two sides must give the same bits on the
+same input: different recurrent configurations each pass L1–L3 but differ
+from each other ([report](../../examples/linear_attention/REPORT.md#what-this-shows)).
 
 ### 4. Verify each mode as it continues from a saved state
 

@@ -67,75 +67,64 @@ need equal arithmetic, not just equal formulas.
 
 ## The step
 
-1. **Diff the preflight reports.**
-   - Goal: confirm that the two runs differ only in the stack.
-   - How: run [determinism_preflight.py](../../tools/determinism_preflight.py)
-     `report` inside each job and diff the two reports, declaring the stack as
-     the intended difference
-     ([determinism and preflight](../1-pretraining/determinism-and-preflight.md)).
-     Two frameworks often name the same control differently (deterministic
-     flags, collective algorithms, fused-kernel switches), so compare the
-     settings by meaning and list what each side sets.
-   - Success: the diff lists the stack and its own switches, and nothing else.
-2. **Align the data and the weights.**
-   - Goal: both stacks see the same tokens in the same order and start from
-     the same weights.
-   - How: align the token stream as described in
-     [data alignment](../1-pretraining/data-alignment.md). When the
-     checkpoint formats differ, convert once and check the conversion bit for
-     bit with [ckpt_compare.py](../../tools/ckpt_compare.py)
-     ([checkpoint conversion](checkpoint-conversion.md)).
-   - Success: the token ids of the first steps are equal on both sides, and
-     every row of every weight has a matching row.
-3. **Capture both stacks.**
-   - Goal: fingerprints at every boundary both stacks have: the embedding
-     output, each layer's attention and MLP outputs, the residual stream, the
-     logits, and, in training, the gradient of each parameter.
-   - How: use `opguard_bridge.run_pair` in
-     [opguard_bridge.py](../../tools/opguard_bridge.py) with OpGuard's
-     per-vector fingerprints switched on (`OPGUARD_XOR_ROWS=1`), so that rows
-     can be paired by content. For code that runs under torch.compile or CUDA
-     graphs, use the [graph probe](../1-pretraining/capture-compiled-code.md).
-   - Success: `opguard_bridge.coverage(run)` shows those boundaries captured
-     on both sides.
-4. **Find the first divergence.**
-   - Goal: the first shared boundary where the same input rows give a
-     different output row.
-   - How: OpGuard pairs events automatically when the two call orders agree
-     ([localize with OpGuard](../1-pretraining/localize-with-opguard.md)).
-     Across stacks they often do not. In that case, pair rows by their
-     fingerprints with OpGuard's token matching, and walk the data flow from an
-     anchor where both sides agree, such as the embedding output, the way its
-     `rl-alignment` skill does. Record every correspondence you rely on as an
-     entry in an OpGuard alignment map, together with its evidence (OpGuard's
-     `docs/AlignmentMaps.md`).
-   - Success: a pivot whose inputs are equal on both sides and whose output
-     differs, and an alignment-map entry that says why the two boundaries
-     correspond.
-5. **Write the rounding-point table.**
-   - Goal: every difference between the two forwards, and between the two
-     backwards in training, written as a named line.
-   - How: follow steps 1 and 2 of the
-     [engine-parity skill](../../skills/engine-parity/SKILL.md). Take an
-     inventory of what actually runs on each side, then write down both
-     rounding sequences, using the
-     [rounding points](../../skills/engine-parity/references/rounding-points.md)
-     table as the checklist, and mark each line "read from source" or
-     "measured".
-   - Success: the difference at the pivot is one of the lines.
-6. **Decide each difference.**
-   - Goal: every line has a decision and a measured effect.
-   - How: change one side, one rounding point at a time, and capture again, as
-     in [engine parity](../2-rl/engine-parity-vllm.md). After each change, the
-     first differing boundary should move later in the model.
-   - Success: no difference is left without a decision.
-7. **Keep it as a regression check.**
-   - Goal: the next upgrade shows what moved.
-   - How: keep the smallest pair that shows each decision (one layer, one
-     step) as an example in the [regression](../4-operations/regression.md)
-     suite, with the decisions written next to it.
-   - Success: the suite runs the pair and reports it equal, or reports the
-     line that moved.
+1. **Diff the preflight reports**, to confirm that the two runs differ only
+   in the stack. Run [determinism_preflight.py](../../tools/determinism_preflight.py)
+   `report` inside each job and diff the two reports, declaring the stack as
+   the intended difference
+   ([determinism and preflight](../1-pretraining/determinism-and-preflight.md)).
+   Two frameworks often name the same control differently (deterministic
+   flags, collective algorithms, fused-kernel switches), so compare the
+   settings by meaning and list what each side sets. The diff should list the
+   stack and its own switches, and nothing else.
+2. **Align the data and the weights**, so that both stacks see the same
+   tokens in the same order and start from the same weights. Align the token
+   stream as described in [data alignment](../1-pretraining/data-alignment.md).
+   When the checkpoint formats differ, convert once and check the conversion
+   bit for bit with [ckpt_compare.py](../../tools/ckpt_compare.py)
+   ([checkpoint conversion](checkpoint-conversion.md)). The token ids of the
+   first steps must be equal on both sides, and every row of every weight
+   must have a matching row.
+3. **Capture both stacks**, with fingerprints at every boundary both stacks
+   have: the embedding output, each layer's attention and MLP outputs, the
+   residual stream, the logits, and, in training, the gradient of each
+   parameter. Use `opguard_bridge.run_pair` in
+   [opguard_bridge.py](../../tools/opguard_bridge.py) with OpGuard's
+   per-vector fingerprints switched on (`OPGUARD_XOR_ROWS=1`), so that rows
+   can be paired by content; for code that runs under torch.compile or CUDA
+   graphs, use the [graph probe](../1-pretraining/capture-compiled-code.md).
+   `opguard_bridge.coverage(run)` should show those boundaries captured on
+   both sides.
+4. **Find the first divergence**: the first shared boundary where the same
+   input rows give a different output row. OpGuard pairs events automatically
+   when the two call orders agree
+   ([localize with OpGuard](../1-pretraining/localize-with-opguard.md)), but
+   across stacks they often do not. In that case, pair rows by their
+   fingerprints with OpGuard's token matching, and walk the data flow from an
+   anchor where both sides agree, such as the embedding output, the way its
+   `rl-alignment` skill does. Record every correspondence you rely on as an
+   entry in an OpGuard alignment map, together with its evidence (OpGuard's
+   `docs/AlignmentMaps.md`). You end with a pivot whose inputs are equal on
+   both sides and whose output differs, and an alignment-map entry that says
+   why the two boundaries correspond.
+5. **Write the rounding-point table**, one named line for every difference
+   between the two forwards, and between the two backwards in training.
+   Follow steps 1 and 2 of the
+   [engine-parity skill](../../skills/engine-parity/SKILL.md): take an
+   inventory of what actually runs on each side, then write down both
+   rounding sequences, using the
+   [rounding points](../../skills/engine-parity/references/rounding-points.md)
+   table as the checklist, and mark each line "read from source" or
+   "measured". The difference at the pivot must be one of the lines.
+6. **Decide each difference**, and measure its effect. Change one side, one
+   rounding point at a time, and capture again, as in
+   [engine parity](../2-rl/engine-parity-vllm.md); after each change, the
+   first differing boundary should move later in the model. No difference may
+   be left without a decision.
+7. **Keep it as a regression check**, so that the next upgrade shows what
+   moved. Keep the smallest pair that shows each decision (one layer, one
+   step) as an example in the [regression](../4-operations/regression.md)
+   suite, with the decisions written next to it. The suite runs the pair and
+   reports it equal, or reports the line that moved.
 
 | Decision | What it gives | Cost class | When to choose it |
 |---|---|---|---|

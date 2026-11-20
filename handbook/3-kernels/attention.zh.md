@@ -62,16 +62,13 @@ program 只负责一个输出，并按固定顺序完成它的求和。
 
 ### 1. 前向在每种模式下都按同样的 block 遍历 key
 
-- **目标：** prefill、decode 和 chunked prefill 在每个位置上的结果逐 bit 一致，一个序列放在任何 batch 里，
-  结果也逐 bit 一致（L2、L3）。
-- **做法：** 使用 [tools/bi_kernels.py](../../tools/bi_kernels.py) 里的固定 block kernel
-  `attention_fixed_blocks`，它按
-  [recipe 4](../../skills/batch-invariant-kernel/references/operator-recipes.md#4-softmax-attention-prefill-decode-chunked-prefill-paged-kv)
-  实现。在 kernel 运行之前先把新的 key 和 value 写进 cache，这样 decode 读取它们的方式就和
-  prefill 一样。
-- **成功标准：** [tools/bi_check.py](../../tools/bi_check.py) 里的 `check_modes` 和
-  `check_batch` 都通过。这在一种 GPU 上得到了证明，而原生后端在那里两项检查都没通过
-  （[报告](../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3)）。
+使用 [tools/bi_kernels.py](../../tools/bi_kernels.py) 里的固定 block kernel `attention_fixed_blocks`，
+它按 [recipe 4](../../skills/batch-invariant-kernel/references/operator-recipes.md#4-softmax-attention-prefill-decode-chunked-prefill-paged-kv)
+实现；在 kernel 运行之前先把新的 key 和 value 写进 cache，这样 decode 读取它们的方式就和 prefill 一样。
+这样 prefill、decode 和 chunked prefill 在每个位置上的结果逐 bit 一致，一个序列放在任何 batch 里结果也一样
+（L2、L3）：[tools/bi_check.py](../../tools/bi_check.py) 里的 `check_modes` 和 `check_batch` 都会通过。
+这在一种 GPU 上得到了证明，而原生后端在那里两项检查都没通过
+（[报告](../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3)）。
 
 | 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -81,13 +78,12 @@ program 只负责一个输出，并按固定顺序完成它的求和。
 
 ### 2. 反向分两遍计算，不用原子操作
 
-- **目标：** 同一个序列单独运行、放在更大的 batch 里，还是在右边做了 padding，得到的梯度都逐 bit 一致（L1、L2）。
-- **做法：** 使用 [tools/bi_kernels.py](../../tools/bi_kernels.py) 里不用原子操作的反向
-  `attention_fixed_blocks_train`。第一遍给每个 program 分一个 key block，它按固定顺序对本组的
-  各个 query 头和之后的所有 query 求和，dK 和 dV 各只写一次。第二遍给每个 program 分一个
-  query block，它像前向那样从位置 0 开始遍历 key，dQ 只写一次。
-- **成功标准：** 重复运行时 L1 成立；单独运行、放进 batch 运行和带 padding 运行时 L2 都成立，padding 部分的
-  输出梯度为零。这在一种 GPU 上得到了证明（[报告](../../examples/attention_backward/REPORT.md#results)）。
+使用 [tools/bi_kernels.py](../../tools/bi_kernels.py) 里不用原子操作的反向
+`attention_fixed_blocks_train`。第一遍给每个 program 分一个 key block，它按固定顺序对本组的各个 query 头
+和之后的所有 query 求和，dK 和 dV 各只写一次；第二遍给每个 program 分一个 query block，它像前向那样从
+位置 0 开始遍历 key，dQ 只写一次。重复运行时 L1 成立，单独运行、放进 batch 运行和右边带 padding 运行时
+L2 都成立（padding 部分的输出梯度为零），就说明做对了。这在一种 GPU 上得到了证明
+（[报告](../../examples/attention_backward/REPORT.md#results)）。
 
 | 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -101,13 +97,11 @@ program 只负责一个输出，并按固定顺序完成它的求和。
 
 ### 3. paged KV、打包、torch.compile 和 CUDA graph 都不能改变结果
 
-- **目标：** 引擎在 kernel 外面加的这些层，不能改变结果的任何一个 bit。
-- **做法：** 使用 [examples/attention_serving](../../examples/attention_serving/serving_kernels.py)
-  里的 paged kernel、varlen kernel 和它们的检查；torch.compile 和 CUDA graph 的做法见
-  [recipe 12](../../skills/batch-invariant-kernel/references/operator-recipes.md#12-deployment-wrappers-torchcompile-and-cuda-graphs)。
-- **成功标准：** 每种页大小、每种打包偏移、每个编译版本和 CUDA graph 版本，结果都与连续 cache 上的
-  kernel 逐 bit 一致。这在一种 GPU 上得到了证明
-  （[报告](../../examples/attention_serving/REPORT.md#what-the-serving-layer-results-show)）。
+这些都是引擎在 kernel 外面加的层。使用 [examples/attention_serving](../../examples/attention_serving/serving_kernels.py)
+里的 paged kernel、varlen kernel 和它们的检查；torch.compile 和 CUDA graph 的做法见
+[recipe 12](../../skills/batch-invariant-kernel/references/operator-recipes.md#12-deployment-wrappers-torchcompile-and-cuda-graphs)。
+每种页大小、每种打包偏移、每个编译版本和 CUDA graph 版本，结果都必须与连续 cache 上的 kernel 逐 bit 一致；
+这在一种 GPU 上得到了证明（[报告](../../examples/attention_serving/REPORT.md#what-the-serving-layer-results-show)）。
 
 | 层 | 怎么做 | 代价等级 |
 |---|---|---|

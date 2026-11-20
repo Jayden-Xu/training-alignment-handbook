@@ -33,7 +33,8 @@ and leave faults visible.
 
 ### 2a. Control the five sources of avoidable variation
 
-**Goal:** remove the variation that makes two correct runs differ.
+Set each of the five in code or in the launch configuration, on every rank,
+so that two correct runs do not differ.
 
 | What varies | What to set | Cost class |
 |---|---|---|
@@ -46,16 +47,12 @@ and leave faults visible.
 Do **not** pin scheduling, or kernels written by you or by a third party. If
 they change the bits, that change is the signal of a bug.
 
-**Success:** every one of the five is set in code or in the launch
-configuration, on every rank.
-
 ### 2b. Read the settings back from each run and diff them
 
-**Goal:** prove that the settings in both runs are what you think they are.
-
-**How:** in each job, call `determinism_preflight.report(...)` from
-[determinism_preflight.py](../../tools/determinism_preflight.py) after the
-restore and before the first step. It reads back, on each rank, and writes as
+This proves that the settings in both runs are what you think they are. In
+each job, after the restore and before the first step, call
+`determinism_preflight.report(...)` from
+[determinism_preflight.py](../../tools/determinism_preflight.py). It reads back, on each rank, and writes as
 JSON: the deterministic flag and its `warn_only`, cuDNN, TF32 and matmul
 precision, `CUBLAS_WORKSPACE_CONFIG`, the SDPA backends, `NCCL_*` and the NCCL
 version, the RNG states, the dataloader's workers and generator, the
@@ -64,10 +61,8 @@ counters, AMP, whether compile and CUDA graphs are used, and the GPU, driver
 and library versions. When OpGuard is installed, its `doctor` output is
 included too. Then `diff(a, b)` lists what differs between the two runs and
 which of those differences make a bitwise comparison meaningless, and
-`findings` lists what a single run leaves uncontrolled.
-
-**Success:** `findings` is empty, and the diff lists only the declared
-difference.
+`findings` lists what a single run leaves uncontrolled. The check passes when
+`findings` is empty and the diff lists only the declared difference.
 
 In a known-answer walkthrough (one GPU, one rank, a few steps), the preflight
 caught an attention backward running under `warn_only` and a missing step

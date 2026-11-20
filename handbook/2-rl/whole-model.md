@@ -61,35 +61,29 @@ trainer as an unmodified engine. A later step settles that row.
 
 ## The step
 
-1. **Audit the operators.**
-   - Goal: a list of the modules whose output depends on the batch.
-   - How: [tools/bi_audit.py](../../tools/bi_audit.py) replays every module
-     on one row alone and on the same row inside a batch, and names the first
-     module whose output differs. It also catches fp32 reductions whose
-     variation is hidden by a bf16 output.
-   - Success: every module is reported invariant, or you have the list of
-     modules to replace.
-2. **Replace the operators that vary.**
-   - Goal: a set of operators that all reduce in a fixed order.
-   - How: follow the [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md)
-     and its [operator recipes](../../skills/batch-invariant-kernel/references/operator-recipes.md).
-   - Success: the audit passes.
-3. **Check every serving mode the engine uses** against the trainer's forward.
-   - Goal: L1–L3 for the whole model, not only for each operator.
-   - How: test decode in a changing batch, chunked prefill, a prefix-cache
-     hit, speculative verification, preemption, padding and variable-length
-     batches; [whole_model.py](../../examples/whole_model/whole_model.py)
-     runs this check for the reference model.
-   - Success: the logits are bitwise equal in every mode, and so are the
-     activation gradients.
-4. **Write down the rounding sequence.**
-   - Goal: a record that the engine will be aligned to in a later step.
-   - How: note every cast, which operations run in fp32, the RoPE formula,
-     and where the norm weight is multiplied in. The
-     [rounding points](../../skills/engine-parity/references/rounding-points.md)
-     checklist lists what to record, and
-     [model.py](../../examples/whole_model/model.py) is a worked example.
-   - Success: one line per rounding point, in the order they happen.
+1. **Audit the operators.** Run [tools/bi_audit.py](../../tools/bi_audit.py):
+   it replays every module on one row alone and on the same row inside a
+   batch, and names the first module whose output differs, including fp32
+   reductions hidden behind a bf16 output. You end with a list of modules to
+   replace; if it is empty, skip the next step.
+2. **Replace the operators that vary**, following the
+   [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md)
+   and its [operator recipes](../../skills/batch-invariant-kernel/references/operator-recipes.md),
+   until the audit passes.
+3. **Check every serving mode the engine uses.** Invariant operators do not
+   yet make an invariant model, so compare decode in a changing batch,
+   chunked prefill, a prefix-cache hit, speculative verification, preemption,
+   padding and variable-length batches against the trainer's forward. The
+   logits and the activation gradients must be bitwise equal in every mode;
+   [whole_model.py](../../examples/whole_model/whole_model.py) runs this
+   check for the reference model.
+4. **Write down the rounding sequence**, one line per rounding point in the
+   order they happen: every cast, which operations run in fp32, the RoPE
+   formula, and where the norm weight is multiplied in. The engine is aligned
+   to this record later. The
+   [rounding points](../../skills/engine-parity/references/rounding-points.md)
+   checklist says what to record, and
+   [model.py](../../examples/whole_model/model.py) is a worked example.
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|

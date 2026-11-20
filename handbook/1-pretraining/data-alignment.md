@@ -58,23 +58,20 @@ position into its fingerprint.
 
 ### 2c. Pin the data source and the tokenizer
 
-**Goal:** both runs read the same files and turn them into the same token ids.
-
-**How:** hash the data files and the tokenizer, together with the arguments
-the tokenizer is called with, and store both hashes in the header of the
+Both runs must read the same files and turn them into the same token ids.
+Hash the data files and the tokenizer, together with the arguments the
+tokenizer is called with, and store both hashes in the header of the
 fingerprint records (`source_fingerprint` and `tokenizer_fingerprint` in
-[data_fingerprint.py](../../tools/data_fingerprint.py)). If you tokenize
-offline, as Megatron-LM's preprocessing does, the tokenizer's output is fixed
-in the files themselves.
-
-**Success:** the two headers agree, or differ only in the declared difference.
+[data_fingerprint.py](../../tools/data_fingerprint.py)); the two headers must
+agree, or differ only in the declared difference. If you tokenize offline, as
+Megatron-LM's preprocessing does, the tokenizer's output is fixed in the files
+themselves.
 
 ### 2d. Fingerprint each batch where it leaves the loader
 
-**Goal:** a record of what each rank consumed at each step.
-
-**How:** add two lines to the training loop, on every rank, and apply them to
-the batch exactly as the loader returns it:
+To record what each rank consumed at each step, add two lines to the
+training loop on every rank, and apply them to the batch exactly as the loader
+returns it:
 
 ```python
 import data_fingerprint as dfp
@@ -92,15 +89,12 @@ position ids, and the labels or the loss mask. With `opguard=`, the recorder
 also writes its records in OpGuard's capture layout, so OpGuard's `first_diff`
 sees the data boundary before the model's boundaries
 ([Localize with OpGuard](localize-with-opguard.md)). A resumed run passes
-`append=True`.
-
-**Success:** both runs have one record for each step and each rank.
+`append=True`. In the end both runs have one record for each step and each
+rank.
 
 ### 2e. Compare the two runs
 
-**Goal:** find the first (step, rank, field) whose bits differ.
-
-**How:**
+Find the first (step, rank, field) whose bits differ:
 
 ```bash
 python tools/data_fingerprint.py compare fp/run_a fp/run_b
@@ -109,17 +103,15 @@ python tools/data_fingerprint.py compare fp/run_a fp/run_b --global
 
 The comparison is exact, with no tolerance. The second form first
 concatenates the ranks of each step, which is what you need when the two runs
-use different data-parallel sizes.
-
-**Success:** no record differs. The data is then aligned, and the pair is
-ready to capture ([Localize with OpGuard](localize-with-opguard.md)).
+use different data-parallel sizes. If no record differs, the data is aligned
+and the pair is ready to capture
+([Localize with OpGuard](localize-with-opguard.md)).
 
 ### 2f. Find out what kind of difference it is
 
-**Goal:** name the kind of difference, because each kind has its own fix.
-
-**How:** the compare command assigns a class to the first difference and
-counts the classes over all steps:
+Each kind of difference has its own fix. The compare command assigns a class
+to the first difference and counts the classes over all steps; you want one
+class and one named cause.
 
 | Class | What it means | Typical cause |
 |---|---|---|
@@ -131,14 +123,11 @@ counts the classes over all steps:
 A difference in the header is reported first. A changed tokenizer shows up
 there, unless only its call arguments changed and they were not recorded.
 
-**Success:** you have one class and one named cause.
-
 ### 2g. Fix the difference
 
-**Goal:** the fingerprints are equal at every step and on every rank.
-
-**How:** choose the fix by the problem. The libraries named in the table solve
-the problem by design, but each one does so only under its own conditions
+Choose the fix by the problem, then compare again: no record may differ, at
+any step or on any rank. The libraries named in the table solve the problem by
+design, but each one does so only under its own conditions
 ([survey](../../examples/data_alignment/REPORT.md#existing-work)).
 
 | Problem | Option | What it gives | Cost class | When to choose it |
@@ -149,8 +138,6 @@ the problem by design, but each one does so only under its own conditions
 | The shuffle buffer is seeded from the process | seed it from the seed, the epoch and the worker id, or give the loader its own generator; Hugging Face datasets takes a seed and an epoch | an order that does not depend on other random draws | free | any streaming shuffle |
 | The packing differs | use the same collate function, row length and packing rule on both sides | the same rows | free | packing on one side only, or a changed packer |
 | The tokenizer differs | pin the tokenizer file and its call arguments, or tokenize offline | the same token ids | free | a tokenizer upgrade, or a new special token |
-
-**Success:** compare again, and no record differs.
 
 ## What can go wrong
 

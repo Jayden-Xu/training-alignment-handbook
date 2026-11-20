@@ -43,8 +43,8 @@ how close it is.
 
 ### How to run it
 
-**Goal:** every check that fits this machine has been run and compared.
-**Success:** the runner exits with 0, and the report has no REGRESSIONS or NO
+Run every check that fits this machine and compare the results. The run is
+clean when the runner exits with 0 and the report has no REGRESSIONS or NO
 RESULT lines.
 
 ```bash
@@ -116,8 +116,8 @@ stack are in the
 
 ### How to add a check or an example
 
-**Goal:** a new claim is re-checked on every stack from now on.
-**Success:** the entry runs in the suite, and its baseline is committed.
+Add an entry so that a new claim is re-checked on every stack from now on.
+You are done when the entry runs in the suite and its baseline is committed.
 
 An example accepts `--quick` and `--json <file>`, and writes its results in
 the `bi-results-v1` format through `tools/bi_report.py`:

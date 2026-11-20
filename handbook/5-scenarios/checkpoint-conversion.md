@@ -52,17 +52,17 @@ to change.
 
 ## The step
 
-1. **Write the map.**
-   - Goal: for each logical parameter, describe how each layout stores it.
-   - How: write a `ckpt-map-v1` JSON file for
-     [ckpt_compare.py](../../tools/ckpt_compare.py), with one entry per
-     logical parameter and layout. Tensor names use `{i}` for the layer and
-     `{r}` for the rank; `cat` joins pieces over ranks, `part` picks a group
-     out of a fused tensor, `slice` removes padding, `replicated` declares
-     copies that must be bit-equal, and `"dim": -1` joins row-parallel pieces
-     back into rows. The
-     [example map](../../examples/ckpt_conversion/mcore_map.json) describes a
-     Megatron-style layout:
+1. **Write the map.** For each logical parameter, describe how each layout
+   stores it, in a `ckpt-map-v1` JSON file for
+   [ckpt_compare.py](../../tools/ckpt_compare.py) with one entry per logical
+   parameter and layout. Tensor names use `{i}` for the layer and `{r}` for
+   the rank; `cat` joins pieces over ranks, `part` picks a group out of a
+   fused tensor, `slice` removes padding, `replicated` declares copies that
+   must be bit-equal, and `"dim": -1` joins row-parallel pieces back into
+   rows. The map is complete when, with `--strict`, it uses every tensor of
+   the source. The
+   [example map](../../examples/ckpt_conversion/mcore_map.json) describes a
+   Megatron-style layout:
 
      ```json
      "model.layers.{i}.self_attn.q_proj.weight": {
@@ -75,11 +75,8 @@ to change.
        "mcore": {"cat": {"over": "r", "each":
          "mp_rank_{r:02d}/model.decoder.layers.{i}.self_attention.linear_proj.weight"}, "dim": -1}}
      ```
-   - Success: with `--strict`, the map uses every tensor of the source.
-2. **Compare the rows.**
-   - Goal: every row of every logical parameter has a match.
-   - How: run the tool on the two checkpoints, naming the map's layouts and
-     the target's TP degree:
+2. **Compare the rows.** Run the tool on the two checkpoints, naming the
+   map's layouts and the target's TP degree:
 
      ```bash
      python tools/ckpt_compare.py SRC_DIR DST_DIR --map map.json --layouts hf mcore --set b:r=2
@@ -93,26 +90,24 @@ to change.
        B 1 of 64 rows unmatched: row 8 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[40]
      NOT all rows matched
      ```
-   - Success: the tool prints "all rows matched" and exits with status 0. Every
-     dtype change is reported per parameter. A widening (bf16 to fp32) is
-     exact, and its rows are compared after widening; a narrowing names every
-     row that lost bits.
-3. **Run a forward at the target layout.**
-   - Goal: confirm that each row sits where the target's code reads it.
-   - How: load the converted checkpoint into the target's model code at the
-     target layout, run it on fixed token ids, and compare the logits with the
-     source model run **with the same reduction**. A row-parallel layer at
-     TP 2 adds two partial sums, which changes the bits compared with TP 1
-     even when every weight is right ([parallelism](../2-rl/parallelism.md)).
-     The demo's [ckpt_conversion.py](../../examples/ckpt_conversion/ckpt_conversion.py)
-     shows the pattern on CPU.
-   - Success: the logits are bit-equal.
-4. **Keep the check.**
-   - Goal: a change to the converter, or a new model, is checked the same way.
-   - How: keep the conversion pair, together with planted faults, as a
-     [regression](../4-operations/regression.md) entry.
-   - Success: the suite reports the clean pair as equal and names every
-     planted fault.
+
+     Every row of every logical parameter has a match when the tool prints
+     "all rows matched" and exits with status 0. Every dtype change is
+     reported per parameter. A widening (bf16 to fp32) is exact, and its rows
+     are compared after widening; a narrowing names every row that lost bits.
+3. **Run a forward at the target layout**, to confirm that each row sits
+   where the target's code reads it. Load the converted checkpoint into the
+   target's model code at the target layout, run it on fixed token ids, and
+   compare the logits with the source model run **with the same reduction**;
+   they must be bit-equal. A row-parallel layer at TP 2 adds two partial
+   sums, which changes the bits compared with TP 1 even when every weight is
+   right ([parallelism](../2-rl/parallelism.md)). The demo's
+   [ckpt_conversion.py](../../examples/ckpt_conversion/ckpt_conversion.py)
+   shows the pattern on CPU.
+4. **Keep the check**, so that a change to the converter, or a new model, is
+   checked the same way. Keep the conversion pair, together with planted
+   faults, as a [regression](../4-operations/regression.md) entry; the suite
+   should report the clean pair as equal and name every planted fault.
 
 Which row key to use:
 

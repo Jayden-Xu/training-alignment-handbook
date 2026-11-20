@@ -63,10 +63,8 @@ Operators based on sorting (embedding backward, cross-entropy, the norms,
 
 ### Pin down every part of the training step
 
-**Goal:** two trainers, or one trainer run twice, do exactly the same
-arithmetic.
-
-**How:** go through the checklist below. The fixed-order kernels are in
+For two trainers, or one trainer run twice, to do exactly the same
+arithmetic, go through the checklist below. The fixed-order kernels are in
 [ts_kernels.py](../../examples/training_step/ts_kernels.py): `seg_sum` handles
 every scatter-style sum (a stable sort by destination, then the rows added in
 ascending source position in fp32, with one rounding), `seq_cumsum` is a
@@ -100,7 +98,7 @@ left-to-right scan, and `tree_mean_loss` is the loss reduction.
 | Fixed-order kernels for attention only | L1 where the model actually varied | small (a few percent) | Attention is the only thing in the model that breaks L1 |
 | Fixed-order kernels for attention, embedding and the loss | L1, and an order that another framework can reproduce (L4) | moderate (under 2x) | Two frameworks, or two codebases, must agree |
 
-**Success:** two runs in separate processes give equal loss bits, equal
+It worked when two runs in separate processes give equal loss bits, equal
 gradient fingerprints and equal weights at every step, and a run that resumes
 from a checkpoint gives the same steps as a run that never stopped.
 
@@ -112,9 +110,9 @@ counts and dtypes
 
 ### Find which part of the step a first divergence points to
 
-**Goal:** map a pivot inside the step to one of the parts in the table above.
-
-**How:** look at where the pivot is.
+Look at where the pivot is, and map it to one of the parts in the table
+above. You are done when you have named one part and have a test that changes
+only that part.
 
 | Where the pivot is | The likely part |
 |---|---|
@@ -123,9 +121,6 @@ counts and dtypes
 | The loss, while the per-token losses are equal | the loss reduction |
 | An embedding lookup right after a resume, with equal token ids | the resumed weights or optimizer state |
 | The loss at a dropout or reshuffle point after a resume | a piece of RNG or sampler state |
-
-**Success:** you have named one part, and you have a test that changes only
-that part.
 
 ## What can go wrong
 

@@ -53,28 +53,19 @@ L2 和 L3、却有一处舍入不同的引擎，离 trainer 的距离和未经�
 
 ## 步骤
 
-1. **审查算子。**
-   - 目标：列出输出会随 batch 变化的模块。
-   - 做法：[tools/bi_audit.py](../../tools/bi_audit.py) 把每个模块分别在单独一行和
-     整个 batch 上重放，找出第一个输出不同的模块。被 bf16 输出掩盖住的 fp32 归约，它也能查出来。
-   - 成功标准：每个模块都报告为不变，或者你拿到了一份需要替换的模块清单。
-2. **替换会随 batch 变化的算子。**
-   - 目标：得到一套归约顺序都固定的算子。
-   - 做法：按照 [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md)
-     及其[算子 recipe](../../skills/batch-invariant-kernel/references/operator-recipes.md)来做。
-   - 成功标准：审查通过。
-3. **对照 trainer 的前向，检查引擎用到的每种推理模式。**
-   - 目标：整个模型达到 L1–L3，而不只是每个算子单独达到。
-   - 做法：测试在不断变化的 batch 里 decode、chunked prefill、命中 prefix cache、验证草稿 token、
-     抢占、padding 和变长 batch；[whole_model.py](../../examples/whole_model/whole_model.py)
-     就是对参考模型做的这项检查。
-   - 成功标准：每种模式下 logits 都逐 bit 一致，激活梯度也逐 bit 一致。
-4. **写下舍入序列。**
-   - 目标：留下一份记录，后面对齐引擎时以它为准。
-   - 做法：记下每一次类型转换、哪些运算用 fp32、RoPE 的公式、norm 权重在哪里乘入。
-     要记哪些内容，见[舍入点](../../skills/engine-parity/references/rounding-points.md)
-     检查清单；[model.py](../../examples/whole_model/model.py) 是一个完整的例子。
-   - 成功标准：每个舍入点一行，按发生的先后排列。
+1. **审查算子。** 运行 [tools/bi_audit.py](../../tools/bi_audit.py)：它把每个模块分别在单独一行和
+   整个 batch 上重放，指出第一个输出不同的模块，被 bf16 输出掩盖的 fp32 归约也能查出来。
+   最后得到一份要替换的模块清单；清单是空的，就跳过下一步。
+2. **替换会随 batch 变化的算子**，照着 [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md)
+   和其中的[算子 recipe](../../skills/batch-invariant-kernel/references/operator-recipes.md)换，直到审查通过。
+3. **检查引擎用到的每种推理模式。** 每个算子都不变，整个模型还不一定不变。所以要把 decode、
+   chunked prefill、命中 prefix cache、验证草稿 token、抢占、padding 和变长 batch 逐一和 trainer
+   的前向对照，每种模式下 logits 和激活梯度都要逐 bit 一致。[whole_model.py](../../examples/whole_model/whole_model.py)
+   就是对参考模型做的这项检查。
+4. **写下舍入序列**，按发生的先后，每个舍入点记一行：每一次类型转换、哪些运算用 fp32、
+   RoPE 的公式、norm 权重在哪里乘入。后面对齐引擎时就以这份记录为准。要记哪些内容见
+   [舍入点](../../skills/engine-parity/references/rounding-points.md)检查清单，
+   [model.py](../../examples/whole_model/model.py) 是一个完整的例子。
 
 | 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|

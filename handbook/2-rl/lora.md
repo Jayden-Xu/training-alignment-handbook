@@ -43,38 +43,31 @@ the accuracy of rounding the exact result to bf16 a single time.
 
 ## The step
 
-1. **Turn off what the engine cannot reproduce.**
-   - Goal: when the trainer recomputes logprobs, it computes the same function
-     the engine served.
-   - How: switch LoRA dropout off for the trainer's logprob pass, and have the
-     engine serve the adapters unmerged.
-   - Success: neither side applies dropout or merges the adapter.
-2. **Use the same LoRA linear layer in the trainer and the engine.**
-   - Goal: the trainer and the engine produce the same bits, and prefill
-     produces the same bits as decode.
-   - How: use `lora_linear` and `lora_linear_train` from
-     [lora_kernels.py](../../examples/lora/lora_kernels.py). In the forward,
-     each row selects its own adapter, and the shrink x·A adds up in a fixed
-     fp32 order; one fp32 FMA then adds the update into the base accumulator,
-     and the result is cast once. The backward adds in the same order and skips
-     rows whose gradient is zero, so padding cannot move the chunk boundaries.
-   - Success: the checks in [lora_bi.py](../../examples/lora/lora_bi.py) pass.
-3. **Test the batch placements that break grouped kernels.**
-   - Goal: a request gets the same result (L2) whichever other adapters share
-     its batch.
-   - How: compare a request run alone with the same request placed next to
-     other adapters, next to rows that use no adapter, at other positions in
-     the batch, and among filler rows. Choose group sizes on both sides of
-     every size at which the GEMM library switches kernels, and include
-     adapters whose rank is padded with zeros.
-   - Success: every placement gives the same result.
-4. **Check that padding does not change the trainer's backward.**
-   - Goal: the gradients are batch-invariant (L2), not only repeatable from run
-     to run (L1).
-   - How: compare the gradients of a sequence run alone with those of the same
-     sequence padded on the right (the padding gets a zero output gradient),
-     and with those of the sequence batched together with other sequences.
-   - Success: dX, dA and dB do not change.
+1. **Turn off what the engine cannot reproduce.** Switch LoRA dropout off for
+   the trainer's logprob pass, and have the engine serve the adapters
+   unmerged, so that the trainer recomputes the same function the engine
+   served. Check that neither side applies dropout or merges the adapter.
+2. **Use the same LoRA linear layer in the trainer and the engine**:
+   `lora_linear` and `lora_linear_train` from
+   [lora_kernels.py](../../examples/lora/lora_kernels.py). In the forward,
+   each row selects its own adapter, the shrink x·A adds up in a fixed fp32
+   order, one fp32 FMA adds the update into the base accumulator, and the
+   result is cast once; the backward adds in the same order and skips rows
+   whose gradient is zero, so padding cannot move the chunk boundaries. The
+   trainer and the engine then agree bit for bit, and so do prefill and
+   decode: the checks in [lora_bi.py](../../examples/lora/lora_bi.py) pass.
+3. **Test the batch placements that break grouped kernels.** Compare a
+   request run alone with the same request placed next to other adapters,
+   next to rows that use no adapter, at other positions in the batch, and
+   among filler rows. Choose group sizes on both sides of every size at which
+   the GEMM library switches kernels, and include adapters whose rank is
+   padded with zeros. Every placement must give the same result (L2).
+4. **Check that padding does not change the trainer's backward.** Compare the
+   gradients of a sequence run alone with those of the same sequence padded on
+   the right (the padding gets a zero output gradient) and batched together
+   with other sequences. dX, dA and dB must not change; this shows the
+   gradients are batch-invariant (L2), not only repeatable from run to run
+   (L1).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|

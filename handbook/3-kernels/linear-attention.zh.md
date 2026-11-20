@@ -51,22 +51,18 @@ token 就更新一次。递归形式每个 token 做一次更新；分块形式�
 
 ### 1. 先确认这一层是 batch-invariant 的
 
-- **目标：** 先排除代价最小的那类失败。
-- **做法：** 找一个最后一块没填满、初始状态不为零的序列，运行
-  [tools/bi_check.py](../../tools/bi_check.py) 里的 `bi_check.check_batch`。
-- **成功标准：** 两种形式都通过。这在一种 GPU 上得到了证明
-  （[报告](../../examples/linear_attention/REPORT.md#results)）。
+先排除代价最小的那类失败：找一个最后一块没填满、初始状态不为零的序列，运行
+[tools/bi_check.py](../../tools/bi_check.py) 里的 `bi_check.check_batch`。两种形式都应该通过，在一种 GPU
+上就是这样（[报告](../../examples/linear_attention/REPORT.md#results)）。
 
 ### 2. 选一种 trainer 和引擎都用的形式
 
-- **目标：** 两端的前向用同一种算术。
-- **做法：** 使用 [gdn_kernels.py](../../examples/linear_attention/gdn_kernels.py) 里的递归
-  kernel 和分块 kernel，以及 [gdn_bi.py](../../examples/linear_attention/gdn_bi.py) 里的对齐分块
-  包装 `AlignedChunked`；做法见
-  [recipe 7](../../skills/batch-invariant-kernel/references/operator-recipes.md#7-linear-attention-and-ssms-gdn-mamba-style)。
-- **成功标准：** decode 和每种分块大小得到的输出和状态，都与一次完整的 prefill 逐 bit 一致。
-  这在一种 GPU 上得到了证明
-  （[报告](../../examples/linear_attention/REPORT.md#recommendation-with-the-measured-cost-of-each-option)）。
+从下表里选一种，让两端的前向用同一种算术。递归 kernel 和分块 kernel 在
+[gdn_kernels.py](../../examples/linear_attention/gdn_kernels.py) 里，对齐分块包装 `AlignedChunked` 在
+[gdn_bi.py](../../examples/linear_attention/gdn_bi.py) 里；做法见
+[recipe 7](../../skills/batch-invariant-kernel/references/operator-recipes.md#7-linear-attention-and-ssms-gdn-mamba-style)。
+之后 decode 和每种分块大小得到的输出和状态，都要与一次完整的 prefill 逐 bit 一致；这在一种 GPU 上得到了证明
+（[报告](../../examples/linear_attention/REPORT.md#recommendation-with-the-measured-cost-of-each-option)）。
 
 | 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -79,11 +75,9 @@ rollout decode 上。
 
 ### 3. 两端使用同一套 kernel 配置
 
-- **目标：** trainer 和引擎里的 kernel 内部用同一棵归约树。
-- **做法：** 递归 kernel 在两端用相同的 tile 宽度和 warp 数；分块 kernel 用相同的块大小和
-  相同的乘法精度。
-- **成功标准：** 两端的 kernel 对同一输入给出逐 bit 一致的结果。不同的递归配置各自都能通过
-  L1–L3，但彼此之间结果不同（[报告](../../examples/linear_attention/REPORT.md#what-this-shows)）。
+配置决定了 kernel 内部的归约树。递归 kernel 在 trainer 和引擎里要用相同的 tile 宽度和 warp 数；分块 kernel
+要用相同的块大小和相同的乘法精度。两端的 kernel 对同一输入必须给出逐 bit 一致的结果：不同的递归配置各自都能
+通过 L1–L3，但彼此之间结果不同（[报告](../../examples/linear_attention/REPORT.md#what-this-shows)）。
 
 ### 4. 从保存的状态出发，逐个模式验证
 

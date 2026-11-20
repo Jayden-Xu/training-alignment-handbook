@@ -35,28 +35,20 @@ LoRA 层计算 y = x·W + s·(x·A)·B。除了基础 GEMM x·W，它还包括�
 
 ## 步骤
 
-1. **关掉引擎无法复现的部分。**
-   - 目标：trainer 重新计算 logprob 时，算的和引擎生成时算的是同一个函数。
-   - 做法：trainer 计算 logprob 时关闭 LoRA dropout；引擎部署时不合并 adapter。
-   - 成功标准：两端都不做 dropout，也都不合并 adapter。
-2. **trainer 和引擎使用同一个 LoRA 线性层。**
-   - 目标：trainer 与引擎的结果逐 bit 一致，prefill 与 decode 的结果也逐 bit 一致。
-   - 做法：使用 [lora_kernels.py](../../examples/lora/lora_kernels.py) 中的
-     `lora_linear` 和 `lora_linear_train`。前向时，每一行选取自己的 adapter，降维乘法
-     x·A（即 shrink）按固定的 fp32 顺序累加；随后用一次 fp32 FMA 把更新加进基础累加器，
-     只转换一次。反向按同样的顺序累加，并跳过梯度为零的行，这样 padding 就不会移动分块边界。
-   - 成功标准：[lora_bi.py](../../examples/lora/lora_bi.py) 中的检查全部通过。
-3. **测试那些会让 grouped kernel 出错的 batch 排布。**
-   - 目标：无论同一个 batch 里还有哪些 adapter，一个请求的结果都不变（L2）。
-   - 做法：拿单独运行的请求，与同一个请求在下面几种情形下的结果比较：旁边有其他 adapter、
-     旁边有不用 adapter 的行、处在 batch 中的不同位置、夹在 padding 行之间。组大小要覆盖 GEMM
-     库每个切换 kernel 的阈值，阈值上下都要测到；还要包括 rank 用零补齐过的 adapter。
-   - 成功标准：所有排布下的结果都相同。
-4. **检查 padding 会不会改变 trainer 的反向。**
-   - 目标：梯度满足 batch-invariant（L2），而不只是每次运行都能复现（L1）。
-   - 做法：把单独一条序列的梯度，与同一条序列在右边补上 padding 后（padding 部分的输出
-     梯度为零）的梯度比较，再与它和其他序列放在同一个 batch 里计算时的梯度比较。
-   - 成功标准：dX、dA 和 dB 都不变。
+1. **关掉引擎无法复现的部分。** trainer 计算 logprob 时关闭 LoRA dropout，引擎部署时不合并
+   adapter，这样 trainer 重新算的就是引擎生成时用的同一个函数。检查两端都不做 dropout，也都不合并 adapter。
+2. **trainer 和引擎使用同一个 LoRA 线性层**，即 [lora_kernels.py](../../examples/lora/lora_kernels.py)
+   中的 `lora_linear` 和 `lora_linear_train`。前向时每一行选取自己的 adapter，降维乘法 x·A（即 shrink）
+   按固定的 fp32 顺序累加，再用一次 fp32 FMA 把更新加进基础累加器，只转换一次；反向按同样的顺序累加，
+   并跳过梯度为零的行，这样 padding 就不会移动分块边界。这样 trainer 与引擎、prefill 与 decode
+   的结果都逐 bit 一致：[lora_bi.py](../../examples/lora/lora_bi.py) 中的检查全部通过。
+3. **测试那些会让 grouped kernel 出错的 batch 排布。** 拿单独运行的请求，与同一个请求在这几种情形下的结果比较：
+   旁边有其他 adapter、旁边有不用 adapter 的行、处在 batch 中的不同位置、夹在 padding 行之间。
+   组大小要覆盖 GEMM 库每个切换 kernel 的阈值，阈值上下都要测到；还要包括 rank 用零补齐过的 adapter。
+   所有排布下的结果都要相同（L2）。
+4. **检查 padding 会不会改变 trainer 的反向。** 把单独一条序列的梯度，与同一条序列在右边补上 padding 后
+   （padding 部分的输出梯度为零）的梯度比较，再与它和其他序列放在同一个 batch 里时的梯度比较。
+   dX、dA 和 dB 都不能变，这说明梯度是 batch-invariant 的（L2），而不只是每次运行都能复现（L1）。
 
 | 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|

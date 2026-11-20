@@ -87,9 +87,7 @@ OpGuard 的采集方式，是包装模型 Python 代码里的调用：被包装�
 
 ### 在编译后的代码里放 probe，再用 OpGuard 比较
 
-**目标：** 在编译后的代码和 graph 重放内部，拿到选定张量的 fingerprint，并且格式能被 OpGuard 的 harness 读取。
-
-**做法：** 用 [graph_probe.py](../../tools/graph_probe.py)。
+用 [graph_probe.py](../../tools/graph_probe.py) 在编译后的代码和 graph 重放内部取选定张量的 fingerprint，格式能被 OpGuard 的 harness 读取。
 
 1. 在编译之前，先用 eager 模式把惰性缓存（RoPE 表之类）建好。
 2. 创建一个 `ProbeSet`，在你想观察的边界处调用 `ps.probe(name, *tensors)`，每一步调用一次 `ps.step()`。每个 probe 都是一个自定义算子（`graph_probe::record`），Dynamo 会保留它，Inductor 会把它当作不透明的 kernel 来调用。它把 `xor_signature`（也可以加上 `xor_vectors`）写进设备上的一个环形缓冲区，所以每次 graph 重放都会写下自己的一行。
@@ -104,7 +102,7 @@ OpGuard 的采集方式，是包装模型 Python 代码里的调用：被包装�
 | 只用 `torch.compile`、不用 CUDA graph 时放 graph probe | 编译后的代码实际算出的结果 | 大：每个 probe 都要运行一遍自定义算子的 Python 函数体 | 只编译、不用 graph；只探测少数几个张量 |
 | 把每个会舍入的算子都做成不透明的（类似 `bi_opaque_all` 的自定义算子） | 编译后的结果和 eager 逐 bit 一致 | 这里没有测量 | 你需要编译结果等于 eager 结果，而不只是采集 |
 
-**成功标准：** probe 的记录和同一张量上的 `opguard_bridge.xor_signature` 相等；带与不带 probe 的输出逐 bit 一致；OpGuard 在导出的这一对运行上找到的 pivot，和直接比较记录得到的结果相同。
+probe 的记录和同一张量上的 `opguard_bridge.xor_signature` 相等，带与不带 probe 的输出逐 bit 一致，OpGuard 在导出的这一对运行上找到的 pivot 也和直接比较记录得到的结果相同，就说明 probe 工作正常。
 
 这一点在一种 GPU 上、用一个小模型的 decode step 得到了证明：probe 的 fingerprint 和 bridge 以及 OpGuard 自己的函数都一致；在每一对运行上，OpGuard 找到的首个分歧点都和直接比较的结果相同；做了隔离之后，probe 在每种编译模式下都没有改变编译后的结果（[报告](../../examples/graph_probe/REPORT.md#what-this-shows)）。
 

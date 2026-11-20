@@ -44,23 +44,22 @@ only after you have measured it.
 
 ## How to qualify new hardware
 
-**Goal:** know which claims hold on the new stack, and which stock behaviour
-differs.
-**Success:** a reviewed baseline for the new stack is committed, and every
-difference is either a stock result recorded as specific to that stack or a
-reported finding.
+You want to know which claims hold on the new stack and which stock
+behaviour differs. You are done when a reviewed baseline for the new stack is
+committed and every difference is either a stock result recorded as specific
+to that stack or a reported finding.
 
-1. Run the regression suite in full mode with `--vs-committed`, as the
+1. **Run the regression suite in full mode** with `--vs-committed`, as the
    [new hardware section of the regression page](regression.md#new-hardware)
    describes ([tools/bi_suite.py](../../tools/bi_suite.py)).
-2. Run the SDC scan with `--cross-group-info` against the committed golden
+2. **Run the SDC scan** with `--cross-group-info` against the committed golden
    files ([tools/sdc_scan.py](../../tools/sdc_scan.py)). It reports, for
    information only, which operator families give the same bits as the stacks
    measured before.
-3. Every required check that fails is a finding, so report it. Every
-   documented stock failure that now passes is a change: record it on its
-   topic page and name the new stack.
-4. Record the baseline, and add the stack to
+3. **Sort the differences.** Every required check that fails is a finding, so
+   report it. Every documented stock failure that now passes is a change:
+   record it on its topic page and name the new stack.
+4. **Record the baseline**, and add the stack to
    [measured coverage](../../suite/COVERAGE.md#what-was-measured).
 
 | Option | What it gives | Cost class | When to choose it |

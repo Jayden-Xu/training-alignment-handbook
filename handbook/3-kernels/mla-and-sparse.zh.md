@@ -38,23 +38,18 @@ key 由这个向量乘以矩阵 W 得到。于是 query q 对缓存的 latent c 
 
 ### 1. 让所有 GEMM 都不变，尤其是行数随步变化的那些
 
-- **目标：** 投影、解压和每个头上的吸收，在 prefill、chunk 和 decode 里看到的行数各不相同，
-  所以它们每一个都必须对 M 不变。
-- **做法：** 用 [GEMM 一页](gemm-and-quantized.md)里的单配置 GEMM；每个头上的乘积用分组的
-  单配置 GEMM。
-- **成功标准：** 每一部分的 `check_batch` 都通过。这在一种 GPU 上得到了证明：注意力核心本身已经
-  不变，但外面包着的是库里的 GEMM，结果仍然失败
-  （[报告](../../examples/mla_sparse/REPORT.md#what-this-shows)）。
+投影、解压和每个头上的吸收，在 prefill、chunk 和 decode 里看到的行数各不相同，所以每一个都必须对 M 不变。
+用 [GEMM 一页](gemm-and-quantized.md)里的单配置 GEMM，每个头上的乘积用分组的单配置 GEMM，直到每一部分的
+`check_batch` 都通过。这在一种 GPU 上得到了证明：注意力核心本身已经不变，但外面包着的是库里的 GEMM，
+结果仍然失败（[报告](../../examples/mla_sparse/REPORT.md#what-this-shows)）。
 
 ### 2. 每种模式、训推两端都用同一种 MLA 形式
 
-- **目标：** prompt、生成出来的 token 和 trainer 都用同一种形式。
-- **做法：** 用一个按所选形式计算、并以固定方式遍历 latent cache 的注意力核心，见
-  [recipe 5](../../skills/batch-invariant-kernel/references/operator-recipes.md#5-mla-latent-attention)
-  和 [mla_sparse_kernels.py](../../examples/mla_sparse/mla_sparse_kernels.py)。
-- **成功标准：** 在所选形式下，所有模式和所有 batch 的结果逐 bit 一致，引擎的运行结果也和 trainer 的
-  相等。这在一种 GPU 上、单层和两层堆叠的情况下得到了证明
-  （[报告](../../examples/mla_sparse/REPORT.md#part-a-mla-absorbed-vs-explicit)）。
+prompt、生成出来的 token 和 trainer 都要用同一种形式。用一个按所选形式计算、并以固定方式遍历 latent cache
+的注意力核心，见 [recipe 5](../../skills/batch-invariant-kernel/references/operator-recipes.md#5-mla-latent-attention)
+和 [mla_sparse_kernels.py](../../examples/mla_sparse/mla_sparse_kernels.py)。这样在所选形式下，所有模式和
+所有 batch 的结果逐 bit 一致，引擎的运行结果也和 trainer 的相等；这在一种 GPU 上、单层和两层堆叠的情况下
+得到了证明（[报告](../../examples/mla_sparse/REPORT.md#part-a-mla-absorbed-vs-explicit)）。
 
 | 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -65,14 +60,11 @@ key 由这个向量乘以矩阵 W 得到。于是 query q 对缓存的 latent c 
 
 ### 3. 让 key 的挑选保持稳定
 
-- **目标：** 选中的 key 集合和输出都不随 batch 或模式变化。
-- **做法：** 按
-  [recipe 6](../../skills/batch-invariant-kernel/references/operator-recipes.md#6-sparse-attention-with-selection-indexer-plus-top-k)
-  来做：投影和 indexer 的 GEMM 都要不变；indexer 对各个头求和时顺序固定；top-k 用稳定排序，
-  先按分数降序、再按索引升序；选中的索引按升序排列，注意力也按这个顺序访问它们。
-- **成功标准：** 先确认没有任何位置的选中集合发生变化，再确认没有任何输出元素发生变化。这在
-  一种 GPU 上得到了证明
-  （[报告](../../examples/mla_sparse/REPORT.md#part-b-sparse-attention-with-selection-dsa-like)）。
+按 [recipe 6](../../skills/batch-invariant-kernel/references/operator-recipes.md#6-sparse-attention-with-selection-indexer-plus-top-k)
+来做：投影和 indexer 的 GEMM 都要不变；indexer 对各个头求和时顺序固定；top-k 用稳定排序，先按分数降序、
+再按索引升序；选中的索引按升序排列，注意力也按这个顺序访问它们。换 batch、换模式时，先确认没有任何位置的
+选中集合发生变化，再确认没有任何输出元素发生变化，就说明做对了。这在一种 GPU 上得到了证明
+（[报告](../../examples/mla_sparse/REPORT.md#part-b-sparse-attention-with-selection-dsa-like)）。
 
 | 部件 | 做法 | 代价等级 |
 |---|---|---|

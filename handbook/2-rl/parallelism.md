@@ -75,33 +75,28 @@ a plain byte copy.
 
 ## The step
 
-1. **Make every row-parallel sum use the logical TP size.**
-   - Goal: o_proj, down_proj and every other row-parallel layer give the same
-     bits at every degree.
-   - How: use the sharded model in
-     [tp_model.py](../../examples/whole_model_tp/tp_model.py) (variant `inv`);
-     [collectives](../3-kernels/collectives.md) describes the scheme for a
-     single GEMM.
-   - Success: the logits at TP t equal those at TP 1 bit for bit.
-2. **Give the vocab-parallel log_softmax a fixed order.**
-   - Goal: the logprobs of the sampled tokens are equal at every degree.
-   - How: take the maximum with an all-reduce, which is exact in any order;
-     compute the sum of exponentials over fixed vocabulary chunks and add the
-     chunks with a fixed tree.
-   - Success: the result equals a one-GPU log_softmax of the gathered logits.
-3. **Fix the backward in the same way.**
-   - Goal: the activation gradients are equal at every degree.
-   - How: use the logical-TP reduction for the input gradients of
-     column-parallel layers.
-   - Success: at every layer boundary, the input gradients equal those at
-     TP 1.
-4. **Check the engine's serving modes under TP, and the KV hand-over.**
-   - Goal: L2, L3 and L5 hold together.
-   - How: [whole_model_tp.py](../../examples/whole_model_tp/whole_model_tp.py)
-     runs decode in a changing batch and chunked prefill at TP 2 and 4, and
-     also runs prefill at one degree followed by decode at another.
-   - Success: every mode equals the trainer's forward at TP 1, and the KV
-     cache that arrives equals the one that was sent.
+1. **Make every row-parallel sum use the logical TP size**, so that o_proj,
+   down_proj and every other row-parallel layer give the same bits at every
+   degree. Use the sharded model in
+   [tp_model.py](../../examples/whole_model_tp/tp_model.py) (variant `inv`);
+   [collectives](../3-kernels/collectives.md) describes the scheme for a
+   single GEMM. The logits at TP t must equal those at TP 1 bit for bit.
+2. **Give the vocab-parallel log_softmax a fixed order**, so that the
+   logprobs of the sampled tokens are equal at every degree. Take the maximum
+   with an all-reduce, which is exact in any order; compute the sum of
+   exponentials over fixed vocabulary chunks and add the chunks with a fixed
+   tree. The result must equal a one-GPU log_softmax of the gathered logits.
+3. **Fix the backward in the same way**: use the logical-TP reduction for the
+   input gradients of column-parallel layers. At every layer boundary, the
+   input gradients must equal those at TP 1, so the activation gradients are
+   equal at every degree.
+4. **Check the engine's serving modes under TP, and the KV hand-over**, so
+   that L2, L3 and L5 hold together.
+   [whole_model_tp.py](../../examples/whole_model_tp/whole_model_tp.py) runs
+   decode in a changing batch and chunked prefill at TP 2 and 4, and also runs
+   prefill at one degree followed by decode at another. Every mode must equal
+   the trainer's forward at TP 1, and the KV cache that arrives must equal the
+   one that was sent.
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|

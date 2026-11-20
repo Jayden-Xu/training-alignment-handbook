@@ -81,60 +81,49 @@ are described in OpGuard's `docs/RLAlignment.md`, and the OpGuard skill
 `rl-alignment` (`harness/skills/rl-alignment`) runs the steps as an agent
 workflow.
 
-1. **Record online.**
-   - Goal: record enough, at low cost, to split and replay any sampled batch
-     later.
-   - How: `RecordWriter` writes five kinds of record. `rollout_batch` holds the
-     token and prompt ids, the positions, each token's policy version, the
-     bits of the rollout logprobs, the batch composition, and a fingerprint of
-     the weights the engine held. `forward` holds each forward and its row
-     layout. `weight_sync` holds per-row weight fingerprints from both sides
-     at every sync. `snapshot` says where each version's weights are kept.
-     When staleness is zero, `trainer_logprob` is recorded as well.
-   - Success: the summary of the records lists every type, and versions are
-     snapshotted only at sampled intervals, so their cost stays bounded.
-2. **Check the weights.**
-   - Goal: confirm that the engine ran the weights the trainer pushed.
-   - How: `rl.weight_sync_check` compares the row fingerprints as multisets,
-     so a different packing, for example a fused QKV, does not count as a
-     difference.
-   - Success: every compared version is clean; otherwise the check names the
-     faulty parameter and row on each side.
-3. **Split the gap.**
-   - Goal: the numeric error and the staleness of every token.
-   - How: `rl.decompose` computes the split in exact arithmetic. It flags
-     tokens that span two versions and reports which recorded weight
-     fingerprint each batch matches. For older versions, `rl.replay_request`
-     builds a replay (the snapshot of version v, the same tokens, and either
-     the original batch composition or a batch-invariant one) for your own
-     workload to run offline.
-   - Success: the numeric error is zero for every token that belongs to a
-     single version, or you have the list of tokens where it is not.
-4. **Localize offline.**
-   - Goal: find the first operator where the numeric error appears.
-   - How: recapture both sides with per-vector fingerprints (OpGuard
-     `OPGUARD_XOR_ROWS=1`) and list the forwards with `rl.forwards`. Then
-     query with `vectors.describe`, `vectors.lookup`, `vectors.coverage` and
-     `vectors.compare`, starting from an anchor where both sides agree and
-     following the data flow. For an engine that runs compiled code or CUDA
-     graphs, take the fingerprints with
-     [tools/graph_probe.py](../../tools/graph_probe.py)
-     (see [capturing torch.compile and CUDA graph code](../1-pretraining/capture-compiled-code.md)).
-   - Success: a paired candidate, where the same input row gives a different
-     output row on the two sides.
-5. **Classify the cause and test it.**
-   - Goal: a cause class, confirmed by an intervention.
-   - How: decide which class the cause belongs to: a rounding point or fusion
-     order, a dependence on the batch, an algorithmic choice, the parallel
-     layout, a different logprob formula, or version bookkeeping and weight
-     sync. Then make the smallest change that brings the numeric error at that
-     operator to zero, and replay.
-   - Success: the replay with the change equals the other side.
-6. **Keep the fix.**
-   - Goal: make sure the fix stays fixed.
-   - How: add the check, together with its baseline, to the
-     [regression](../4-operations/regression.md) suite.
-   - Success: every later version must reproduce the result.
+1. **Record online** enough, at low cost, to split and replay any sampled
+   batch later. `RecordWriter` writes five kinds of record: `rollout_batch`
+   holds the token and prompt ids, the positions, each token's policy
+   version, the bits of the rollout logprobs, the batch composition, and a
+   fingerprint of the weights the engine held; `forward` holds each forward
+   and its row layout; `weight_sync` holds per-row weight fingerprints from
+   both sides at every sync; `snapshot` says where each version's weights are
+   kept; and when staleness is zero, `trainer_logprob` is recorded as well.
+   The summary of the records must list every type, and versions are
+   snapshotted only at sampled intervals, so their cost stays bounded.
+2. **Check the weights** to confirm that the engine ran the weights the
+   trainer pushed. `rl.weight_sync_check` compares the row fingerprints as
+   multisets, so a different packing, for example a fused QKV, does not count
+   as a difference. Every compared version should be clean; otherwise the
+   check names the faulty parameter and row on each side.
+3. **Split the gap** into the numeric error and the staleness of every token.
+   `rl.decompose` computes the split in exact arithmetic, flags tokens that
+   span two versions, and reports which recorded weight fingerprint each
+   batch matches. For older versions, `rl.replay_request` builds a replay (the
+   snapshot of version v, the same tokens, and either the original batch
+   composition or a batch-invariant one) for your own workload to run
+   offline. The numeric error should be zero for every token that belongs to
+   a single version; otherwise you get the list of tokens where it is not.
+4. **Localize offline** to the first operator where the numeric error
+   appears. Recapture both sides with per-vector fingerprints (OpGuard
+   `OPGUARD_XOR_ROWS=1`), list the forwards with `rl.forwards`, and query
+   with `vectors.describe`, `vectors.lookup`, `vectors.coverage` and
+   `vectors.compare`, starting from an anchor where both sides agree and
+   following the data flow. For an engine that runs compiled code or CUDA
+   graphs, take the fingerprints with
+   [tools/graph_probe.py](../../tools/graph_probe.py)
+   (see [capturing torch.compile and CUDA graph code](../1-pretraining/capture-compiled-code.md)).
+   You are done when you have a paired candidate: the same input row gives a
+   different output row on the two sides.
+5. **Classify the cause and test it.** Decide which class the cause belongs
+   to: a rounding point or fusion order, a dependence on the batch, an
+   algorithmic choice, the parallel layout, a different logprob formula, or
+   version bookkeeping and weight sync. Then make the smallest change that
+   brings the numeric error at that operator to zero, and replay; the cause
+   is confirmed when the replay with the change equals the other side.
+6. **Keep the fix** by adding the check, together with its baseline, to the
+   [regression](../4-operations/regression.md) suite. Every later version
+   must then reproduce the result.
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|

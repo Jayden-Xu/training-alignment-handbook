@@ -76,7 +76,7 @@ norm 之后的所有边界也都不同，因为它们的输入已经变了。所
 
 ### 第 1 步：选一个能单独回答你的问题的参考运行
 
-**目标：** 选一个参考运行，让它把你关心的问题单独隔离出来。只要一次采集过的 suspect 运行和一次参考运行就够了，suspect 运行本身不必是确定的。
+选一个能把你关心的问题单独隔离出来的参考运行。只要一次采集过的 suspect 运行和一次参考运行就够了，suspect 运行本身不必是确定的。
 
 | 参考运行 | 它回答的问题 |
 |---|---|
@@ -87,23 +87,17 @@ norm 之后的所有边界也都不同，因为它们的输入已经变了。所
 | 同一个模型在另一个框架里的实现 | 两种实现在哪里不一致？ |
 | 单 GPU，或一个让逻辑 TP 保持大于 1 的 TP 模拟器 | 并行实现有没有写错？ |
 
-**做法：** 让两次运行用同样的数据、种子和 checkpoint。把你要测试的那一个差异写下来；之后把它作为 `declared` 传给预检的 diff。
-
-**成功标准：** 你能用一句话说清这个差异，而且除此之外没有别的地方应该不同。
+让两次运行用同样的数据、种子和 checkpoint，把你要测试的那一个差异写下来；之后把它作为 `declared` 传给预检的 diff。能用一句话说清这个差异、而且除此之外没有别的地方应该不同，这一步就完成了。
 
 ### 第 2 步：控制可避免的变化，并确认它们已经消除
 
-**目标：** 消除可避免的变化，并证明它们确实没有了。这些变化来自五个方面：随机性和数据顺序、库里的 kernel、集合通信、从 checkpoint 恢复训练，以及 TP 规模。不要去固定调度或用户自己写的 kernel：如果它们改变了结果，这个变化正是你要找的信号。
+可避免的变化来自五个方面：随机性和数据顺序、库里的 kernel、集合通信、从 checkpoint 恢复训练，以及 TP 规模。设置好它们，在每个训练任务内部用 [determinism_preflight.py](../../tools/determinism_preflight.py) 读回来，再对两份报告做 diff（[确定性与预检](determinism-and-preflight.md)）；diff 里应该只剩下声明过的那个差异。训练 step 各部分的设置见[训练 step](training-step.md)；对梯度求和的集合通信见[数据并行](data-parallel.md)。
 
-**做法：** 设置好这五个方面，然后在每个训练任务内部用 [determinism_preflight.py](../../tools/determinism_preflight.py) 把它们读回来，再对两份报告做 diff（[确定性与预检](determinism-and-preflight.md)）。训练 step 各部分的设置见[训练 step](training-step.md)；对梯度求和的集合通信见[数据并行](data-parallel.md)。
-
-**成功标准：** diff 里只剩下声明过的那个差异。
+不要去固定调度或用户自己写的 kernel：如果它们改变了结果，这个变化正是你要找的信号。
 
 ### 第 3 步：在两次运行上采集 fingerprint
 
-**目标：** 在两次运行的每个模型级边界上，记录输入和输出的 fingerprint。fingerprint 在算子自己的 stream 上计算，不会额外引入同步。
-
-**做法：** [opguard_bridge.py](../../tools/opguard_bridge.py) 让两次运行都经过 OpGuard 的 harness：先发现边界，再规划在哪里插桩，然后采集并比较。如果代码跑在 `torch.compile` 或 CUDA graph 下，eager 采集看不到生产环境实际算出的结果；这时改用 [graph_probe.py](../../tools/graph_probe.py)（见[torch.compile 与 CUDA graph](capture-compiled-code.md)）。
+在两次运行的每个模型级边界上，记录输入和输出的 fingerprint；fingerprint 在算子自己的 stream 上计算，不会额外引入同步。[opguard_bridge.py](../../tools/opguard_bridge.py) 让两次运行都经过 OpGuard 的 harness：先发现边界，再规划在哪里插桩，然后采集并比较。如果代码跑在 `torch.compile` 或 CUDA graph 下，eager 采集看不到生产环境实际算出的结果；这时改用 [graph_probe.py](../../tools/graph_probe.py)（见[torch.compile 与 CUDA graph](capture-compiled-code.md)）。
 
 | 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -111,21 +105,17 @@ norm 之后的所有边界也都不同，因为它们的输入已经变了。所
 | 在编译后的代码里放 graph probe | 编译后的代码和 graph 重放实际算出的结果 | 在 CUDA graph 内部，每个 probe 都很小；在 graph 外面就大了；step 很小而 probe 很多时，加起来也会变大 | 生产环境用了 `torch.compile` 或 CUDA graph |
 | 完整转储张量 | 数值本身，而不是 fingerprint | 大（2 倍或更多） | 只用于 fingerprint 已经指出的区域 |
 
-**成功标准：** `opguard_bridge.coverage(run)` 显示你关心的区域（包括其中的 GEMM）都已采集。
+`opguard_bridge.coverage(run)` 显示你关心的区域（包括其中的 GEMM）都已采集，采集就完整了。
 
 ### 第 4 步：找到首个分歧点
 
-**目标：** 按调用顺序，找出第一个 fingerprint 不同的边界。
+要找的是按调用顺序第一个 fingerprint 不同的边界。两份 trace 从来不会按位置一一对齐：overlap、融合和改写都会挪动事件，而且其中一份 trace 可能多出另一份没有的事件。所以 OpGuard 用保序匹配来配对事件：先以能确定对应的边界为锚点，拿不准的事件就不配对，留作空缺。
 
-**做法：** 两份 trace 从来不会按位置一一对齐：overlap、融合和改写都会挪动事件，而且其中一份 trace 可能多出另一份没有的事件。所以 OpGuard 用保序匹配来配对事件：先以能确定对应的边界为锚点，拿不准的事件就不配对，留作空缺。第一对不相等的事件叫 **pivot**。`opguard_bridge.first_divergence(...)` 会收集关于它的所有事实（[用 OpGuard 定位](localize-with-opguard.md)）。
-
-**成功标准：** 找到一个 pivot，而且它之前没有未对齐的事件。注意，没配上对的事件不算差异。
+第一对不相等的事件叫 **pivot**，`opguard_bridge.first_divergence(...)` 会收集关于它的所有事实（[用 OpGuard 定位](localize-with-opguard.md)）。pivot 之前没有未对齐的事件，这一步才算完成；注意，没配上对的事件不算差异。
 
 ### 第 5 步：判断原因属于哪一类
 
-**目标：** 说出原因属于哪一类，因为每一类都有自己的修法和专门的一页。
-
-**做法：** 看 pivot 所在的源码行、产生它输入的那些算子，以及它所在调用点上每次调用的状态。`opguard_bridge.suggest(...)` 会列出可能的线索，每条都附有理由。OpGuard 在生产环境中定位到的根因，可以归为下面几类：
+每一类原因都有自己的修法和专门的一页。看 pivot 所在的源码行、产生它输入的那些算子，以及它所在调用点上每次调用的状态；`opguard_bridge.suggest(...)` 会列出可能的线索，每条都附有理由。最后要得到一个假设，以及指向它的证据。OpGuard 在生产环境中定位到的根因，可以归为下面几类：
 
 | 原因类别 | 例子 | 去哪一页 |
 |---|---|---|
@@ -139,31 +129,17 @@ norm 之后的所有边界也都不同，因为它们的输入已经变了。所
 | MoE 路由 | 直方图分箱对不上，导致路由慢慢漂移 | [第 3 部分：MoE](../3-kernels/moe.md) |
 | 硬件的静默数据损坏 | 一次布尔 scatter 把一个 token 送错了位置，直到许多算子之后才表现为形状不匹配 | [SDC](sdc.md) |
 
-**成功标准：** 得到一个假设，以及指向它的证据。
-
 ### 第 6 步：修复原因
 
-**目标：** 用最小的改动消除原因。
-
-**做法：** 修法取决于原因的类别。设置问题，回到预检里改正；训练 step 某个部分的问题，按那一页的清单处理；kernel 的问题，用 [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md) 和它的[recipe](../../skills/batch-invariant-kernel/references/operator-recipes.md)来修。OpGuard harness 里的 `validate-hypothesis` skill 每次只检验一个原因。
-
-**成功标准：** 改动对 pivot 的影响，和假设预测的一样。
+用最小的改动消除原因，修法取决于原因的类别。设置问题，回到预检里改正；训练 step 某个部分的问题，按那一页的清单处理；kernel 的问题，用 [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md) 和它的[recipe](../../skills/batch-invariant-kernel/references/operator-recipes.md)来修。OpGuard harness 里的 `validate-hypothesis` skill 每次只检验一个原因；改动对 pivot 的影响应该和假设预测的一样。
 
 ### 第 7 步：确认是修复让两次运行一致的
 
-**目标：** 证明是这个修复、而不是别的东西，让两次运行变得一致。
-
-**做法：** 带上修复，重新采集这一对运行。
-
-**成功标准：** 没有任何事件不同，没有未对齐的事件，最终参数逐 bit 一致。
+带上修复，重新采集这一对运行，证明是这个修复、而不是别的东西让两次运行变得一致。结果应该是没有任何事件不同，没有未对齐的事件，最终参数逐 bit 一致。
 
 ### 第 8 步：把这一对运行留作回归检查
 
-**目标：** 下次升级之后，两次运行仍然一致。
-
-**做法：** 把这一对运行，或者能复现它的最小案例，加进回归套件（[回归](../4-operations/regression.md)），并记下这个一致性是在哪个软件栈上成立的。
-
-**成功标准：** 回归套件跑这个案例时，报告结果一致。
+把这一对运行，或者能复现它的最小案例，加进回归套件（[回归](../4-operations/regression.md)），并记下这个一致性是在哪个软件栈上成立的，这样下次升级之后也能确认两次运行仍然一致。回归套件跑这个案例时，应该报告结果一致。
 
 ## 可能出错的地方
 

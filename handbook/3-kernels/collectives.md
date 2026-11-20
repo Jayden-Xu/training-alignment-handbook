@@ -63,23 +63,20 @@ those chunks are summed in one fixed tree, however many GPUs hold them.
 
 ### 1. Find which collectives and settings change a row's result
 
-- **Goal:** know which collectives and which settings change a row's bits.
-- **How:** reduce a fixed slice on its own, and then inside messages of many
-  sizes and at several positions, and record from the library's tuning log
-  what it chose for each call.
-  [examples/collectives_tp/collectives_tp.py](../../examples/collectives_tp/collectives_tp.py)
-  does this, and includes an order diagnostic that explains how each
-  element's sum was formed.
-- **Success:** every failing element is explained by a known order
-  ([report](../../examples/collectives_tp/REPORT.md#what-this-shows)).
+Reduce a fixed slice on its own, then inside messages of many sizes and at
+several positions, and record from the library's tuning log what it chose for
+each call.
+[examples/collectives_tp/collectives_tp.py](../../examples/collectives_tp/collectives_tp.py)
+does this, with an order diagnostic that explains how each element's sum was
+formed. You are done when every failing element is explained by a known order
+([report](../../examples/collectives_tp/REPORT.md#what-this-shows)).
 
 ### 2. Fix the order of the cross-GPU sum (L2)
 
-- **Goal:** a row's cross-GPU sum is the same in any batch.
-- **How:** follow [recipe 10](../../skills/batch-invariant-kernel/references/operator-recipes.md#10-collectives-tp--ep--sp).
-- **Success:** the TP layer passes `check_batch`. This was shown on one node
-  of 8 GPUs and on two nodes of 8 GPUs
-  ([report](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)).
+Follow [recipe 10](../../skills/batch-invariant-kernel/references/operator-recipes.md#10-collectives-tp--ep--sp)
+so that a row's cross-GPU sum is the same in any batch. The TP layer must then
+pass `check_batch`; this was shown on one node of 8 GPUs and on two nodes of
+8 GPUs ([report](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
@@ -95,15 +92,13 @@ so for L4 both sides must use the same fallback.
 
 ### 3. Fix the partial sums themselves (L5)
 
-- **Goal:** the same rows give the same bits at TP 1, 2, 4 and higher.
-- **How:** choose a logical TP size C. K is cut into C fixed chunks, each GPU
-  computes whole chunks with an fp32 output, and the partial sums are added in
-  one fixed pairwise tree. A parallel degree that divides C gives each GPU
-  whole chunks. Above C, split each chunk's output columns across GPUs, never
-  its range of K.
-- **Success:** every parallel degree gives the same result. This was shown on
-  up to 16 GPUs across two nodes
-  ([report](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)).
+Choose a logical TP size C: K is cut into C fixed chunks, each GPU computes
+whole chunks with an fp32 output, and the partial sums are added in one fixed
+pairwise tree. A parallel degree that divides C gives each GPU whole chunks;
+above C, split each chunk's output columns across GPUs, never its range of K.
+The same rows must then give the same bits at TP 1, 2, 4 and higher; this was
+shown on up to 16 GPUs across two nodes
+([report](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|

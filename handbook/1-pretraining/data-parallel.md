@@ -78,11 +78,9 @@ which partial sums exist.
 
 ### Fix the order of every sum across ranks
 
-**Goal:** a parameter's gradient, the gradient norm, the loss and the updated
-weights do not depend on the bucketing, on the sharding layout or on the
-degree.
-
-**How:** pick the options your run needs. The code is in
+A parameter's gradient, the gradient norm, the loss and the updated weights
+should not depend on the bucketing, on the sharding layout or on the degree.
+Pick the options your run needs. The code is in
 [training_dp.py](../../examples/training_dp/training_dp.py) (the ordered
 collectives, the DDP comm hook `Worker.ordered_hook`, logical shards and the
 logical norm), and every comparison is made bit for bit with
@@ -103,8 +101,8 @@ stock operators needs strict deterministic mode. Across two nodes, route the
 exchange within each node first (the two-level route); a flat all-to-all over
 the slower link between nodes costs much more.
 
-**Success:** on every rank, the gradients, losses, norms, weights and Adam
-state equal those of the d = 1 run bit for bit, and an elastic resume at
+It worked when, on every rank, the gradients, losses, norms, weights and
+Adam state equal those of the d = 1 run bit for bit, and an elastic resume at
 another degree matches a run that never stopped.
 
 This was shown with fp32 gradients, on up to 16 GPUs on two nodes, both with

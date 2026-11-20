@@ -60,23 +60,20 @@ kernel 内部固定两件事：部分和每隔多久提升一次精度，以及�
 
 ### 1. 找出结果随 batch 变化的 GEMM 形状
 
-- **目标：** 知道模型里哪些 GEMM 形状在 M 变化时结果会变。
-- **做法：** 对模型实际运行的每个形状 (K, N)，调用 [tools/bi_check.py](../../tools/bi_check.py)
-  里的 `bi_check.check_batch`。batch size 取在 2 的幂和 tile 大小的倍数附近，同一 batch 的其他行
-  分别填随机值、零和大值。
-- **成功标准：** 得到一份会失败的形状和大小的清单。测得：库里的 GEMM 在测过的每个形状上都失败，
-  往往 batch 里有 2 行时就开始失败（[报告](../../examples/moe_combine/REPORT.md#1-locate-the-variance)）。
+对模型实际运行的每个形状 (K, N)，调用 [tools/bi_check.py](../../tools/bi_check.py) 里的
+`bi_check.check_batch`：batch size 取在 2 的幂和 tile 大小的倍数附近，同一 batch 的其他行分别填随机值、
+零和大值。最后得到一份 M 一变结果就变的形状和大小的清单。测得：库里的 GEMM 在测过的每个形状上都失败，
+往往 batch 里有 2 行时就开始失败（[报告](../../examples/moe_combine/REPORT.md#1-locate-the-variance)）。
 
 ### 2. 所有 batch size 都用同一套配置
 
-- **目标：** 无论 M 是多少，每个元素都由同一棵归约树求和。
-- **做法：** 使用 [tools/bi_kernels.py](../../tools/bi_kernels.py) 里的单配置 GEMM
-  `mm_one_config`，或者按
-  [recipe 2](../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16)
-  自己写 kernel。如果多个头或多个 expert 都需要 GEMM，就在循环里调用同一个 kernel 体，或者给它
-  传一个头索引（[recipe 3](../../skills/batch-invariant-kernel/references/operator-recipes.md#3-batched-and-grouped-gemm-moe-experts-bmm-vs-mm)）。
-- **成功标准：** `check_batch` 在每个大小上都通过。这在一种 GPU、三个形状上得到了证明
-  （[报告](../../examples/moe_combine/REPORT.md#1-locate-the-variance)）。
+这样无论 M 是多少，每个元素都由同一棵归约树求和。使用 [tools/bi_kernels.py](../../tools/bi_kernels.py)
+里的单配置 GEMM `mm_one_config`，或者按
+[recipe 2](../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16)
+自己写 kernel；如果多个头或多个 expert 都需要 GEMM，就在循环里调用同一个 kernel 体，或者给它传一个头索引
+（[recipe 3](../../skills/batch-invariant-kernel/references/operator-recipes.md#3-batched-and-grouped-gemm-moe-experts-bmm-vs-mm)）。
+`check_batch` 要在每个大小上都通过；这在一种 GPU、三个形状上得到了证明
+（[报告](../../examples/moe_combine/REPORT.md#1-locate-the-variance)）。
 
 | 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -89,12 +86,11 @@ kernel 内部固定两件事：部分和每隔多久提升一次精度，以及�
 
 ### 3. 只根据这一行自己来算量化 scale
 
-- **目标：** 一行的量化值只取决于这一行。
-- **做法：** 激活用 per-token 或 per-block 的 scale，或者用静态 scale
-  （[recipe 9](../../skills/batch-invariant-kernel/references/operator-recipes.md#9-quantized-gemm-fp8-block-scaled-mxfp8-nvfp4)）。
-  GEMM 本身按第 2 步来做，并固定精度提升的间隔和乘 scale 的顺序。
-- **成功标准：** 同一 batch 的其他行填大值时，`check_batch` 仍然通过。这是在模拟的 FP8 数值下证明的
-  （[报告](../../examples/kernel_cases/REPORT.md#fp8-activation-scales-l2)）。
+激活用 per-token 或 per-block 的 scale，或者用静态 scale
+（[recipe 9](../../skills/batch-invariant-kernel/references/operator-recipes.md#9-quantized-gemm-fp8-block-scaled-mxfp8-nvfp4)），
+这样一行的量化值只取决于这一行。GEMM 本身按第 2 步来做，并固定精度提升的间隔和乘 scale 的顺序。
+同一 batch 的其他行填大值时，`check_batch` 也要通过；这是在模拟的 FP8 数值下证明的
+（[报告](../../examples/kernel_cases/REPORT.md#fp8-activation-scales-l2)）。
 
 | 激活的 scale | L2 | 代价等级 | 什么时候选 |
 |---|---|---|---|

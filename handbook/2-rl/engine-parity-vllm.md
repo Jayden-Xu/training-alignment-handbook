@@ -52,45 +52,37 @@ arithmetic, not just the same formula.
 The [engine-parity skill](../../skills/engine-parity/SKILL.md) runs these
 actions as a workflow.
 
-1. **Take an inventory of both forwards.**
-   - Goal: know what actually runs on each side.
-   - How: from the source code and from the loaded model, list the packed and
-     fused modules, the custom operators, whether a compiler and CUDA graphs
-     are used, which attention backend was chosen, and every switch that
-     changes kernels (skill section 1).
-   - Success: the module tree and the backend are printed from the running
-     engine, not copied from the configuration you passed in.
-2. **Write down both rounding sequences.**
-   - Goal: a checklist of the differences.
-   - How: fill in the table in
-     [rounding points](../../skills/engine-parity/references/rounding-points.md),
-     and mark each entry as "read from source" or "measured".
-   - Success: every difference between the two sides is a line with a name.
-3. **Check the engine against itself.**
-   - Goal: the engine reaches L1 and L2 before you compare it with any
-     trainer.
-   - How: run the same batch twice, and run each prompt alone and in batches
-     of several sizes. If the engine has a batch-invariant mode, switch it on,
-     and read which operators that mode covers on your GPU.
-   - Success: every prompt gets the same logprobs alone and in a batch. If
-     not, report it as variation inside the engine and fix it there.
-4. **Align the trainer one rounding point at a time.**
-   - Goal: L4 for the logprobs of the sampled tokens.
-   - How: feed the engine's own tokens through the trainer with teacher
-     forcing, and compare the fp32 logprob bits with no tolerance. Change one
-     rounding point, then count the differing tokens again;
-     [trainer.py](../../examples/cross_engine/trainer.py) and
-     [cross_engine.py](../../examples/cross_engine/cross_engine.py) serve as
-     templates.
-   - Success: no token differs. A leave-one-out pass then shows which points
-     matter.
-5. **Localize whatever still differs.**
-   - Goal: find the first operator that still differs.
-   - How: replay operators, feeding every captured engine input to each
-     trainer candidate, and compare the residual stream layer by layer. For a
-     compiled engine, use fingerprints at operator boundaries instead of hooks
-     ([RL loop](rl-loop.md)).
-   - Success: a named operator, with evidence from both sides.
+1. **Take an inventory of both forwards**, to know what actually runs on each
+   side. From the source code and from the loaded model, list the packed and
+   fused modules, the custom operators, whether a compiler and CUDA graphs are
+   used, which attention backend was chosen, and every switch that changes
+   kernels (skill section 1). Print the module tree and the backend from the
+   running engine; do not copy them from the configuration you passed in.
+2. **Write down both rounding sequences** in the table in
+   [rounding points](../../skills/engine-parity/references/rounding-points.md),
+   marking each entry as "read from source" or "measured". The result is a
+   checklist in which every difference between the two sides is a line with a
+   name.
+3. **Check the engine against itself**, so that it reaches L1 and L2 before
+   you compare it with any trainer. Run the same batch twice, and run each
+   prompt alone and in batches of several sizes; if the engine has a
+   batch-invariant mode, switch it on and read which operators that mode
+   covers on your GPU. Every prompt must get the same logprobs alone and in a
+   batch. If not, report it as variation inside the engine and fix it there.
+4. **Align the trainer one rounding point at a time** until the logprobs of
+   the sampled tokens reach L4. Feed the engine's own tokens through the
+   trainer with teacher forcing, compare the fp32 logprob bits with no
+   tolerance, change one rounding point, and count the differing tokens
+   again; [trainer.py](../../examples/cross_engine/trainer.py) and
+   [cross_engine.py](../../examples/cross_engine/cross_engine.py) serve as
+   templates. You are done when no token differs; a leave-one-out pass then
+   shows which points matter.
+5. **Localize whatever still differs** down to the first operator that
+   differs. Replay operators, feeding every captured engine input to each
+   trainer candidate, and compare the residual stream layer by layer; for a
+   compiled engine, use fingerprints at operator boundaries instead of hooks
+   ([RL loop](rl-loop.md)). The result is a named operator, with evidence from
+   both sides.
 
 | Approach | What it does | Cost class | When to choose it |
 |---|---|---|---|

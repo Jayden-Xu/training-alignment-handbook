@@ -46,49 +46,40 @@ here: separate bookkeeping errors from numeric error before you debug either.
 
 ## The step
 
-1. **Check that the same tokens were scored.**
-   - Goal: both sides scored the same token ids at the same positions.
-   - How: store every precomputed value together with its token ids, its
-     positions and the exact bits of each logprob, using the fields of
-     OpGuard's `rollout_batch` record
-     (`opguard_harness.rl_records.RecordWriter`); the trainer writes its own
-     values as a `trainer_logprob` record. Compare the ids before comparing
-     any value. Check the things that usually differ: the chat template (a
-     doubled BOS, a system prompt, the generation prompt), which tokens are
-     scored (the response only, with or without the end-of-sequence token),
-     the padding side and the attention mask, the position ids in packed
-     sequences, and truncation.
-   - Success: the ids and the positions are equal for every stored sequence.
-2. **Check that the same weights were used.**
-   - Goal: the engine held the same reference or teacher weights that the
-     trainer loads.
-   - How: write a `weight_sync` record with per-row fingerprints from both
-     sides, and check it with OpGuard's `rl.weight_sync_check`. If the engine
-     loads a converted checkpoint, run
-     [ckpt_compare.py](../../tools/ckpt_compare.py) on the two files instead
-     ([checkpoint conversion](checkpoint-conversion.md)).
-   - Success: every row has a match.
-3. **Compare the numbers.**
-   - Goal: for every scored token, the trainer's logprob equals the stored
-     one bit for bit.
-   - How: feed the stored token ids through the trainer's forward with teacher
-     forcing, and compare the fp32 bits with no tolerance. `rl.decompose` at
-     the reference version reports the numeric error for each token (the
-     staleness is zero by construction) ([RL loop](../2-rl/rl-loop.md)).
-   - Success: the numeric error is zero for every token, or you have a list of
-     the tokens where it is not.
+1. **Check that the same tokens were scored**, at the same positions. Store
+   every precomputed value together with its token ids, its positions and the
+   exact bits of each logprob, using the fields of OpGuard's `rollout_batch`
+   record (`opguard_harness.rl_records.RecordWriter`); the trainer writes its
+   own values as a `trainer_logprob` record. Compare the ids before any value,
+   and check the things that usually differ: the chat template (a doubled
+   BOS, a system prompt, the generation prompt), which tokens are scored (the
+   response only, with or without the end-of-sequence token), the padding
+   side and the attention mask, the position ids in packed sequences, and
+   truncation. The ids and the positions must be equal for every stored
+   sequence.
+2. **Check that the same weights were used**: the engine must hold the
+   reference or teacher weights that the trainer loads. Write a `weight_sync`
+   record with per-row fingerprints from both sides, and check it with
+   OpGuard's `rl.weight_sync_check`; every row must have a match. If the
+   engine loads a converted checkpoint, run
+   [ckpt_compare.py](../../tools/ckpt_compare.py) on the two files instead
+   ([checkpoint conversion](checkpoint-conversion.md)).
+3. **Compare the numbers.** Feed the stored token ids through the trainer's
+   forward with teacher forcing, and compare the fp32 bits with no tolerance.
+   `rl.decompose` at the reference version reports the numeric error for each
+   token (the staleness is zero by construction) ([RL loop](../2-rl/rl-loop.md)).
+   You end with a numeric error of zero for every scored token, or with a list
+   of the tokens where it is not.
 4. **If the numbers differ, make the engine agree or move the computation.**
-   - Goal: a numeric error of zero, or a recorded decision.
-   - How: the engine batches sequences of different lengths, so first make it
-     invariant on its own ([whole model](../2-rl/whole-model.md)), then align
-     its rounding points with the trainer's
-     ([engine parity](../2-rl/engine-parity-vllm.md),
-     [engine-parity skill](../../skills/engine-parity/SKILL.md)), and localize
-     whatever remains with per-vector fingerprints as in the
-     [RL loop](../2-rl/rl-loop.md). Alternatively, compute the reference in
-     the trainer.
-   - Success: the check in step 3 passes, or the measured gap is recorded as
-     a decision.
+   The engine batches sequences of different lengths, so first make it
+   invariant on its own ([whole model](../2-rl/whole-model.md)), then align
+   its rounding points with the trainer's
+   ([engine parity](../2-rl/engine-parity-vllm.md),
+   [engine-parity skill](../../skills/engine-parity/SKILL.md)), and localize
+   whatever remains with per-vector fingerprints as in the
+   [RL loop](../2-rl/rl-loop.md). Alternatively, compute the reference in the
+   trainer. You are done when the check in step 3 passes, or the measured gap
+   is recorded as a decision.
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|

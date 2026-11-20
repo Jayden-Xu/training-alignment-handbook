@@ -40,37 +40,23 @@ logits 上游的每一个点都对上之后，才会有哪怕一个 logprob 相�
 
 [engine-parity skill](../../skills/engine-parity/SKILL.md) 把下面这些动作串成一个工作流程来执行。
 
-1. **盘点两端的前向。**
-   - 目标：弄清每一端实际运行的是什么。
-   - 做法：从源码和加载后的模型里列出：打包和融合过的模块、自定义算子、是否用了编译器和
-     CUDA graph、实际选中的注意力后端，以及每一个会改变 kernel 的开关（skill 第 1 节）。
-   - 成功标准：模块树和后端是从正在运行的引擎里打印出来的，而不是照抄你传进去的配置。
-2. **写下两端的舍入序列。**
-   - 目标：得到一份列出所有差异的检查清单。
-   - 做法：填写[舍入点](../../skills/engine-parity/references/rounding-points.md)里的表，
-     每一条都标明是“根据源码阅读”还是“测量所得”。
-   - 成功标准：两端之间的每一处差异，都是表里有名字的一行。
-3. **拿引擎和它自己比较。**
-   - 目标：在和任何 trainer 比较之前，引擎先达到 L1 和 L2。
-   - 做法：同一个 batch 跑两次；每个 prompt 单独跑一次，再放进几种不同大小的 batch 里跑。
-     如果引擎有 batch-invariant 模式，就打开它，并查清楚这个模式在你的 GPU 上实际覆盖了
-     哪些算子。
-   - 成功标准：每个 prompt 单独跑和放进 batch 跑，logprob 都相同。如果不同，就把它作为
-     引擎内部的波动报告出来，并在引擎里修。
-4. **一次一个舍入点地对齐 trainer。**
-   - 目标：采样出的 token 的 logprob 达到 L4。
-   - 做法：用 teacher forcing 把引擎自己生成的 token 送进 trainer，逐 bit 比较 fp32 的
-     logprob，不设任何容差；改一个点，再重新数一遍。
-     [trainer.py](../../examples/cross_engine/trainer.py) 和
-     [cross_engine.py](../../examples/cross_engine/cross_engine.py) 可以当模板用。
-   - 成功标准：没有任何 token 不同。之后再做一遍逐一回退（每次只撤销一个点），
-     就能看出哪些点真正有影响。
-5. **定位剩下的差异。**
-   - 目标：找到第一个仍然不同的算子。
-   - 做法：做算子重放（把采集到的每个引擎输入，分别喂给 trainer 的每个候选实现），
-     并逐层比较残差流。如果引擎经过了编译，就在算子边界上取 fingerprint，代替 hook
-     （[RL 循环](rl-loop.md)）。
-   - 成功标准：指出一个具体的算子，并有来自两端的证据。
+1. **盘点两端的前向**，弄清每一端实际运行的是什么。从源码和加载后的模型里列出：打包和融合过的模块、
+   自定义算子、是否用了编译器和 CUDA graph、实际选中的注意力后端，以及每一个会改变 kernel 的开关
+   （skill 第 1 节）。模块树和后端要从正在运行的引擎里打印出来，而不是照抄你传进去的配置。
+2. **写下两端的舍入序列**，填进[舍入点](../../skills/engine-parity/references/rounding-points.md)里的表，
+   每一条都标明是“根据源码阅读”还是“测量所得”。最后得到一份检查清单，两端之间的每一处差异都是表里有名字的一行。
+3. **拿引擎和它自己比较**，让引擎在和任何 trainer 比较之前先达到 L1 和 L2。同一个 batch 跑两次；
+   每个 prompt 单独跑一次，再放进几种不同大小的 batch 里跑。如果引擎有 batch-invariant 模式，就打开它，
+   并查清楚这个模式在你的 GPU 上实际覆盖了哪些算子。每个 prompt 单独跑和放进 batch 跑，logprob 都要相同；
+   如果不同，就把它作为引擎内部的波动报告出来，并在引擎里修。
+4. **一次一个舍入点地对齐 trainer**，直到采样出的 token 的 logprob 达到 L4。用 teacher forcing
+   把引擎自己生成的 token 送进 trainer，逐 bit 比较 fp32 的 logprob，不设任何容差；改一个点，再重新数一遍。
+   [trainer.py](../../examples/cross_engine/trainer.py) 和
+   [cross_engine.py](../../examples/cross_engine/cross_engine.py) 可以当模板用。没有任何 token 不同时就完成了；
+   之后再做一遍逐一回退（每次只撤销一个点），就能看出哪些点真正有影响。
+5. **定位剩下的差异**，找到第一个仍然不同的算子。做算子重放（把采集到的每个引擎输入，分别喂给 trainer
+   的每个候选实现），并逐层比较残差流；如果引擎经过了编译，就在算子边界上取 fingerprint，代替 hook
+   （[RL 循环](rl-loop.md)）。结果是一个具体的算子，并有来自两端的证据。
 
 | 途径 | 做什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|

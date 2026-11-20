@@ -75,17 +75,16 @@ order.
 
 ### 1. In the forward pass, use the same key blocks in every mode
 
-- **Goal:** prefill, decode and chunked prefill give the same bits at every
-  position, and a sequence gives the same bits in any batch (L2, L3).
-- **How:** use the fixed-block kernel `attention_fixed_blocks` in
-  [tools/bi_kernels.py](../../tools/bi_kernels.py), which follows
-  [recipe 4](../../skills/batch-invariant-kernel/references/operator-recipes.md#4-softmax-attention-prefill-decode-chunked-prefill-paged-kv).
-  Write the new keys and values into the cache before the kernel runs, so
-  that decode reads them in the same way as prefill does.
-- **Success:** `check_modes` and `check_batch` from
-  [tools/bi_check.py](../../tools/bi_check.py) pass. This was shown on one
-  GPU type, where the stock backend failed both checks
-  ([report](../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3)).
+Use the fixed-block kernel `attention_fixed_blocks` in
+[tools/bi_kernels.py](../../tools/bi_kernels.py), which follows
+[recipe 4](../../skills/batch-invariant-kernel/references/operator-recipes.md#4-softmax-attention-prefill-decode-chunked-prefill-paged-kv),
+and write the new keys and values into the cache before the kernel runs, so
+that decode reads them in the same way as prefill. Prefill, decode and
+chunked prefill then give the same bits at every position, and a sequence
+the same bits in any batch (L2, L3): `check_modes` and `check_batch` from
+[tools/bi_check.py](../../tools/bi_check.py) pass. This was shown on one GPU
+type, where the stock backend failed both checks
+([report](../../examples/kernel_cases/REPORT.md#forward-prefill-decode-and-chunked-prefill-l2-l3)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
@@ -95,17 +94,15 @@ order.
 
 ### 2. Write the backward pass as two passes without atomics {#backward-dq-dk-dv}
 
-- **Goal:** the same sequence gets the same gradients when it runs alone, in
-  a larger batch and with right padding (L1, L2).
-- **How:** use the atomic-free backward `attention_fixed_blocks_train` in
-  [tools/bi_kernels.py](../../tools/bi_kernels.py). The first pass gives each
-  program a block of keys. The program sums over the query heads of its group
-  and over the later queries in a fixed order, and writes dK and dV once. The
-  second pass gives each program a block of queries. The program walks the
-  keys from position 0, as the forward pass does, and writes dQ once.
-- **Success:** L1 holds over repeated runs, and L2 holds alone, batched and
-  padded, with a zero output gradient on the padding. This was shown on one
-  GPU type ([report](../../examples/attention_backward/REPORT.md#results)).
+Use the atomic-free backward `attention_fixed_blocks_train` in
+[tools/bi_kernels.py](../../tools/bi_kernels.py). In the first pass each
+program owns a block of keys, sums over its group's query heads and the later
+queries in a fixed order, and writes dK and dV once; in the second each
+program owns a block of queries, walks the keys from position 0 as the
+forward pass does, and writes dQ once. It works when L1 holds over repeated
+runs and L2 holds alone, batched and with right padding (a zero output
+gradient on the padding), which was shown on one GPU type
+([report](../../examples/attention_backward/REPORT.md#results)).
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|
@@ -121,16 +118,14 @@ absolute positions, so it is not covered.
 
 ### 3. Keep the bits unchanged under paging, packing, compilation and CUDA graphs {#serving-layers-paged-kv-varlen-packing-compile-and-cuda-graphs}
 
-- **Goal:** the layers that an engine adds around the kernel do not change
-  the bits.
-- **How:** use the paged and variable-length kernels and their checks in
-  [examples/attention_serving](../../examples/attention_serving/serving_kernels.py),
-  and [recipe 12](../../skills/batch-invariant-kernel/references/operator-recipes.md#12-deployment-wrappers-torchcompile-and-cuda-graphs)
-  for the compiler and CUDA graphs.
-- **Success:** every page size, every pack offset, and every compiled or
-  graphed variant gives the same bits as the kernel on a contiguous cache.
-  This was shown on one GPU type
-  ([report](../../examples/attention_serving/REPORT.md#what-the-serving-layer-results-show)).
+These are the layers an engine adds around the kernel. Use the paged and
+variable-length kernels and their checks in
+[examples/attention_serving](../../examples/attention_serving/serving_kernels.py),
+and [recipe 12](../../skills/batch-invariant-kernel/references/operator-recipes.md#12-deployment-wrappers-torchcompile-and-cuda-graphs)
+for the compiler and CUDA graphs. Every page size, every pack offset, and
+every compiled or graphed variant must give the same bits as the kernel on a
+contiguous cache; this was shown on one GPU type
+([report](../../examples/attention_serving/REPORT.md#what-the-serving-layer-results-show)).
 
 | Layer | What to do | Cost class |
 |---|---|---|

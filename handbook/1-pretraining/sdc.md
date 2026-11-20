@@ -42,10 +42,8 @@ first: a disagreement is a fact to explain, not yet a verdict.
 
 ### 1. Scan the devices
 
-**Goal:** a pass or a fail for each device, naming the operator and the
-repeat that failed.
-
-**How:** [sdc_scan.py](../../tools/sdc_scan.py) runs a fixed, seeded golden
+[sdc_scan.py](../../tools/sdc_scan.py) gives a pass or a fail for each
+device, naming the operator and the repeat that failed. It runs a fixed, seeded golden
 workload in one worker per GPU and compares the fingerprints on the device.
 The workload covers GEMMs, attention, norms, softmax, elementwise math,
 gathers and scatters, sorts, integer operations, memory patterns, long
@@ -74,8 +72,8 @@ A **group** is a set of devices with the same GPU model, SM count, memory
 size, driver, torch, CUDA build, cuDNN, cuBLAS, Triton and NCCL. The fleet and
 golden-file verdicts never compare across groups.
 
-**Success:** every device passes, the fault-injection self-test names every
-injected fault and nothing else, and the exit code is zero.
+A clean scan means every device passes, the fault-injection self-test names
+every injected fault and nothing else, and the exit code is zero.
 
 ### 2. Decide when to scan
 
@@ -88,10 +86,8 @@ injected fault and nothing else, and the exit code is zero.
 
 ### 3. Check for corruption inside the training job
 
-**Goal:** catch faults that appear only under the job's own kernels, shapes
-and load, which a scan does not test.
-
-**How:** `sdc_guard(fn, *inputs)` returns `fn(*inputs)`, then computes `fn`
+A scan does not test the job's own kernels, shapes and load, so some faults
+appear only inside the job. `sdc_guard(fn, *inputs)` returns `fn(*inputs)`, then computes `fn`
 again without autograd and with the random state put back, compares the
 fingerprints, and raises `SDCMismatch`, naming the output and the words that
 differ. `fn` must be deterministic and must not change any state.
@@ -100,10 +96,9 @@ rank compute `fn` on it, and all-gathers the fingerprints of the inputs and
 outputs. Two ranks can only tell you that they differ; three or more can name
 the one that is wrong. `replica_check(params)` compares the parameters of the
 replicas. For an example, see
-[guard_demo.py](../../examples/sdc_scan/guard_demo.py).
-
-**Success:** there are no false alarms over healthy steps, and a bit flip
-planted on purpose is reported at the right element and rank.
+[guard_demo.py](../../examples/sdc_scan/guard_demo.py). The checks work when
+there are no false alarms over healthy steps and a bit flip planted on purpose
+is reported at the right element and rank.
 
 ### 4. What to do when devices in a group disagree
 

@@ -23,9 +23,7 @@
 
 ### 1. 扫描设备
 
-**目标：** 给每个设备一个通过或失败的结论，失败时指出是哪个算子、哪一轮重复。
-
-**做法：** [sdc_scan.py](../../tools/sdc_scan.py) 在每块 GPU 上起一个 worker，运行一套固定的、设了种子的 golden 工作负载，并在设备上比较 fingerprint。这套工作负载包括 GEMM、注意力、norm、softmax、逐元素数学运算、gather 和 scatter、排序、整数运算、内存读写模式、长归约、一次优化器 step、一个小的训练 step，以及每一对 GPU 之间的 NCCL 集合通信。
+[sdc_scan.py](../../tools/sdc_scan.py) 给每个设备一个通过或失败的结论，失败时指出是哪个算子、哪一轮重复。它在每块 GPU 上起一个 worker，运行一套固定的、设了种子的 golden 工作负载，并在设备上比较 fingerprint。这套工作负载包括 GEMM、注意力、norm、softmax、逐元素数学运算、gather 和 scatter、排序、整数运算、内存读写模式、长归约、一次优化器 step、一个小的训练 step，以及每一对 GPU 之间的 NCCL 集合通信。
 
 ```
 python tools/sdc_scan.py --quick --json out.json        # few repeats + fault-injection self-test
@@ -47,7 +45,7 @@ python tools/sdc_scan.py --list-ops
 
 **组**指的是一批 GPU 型号、SM 数、显存大小、驱动、torch、CUDA 构建、cuDNN、cuBLAS、Triton 和 NCCL 都相同的设备。fleet 和 golden 文件的判定从不跨组比较。
 
-**成功标准：** 每个设备都通过；故障注入自检报出了每一个注入的故障，且没有报出别的；退出码为零。
+扫描干净的标志是：每个设备都通过；故障注入自检报出了每一个注入的故障，且没有报出别的；退出码为零。
 
 ### 2. 决定什么时候扫描
 
@@ -60,11 +58,7 @@ python tools/sdc_scan.py --list-ops
 
 ### 3. 在训练任务内部检查
 
-**目标：** 抓住只在训练任务自己的 kernel、形状和负载下才出现的故障，这些是扫描测不到的。
-
-**做法：** `sdc_guard(fn, *inputs)` 先返回 `fn(*inputs)`，然后在关闭 autograd、恢复随机状态的情况下再算一遍 `fn`，比较两次的 fingerprint；不一致时抛出 `SDCMismatch`，指出是哪个输出、哪些字不同。`fn` 必须是确定的，而且不能改变任何状态。`cross_rank_check(fn, *inputs)` 把 rank 0 的 micro-batch 广播出去，让每个 rank 都在它上面算一遍 `fn`，再把输入和输出的 fingerprint 做 all-gather。只有两个 rank 时，只能知道它们不一样；有三个或更多 rank，才能指出哪一个是出错的。`replica_check(params)` 比较各个副本的参数。示例见 [guard_demo.py](../../examples/sdc_scan/guard_demo.py)。
-
-**成功标准：** 在健康的 step 上没有误报；故意植入的一个 bit 翻转，能在正确的元素和 rank 上被报出来。
+扫描测不到训练任务自己的 kernel、形状和负载，有些故障只在训练任务内部才出现。`sdc_guard(fn, *inputs)` 先返回 `fn(*inputs)`，然后在关闭 autograd、恢复随机状态的情况下再算一遍 `fn`，比较两次的 fingerprint；不一致时抛出 `SDCMismatch`，指出是哪个输出、哪些字不同。`fn` 必须是确定的，而且不能改变任何状态。`cross_rank_check(fn, *inputs)` 把 rank 0 的 micro-batch 广播出去，让每个 rank 都在它上面算一遍 `fn`，再把输入和输出的 fingerprint 做 all-gather。只有两个 rank 时，只能知道它们不一样；有三个或更多 rank，才能指出哪一个是出错的。`replica_check(params)` 比较各个副本的参数。示例见 [guard_demo.py](../../examples/sdc_scan/guard_demo.py)。检查有效的标志是：在健康的 step 上没有误报；故意植入的一个 bit 翻转，能在正确的元素和 rank 上被报出来。
 
 ### 4. 同组设备不一致时怎么办
 

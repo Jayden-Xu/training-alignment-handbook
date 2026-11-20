@@ -70,11 +70,11 @@ L2，每种推理模式各用一个 kernel 则破坏 L3（测得：见[报告](.
 
 ### 1. 找出结果随什么而变
 
-- **目标：** 找到算子内部那个依赖了元素自身求和长度以外因素的选择。
-- **做法：** 运行 [tools/bi_check.py](../../tools/bi_check.py) 里的 `bi_check.check_batch`；
-  如果算子的行为类似注意力，再运行 `check_modes`。然后阅读启动 kernel、挑选配置的那部分代码。
-  如果是从整个模型出发，[tools/bi_audit.py](../../tools/bi_audit.py) 会指出第一个输出随 batch 变化的模块。
-- **成功标准：** 拿到一个失败的模式，并且能用一个机制解释它。
+要找的是算子内部那个依赖了元素自身求和长度以外因素的选择。运行
+[tools/bi_check.py](../../tools/bi_check.py) 里的 `bi_check.check_batch`，算子的行为类似注意力时再运行
+`check_modes`，然后读启动 kernel、挑选配置的那部分代码；如果是从整个模型出发，
+[tools/bi_audit.py](../../tools/bi_audit.py) 会指出第一个输出随 batch 变化的模块。拿到一个失败的模式，
+并且能用一个机制解释它，这一步就完成了。
 
 | 变化藏在哪里 | 例子 |
 |---|---|
@@ -91,10 +91,9 @@ L2，每种推理模式各用一个 kernel 则破坏 L3（测得：见[报告](.
 
 ### 2. 选一个代价最小、又能消除依赖的修法
 
-- **目标：** 用最小的改动、最低的代价去掉这个依赖。
-- **做法：** 按下表的顺序逐个尝试，每个方案的细节见
-  [skill](../../skills/batch-invariant-kernel/SKILL.md#2-choose-the-cheapest-strategy-that-holds)。
-- **成功标准：** 得到一个候选 kernel，交给第 4 步验证。
+按下表的顺序逐个尝试，改动从小到大，每个方案的细节见
+[skill](../../skills/batch-invariant-kernel/SKILL.md#2-choose-the-cheapest-strategy-that-holds)。
+结果是一个候选 kernel，交给第 4 步验证。
 
 | 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -107,31 +106,26 @@ L2，每种推理模式各用一个 kernel 则破坏 L3（测得：见[报告](.
 
 ### 3. 和要对齐的那一端在同样的地方舍入
 
-- **目标：** 让不变的 kernel 和它要对齐的那一端在相同的位置舍入，也就是 cast 相同、融合方式相同、
-  累加器的 dtype 相同，epilogue 里各步的顺序也相同。
-- **做法：** 动手修改之前，先按顺序写下参考实现在哪些地方舍入；见
-  [舍入点](../../skills/engine-parity/references/rounding-points.md)。
-- **成功标准：** 在旧 kernel 还没有出现变化的 batch 上，新 kernel 与旧 kernel 逐 bit 一致；否则就让
-  两端一起改。
+cast 要相同，融合方式、累加器的 dtype 和 epilogue 里各步的顺序也要相同。动手修改之前，先按顺序写下
+参考实现在哪些地方舍入（见[舍入点](../../skills/engine-parity/references/rounding-points.md)）。
+在旧 kernel 还没有出现变化的 batch 上，新 kernel 必须与旧 kernel 逐 bit 一致；否则就让两端一起改。
 
 一个 kernel 可以是 batch-invariant 的，却仍有一处舍入和另一个引擎不同。这样它能通过 L2，却通不过 L4
 （见[整个模型](../2-rl/whole-model.md)）。
 
 ### 4. 在完整的测试矩阵上逐 bit 验证
 
-- **目标：** 拿到 kernel 确实不变的证据，而不是靠读代码推断。
-- **做法：** 运行[验证矩阵](../../skills/batch-invariant-kernel/references/verification.md)。
-  它会改变每个阈值附近的 batch size、行的位置、同一 batch 里其他行的内容（随机值、零、大值）、模式、
-  布局，还包括重复运行、反向、并行度、torch.compile 和 CUDA graph 下的部署，以及不同的引擎。
-- **成功标准：** 没有任何不一致。比较时通过整数视图逐 bit 比较，`-0.0` 和 `+0.0` 算作不同，不设容差。
+运行[验证矩阵](../../skills/batch-invariant-kernel/references/verification.md)，因为读代码只能推断，
+拿不到证据。它会改变每个阈值附近的 batch size、行的位置、同一 batch 里其他行的内容（随机值、零、大值）、
+模式、布局，还包括重复运行、反向、并行度、torch.compile 和 CUDA graph 下的部署，以及不同的引擎。
+没有任何不一致才算通过：通过整数视图逐 bit 比较，`-0.0` 和 `+0.0` 算作不同，不设容差。
 
 ### 5. 让验证过的 kernel 真正跑在代码路径上
 
-- **目标：** 确认真正运行的就是验证过的 kernel，并且知道它的代价。
-- **做法：** 把它注册为不透明的自定义算子，让编译器无法再把它和相邻的算子融合，并用一个开关控制
-  是否启用。在 prefill 和 decode 常见的 batch size 上测吞吐，与基线对比。最后按
-  [skill](../../skills/batch-invariant-kernel/SKILL.md#6-report) 的要求写报告条目。
-- **成功标准：** 实际部署的代码路径通过同一个矩阵，代价也记录在案。
+把它注册为不透明的自定义算子，用一个开关控制是否启用，这样编译器就无法再把它和相邻的算子融合。
+在 prefill 和 decode 常见的 batch size 上测吞吐、与基线对比，再按
+[skill](../../skills/batch-invariant-kernel/SKILL.md#6-report) 的要求写报告条目。实际部署的代码路径
+通过同一个矩阵、代价也记录在案，这一步才算完成。
 
 ## 各类算子，从最简单到最难
 

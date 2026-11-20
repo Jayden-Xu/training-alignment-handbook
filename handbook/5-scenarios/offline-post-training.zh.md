@@ -37,36 +37,26 @@ loss   = -log sigmoid(beta * margin)
 
 ## 步骤
 
-1. **确认打分的是同样的 token。**
-   - 目标：两边在相同的位置上，给相同的 token id 打分。
-   - 做法：每个预先算好的值，都要连同它的 token id、位置，以及每个 logprob 的精确 bit 一起
-     存下来，使用 OpGuard 的 `rollout_batch` 记录里的字段
-     （`opguard_harness.rl_records.RecordWriter`）；trainer 则把自己算的值写成一条
-     `trainer_logprob` 记录。比较任何值之前，先比较 id。重点检查通常会不一样的地方：
-     对话模板（重复的 BOS、系统提示、生成提示）、哪些 token 参与打分（是否只算回答部分，
-     是否包含结束 token）、padding 在左边还是右边以及 attention mask、packing 序列里的
-     position id，以及截断。
-   - 成功标准：每一条存下来的序列，id 和位置都相等。
-2. **确认用的是同样的权重。**
-   - 目标：引擎持有的参考模型或 teacher 权重，正是 trainer 加载的那一份。
-   - 做法：写一条带有两端逐行 fingerprint 的 `weight_sync` 记录，用 OpGuard 的
-     `rl.weight_sync_check` 检查。如果引擎加载的是转换过的 checkpoint，就改为在两个文件上
-     运行 [ckpt_compare.py](../../tools/ckpt_compare.py)（[checkpoint 转换](checkpoint-conversion.md)）。
-   - 成功标准：每一行都能配上对。
-3. **比较数值。**
-   - 目标：每个参与打分的 token，trainer 算出的 logprob 都与存下来的逐 bit 一致。
-   - 做法：用 teacher forcing 把存下来的 token id 送进 trainer 的前向，逐 bit 比较
-     fp32 的值，不设任何容差。在参考模型的版本上运行 `rl.decompose`，它会按 token 报告数值误差（这里的
-     staleness 天然为零）（[RL 循环](../2-rl/rl-loop.md)）。
-   - 成功标准：每个 token 的数值误差都为零，或者你拿到了一份数值误差不为零的 token 清单。
-4. **如果数值不同，就让引擎对齐，或者换个地方算。**
-   - 目标：数值误差为零，或者有一个记录在案的决定。
-   - 做法：引擎会把不同长度的序列放进同一个 batch，所以先让它自己满足不变性
-     （[整个模型](../2-rl/whole-model.md)），再把它的舍入点和 trainer 对齐
-     （[引擎一致性](../2-rl/engine-parity-vllm.md)、[engine-parity skill](../../skills/engine-parity/SKILL.md)），
-     剩下的差异则像 [RL 循环](../2-rl/rl-loop.md)里那样，用逐向量 fingerprint 定位。
-     另一种办法是直接在 trainer 里算参考。
-   - 成功标准：第 3 步的检查通过，或者测得的差距已经作为一项决定记录下来。
+1. **确认打分的是同样的 token**，而且位置相同。每个预先算好的值，都要连同它的 token id、位置，
+   以及每个 logprob 的精确 bit 一起存下来，使用 OpGuard 的 `rollout_batch` 记录里的字段
+   （`opguard_harness.rl_records.RecordWriter`）；trainer 则把自己算的值写成一条
+   `trainer_logprob` 记录。比较任何值之前，先比较 id，并重点检查通常会不一样的地方：对话模板
+   （重复的 BOS、系统提示、生成提示）、哪些 token 参与打分（是否只算回答部分，是否包含结束
+   token）、padding 在左边还是右边以及 attention mask、packing 序列里的 position id，以及截断。
+   每一条存下来的序列，id 和位置都必须相等。
+2. **确认用的是同样的权重**：引擎持有的参考模型或 teacher 权重，必须正是 trainer 加载的那一份。
+   写一条带有两端逐行 fingerprint 的 `weight_sync` 记录，用 OpGuard 的 `rl.weight_sync_check`
+   检查，每一行都必须配上对。如果引擎加载的是转换过的 checkpoint，就改为在两个文件上运行
+   [ckpt_compare.py](../../tools/ckpt_compare.py)（[checkpoint 转换](checkpoint-conversion.md)）。
+3. **比较数值。**用 teacher forcing 把存下来的 token id 送进 trainer 的前向，逐 bit 比较 fp32
+   的值，不设任何容差。在参考模型的版本上运行 `rl.decompose`，它会按 token 报告数值误差（这里的
+   staleness 天然为零）（[RL 循环](../2-rl/rl-loop.md)）。最后你得到的是：每个参与打分的 token
+   数值误差都为零，或者一份数值误差不为零的 token 清单。
+4. **如果数值不同，就让引擎对齐，或者换个地方算。**引擎会把不同长度的序列放进同一个 batch，
+   所以先让它自己满足不变性（[整个模型](../2-rl/whole-model.md)），再把它的舍入点和 trainer 对齐
+   （[引擎一致性](../2-rl/engine-parity-vllm.md)、[engine-parity skill](../../skills/engine-parity/SKILL.md)），
+   剩下的差异则像 [RL 循环](../2-rl/rl-loop.md)里那样，用逐向量 fingerprint 定位。另一种办法是
+   直接在 trainer 里算参考。第 3 步的检查通过，或者测得的差距已经作为一项决定记录下来，就算完成了。
 
 | 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|

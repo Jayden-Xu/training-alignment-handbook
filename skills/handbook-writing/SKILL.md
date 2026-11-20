@@ -25,9 +25,14 @@ problem now. They read a page to learn what to do next and why.
    or a picture before any rule: three numbers added in two orders; one row in
    a batch of 1 and of 64; a decode step against a prefill. Then state the
    rule in one sentence and name the general principle it instances.
-3. **The step.** What to do, in order. For each action: its goal, how (the
-   tool or skill, one line, linked), and what success looks like. Options as
-   a small table: option, what it gives, cost class, when to choose it.
+3. **The step.** What to do, in order, as a short numbered list. Each step
+   is a bold imperative followed by two or three sentences of prose: what to
+   do and with which tool or skill (linked), and how you know it worked. Say
+   why only when the reason is not obvious from the step itself. Do not split
+   every step into "Goal / How / Success" labels: the goal usually repeats
+   the step's name, and the uniform labels make a page read like a form.
+   Options as a small table: option, what it gives, cost class, when to
+   choose it.
 4. **What can go wrong.** Pitfalls as `!!! warning` admonitions: one sentence
    of cause, one of consequence, one of what to do.
 5. **Summary.** Three to five bullets the reader should remember.

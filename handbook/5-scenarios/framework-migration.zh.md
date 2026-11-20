@@ -57,54 +57,40 @@ TorchTitan，从自研 trainer 换成某个库，或者还是同一个框架，�
 
 ## 步骤
 
-1. **比较预检报告。**
-   - 目标：确认两次运行只有软件栈不同。
-   - 做法：在每个训练任务里运行 [determinism_preflight.py](../../tools/determinism_preflight.py)
-     的 `report`，再比较两份报告，并声明软件栈就是有意引入的那个差异
-     （[确定性与预检](../1-pretraining/determinism-and-preflight.md)）。两个框架对同一个控制项
-     常常叫法不同（确定性开关、集合通信算法、融合 kernel 的开关），所以要按含义来比较，
-     并列出每一端各自设置了什么。
-   - 成功标准：diff 里只有软件栈本身和它自己的开关，没有别的。
-2. **对齐数据和权重。**
-   - 目标：两套软件栈按相同的顺序看到相同的 token，并从相同的权重开始。
-   - 做法：按[数据对齐](../1-pretraining/data-alignment.md)里的方法对齐 token 流。如果
-     checkpoint 格式不同，就只转换一次，并用 [ckpt_compare.py](../../tools/ckpt_compare.py)
-     逐 bit 检查这次转换（[checkpoint 转换](checkpoint-conversion.md)）。
-   - 成功标准：前几步的 token id 两边相等，每个权重的每一行都能找到对应的行。
-3. **采集两套软件栈。**
-   - 目标：在两边都有的每个边界上取得 fingerprint：embedding 的输出、每一层注意力和 MLP 的
-     输出、残差流、logits，训练时还有每个参数的梯度。
-   - 做法：使用 [opguard_bridge.py](../../tools/opguard_bridge.py) 里的
-     `opguard_bridge.run_pair`，并打开 OpGuard 的逐向量 fingerprint（`OPGUARD_XOR_ROWS=1`），
-     这样才能按内容给行配对。如果代码用了 torch.compile 或 CUDA graph，就用
-     [graph probe](../1-pretraining/capture-compiled-code.md)。
-   - 成功标准：`opguard_bridge.coverage(run)` 显示两边都采到了这些边界。
-4. **找首个分歧点。**
-   - 目标：找到第一个共有边界，在那里相同的输入行给出了不同的输出行。
-   - 做法：两边调用顺序一致时，OpGuard 会自动给事件配对
-     （[用 OpGuard 定位](../1-pretraining/localize-with-opguard.md)）。但跨软件栈时，调用顺序
-     往往对不上。这时就用 OpGuard 的 token 匹配，按 fingerprint 给行配对，从两边一致的锚点
-     （比如 embedding 的输出）出发，沿着数据流往下走，就像它的 `rl-alignment` skill 那样。
-     你依赖的每一处对应关系，都要连同证据记成 OpGuard alignment map 里的一条记录
-     （见 OpGuard 的 `docs/AlignmentMaps.md`）。
-   - 成功标准：找到一个 pivot，它在两边的输入相等、输出不同；同时有一条 alignment map 记录，
-     说明这两个边界为什么是对应的。
-5. **写出舍入点表。**
-   - 目标：两个前向之间（训练时还有两个反向之间）的每一处差异，都写成有名字的一行。
-   - 做法：按 [engine-parity skill](../../skills/engine-parity/SKILL.md) 的第 1、2 步来做：
-     先盘点每一端实际运行的是什么，再以[舍入点](../../skills/engine-parity/references/rounding-points.md)
-     表为检查清单，写出两边的舍入序列；每一行都标明是“根据源码阅读”还是“测量所得”。
-   - 成功标准：pivot 处的那个差异，就是表里的某一行。
-6. **逐处做决定。**
-   - 目标：每一行都有一个决定，以及实测的影响。
-   - 做法：像[引擎一致性](../2-rl/engine-parity-vllm.md)那样，每次只在一端改一个舍入点，
-     然后重新采集。每改一次，第一个出现差异的边界都应该往模型后面移。
-   - 成功标准：没有任何一处差异是没有决定的。
-7. **留作回归检查。**
-   - 目标：下一次升级时，能看出哪里变了。
-   - 做法：对每个决定，挑出最小的、能体现它的一对运行（一层、一步），作为示例放进
-     [回归](../4-operations/regression.md)套件，并把这些决定写在旁边。
-   - 成功标准：回归套件跑它时报告一致，或者指出变化的那一行。
+1. **比较预检报告**，确认两次运行只有软件栈不同。在每个训练任务里运行
+   [determinism_preflight.py](../../tools/determinism_preflight.py) 的 `report`，再比较两份报告，
+   并声明软件栈就是有意引入的那个差异（[确定性与预检](../1-pretraining/determinism-and-preflight.md)）。
+   两个框架对同一个控制项常常叫法不同（确定性开关、集合通信算法、融合 kernel 的开关），所以要按
+   含义来比较，并列出每一端各自设置了什么。diff 里应当只有软件栈本身和它自己的开关，没有别的。
+2. **对齐数据和权重**，让两套软件栈按相同的顺序看到相同的 token，并从相同的权重开始。按
+   [数据对齐](../1-pretraining/data-alignment.md)里的方法对齐 token 流。如果 checkpoint 格式不同，
+   就只转换一次，并用 [ckpt_compare.py](../../tools/ckpt_compare.py) 逐 bit 检查这次转换
+   （[checkpoint 转换](checkpoint-conversion.md)）。前几步的 token id 两边必须相等，每个权重的
+   每一行都必须找到对应的行。
+3. **采集两套软件栈**，在两边都有的每个边界上取得 fingerprint：embedding 的输出、每一层注意力和
+   MLP 的输出、残差流、logits，训练时还有每个参数的梯度。使用
+   [opguard_bridge.py](../../tools/opguard_bridge.py) 里的 `opguard_bridge.run_pair`，并打开
+   OpGuard 的逐向量 fingerprint（`OPGUARD_XOR_ROWS=1`），这样才能按内容给行配对；如果代码用了
+   torch.compile 或 CUDA graph，就用 [graph probe](../1-pretraining/capture-compiled-code.md)。
+   `opguard_bridge.coverage(run)` 应当显示两边都采到了这些边界。
+4. **找首个分歧点**，也就是第一个共有边界，在那里相同的输入行给出了不同的输出行。两边调用顺序
+   一致时，OpGuard 会自动给事件配对（[用 OpGuard 定位](../1-pretraining/localize-with-opguard.md)），
+   但跨软件栈时，调用顺序往往对不上。这时就用 OpGuard 的 token 匹配，按 fingerprint 给行配对，
+   从两边一致的锚点（比如 embedding 的输出）出发，沿着数据流往下走，就像它的 `rl-alignment`
+   skill 那样。你依赖的每一处对应关系，都要连同证据记成 OpGuard alignment map 里的一条记录
+   （见 OpGuard 的 `docs/AlignmentMaps.md`）。最后你会找到一个 pivot，它在两边的输入相等、输出
+   不同，同时有一条 alignment map 记录说明这两个边界为什么是对应的。
+5. **写出舍入点表**，把两个前向之间（训练时还有两个反向之间）的每一处差异都写成有名字的一行。
+   按 [engine-parity skill](../../skills/engine-parity/SKILL.md) 的第 1、2 步来做：先盘点每一端
+   实际运行的是什么，再以[舍入点](../../skills/engine-parity/references/rounding-points.md)表为
+   检查清单，写出两边的舍入序列，每一行都标明是“根据源码阅读”还是“测量所得”。pivot 处的那个
+   差异，必须是表里的某一行。
+6. **逐处做决定**，并实测它的影响。像[引擎一致性](../2-rl/engine-parity-vllm.md)那样，每次只在
+   一端改一个舍入点，然后重新采集；每改一次，第一个出现差异的边界都应该往模型后面移。不能留下
+   任何一处没有决定的差异。
+7. **留作回归检查**，下一次升级时就能看出哪里变了。对每个决定，挑出最小的、能体现它的一对运行
+   （一层、一步），作为示例放进[回归](../4-operations/regression.md)套件，并把这些决定写在旁边。
+   回归套件跑它时会报告一致，或者指出变化的那一行。
 
 | 决定 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|

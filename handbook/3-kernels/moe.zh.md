@@ -43,29 +43,25 @@ token，随 batch 而变；每个 token 的输出又是 k 个 expert 输出之�
 
 ### 1. 每个 token 在任何 batch 里都走同样的路由
 
-- **目标：** 一个 token 选中哪些 expert、权重是多少，只取决于这个 token。
-- **做法：** 路由器的 GEMM 用单配置 kernel；top-k 用稳定排序，先按分数降序、再按 expert id 升序；
-  权重按 top-k 排名的顺序在 fp32 下重新归一化；不设 capacity 上限。
-- **成功标准：** 路由器给出的 expert id 和权重，在不同 batch 和不同并行度下都逐 bit 一致
-  （[报告](../../examples/moe_ep/REPORT.md#under-expert-parallelism)）。
+路由器的 GEMM 用单配置 kernel；top-k 用稳定排序，先按分数降序、再按 expert id 升序；权重按 top-k 排名的
+顺序在 fp32 下重新归一化；不设 capacity 上限。这样一个 token 选中哪些 expert、权重是多少，只取决于这个
+token，在不同 batch 和不同并行度下都逐 bit 一致（[报告](../../examples/moe_ep/REPORT.md#under-expert-parallelism)）。
 
 ### 2. 让 expert 的 GEMM 不变
 
-- **目标：** e_i 不随 M_i 变化。
-- **做法：** 每个 expert 调用一次单配置 GEMM
-  （[recipe 3](../../skills/batch-invariant-kernel/references/operator-recipes.md#3-batched-and-grouped-gemm-moe-experts-bmm-vs-mm)）。
-- **成功标准：** 每个 expert 形状上 `check_batch` 都通过。这在两种 GPU 上得到了证明
-  （[报告](../../examples/moe_combine/REPORT.md#1-locate-the-variance)）。
+每个 expert 调用一次单配置 GEMM
+（[recipe 3](../../skills/batch-invariant-kernel/references/operator-recipes.md#3-batched-and-grouped-gemm-moe-experts-bmm-vs-mm)），
+让 e_i 不随 M_i 变化。每个 expert 形状上 `check_batch` 都要通过；这在两种 GPU 上得到了证明
+（[报告](../../examples/moe_combine/REPORT.md#1-locate-the-variance)）。
 
 ### 3. 按固定顺序把每个 token 的 expert 输出加起来
 
-- **目标：** 一个 token 的 k 项之和，顺序和精度都只有一种。
-- **做法：** 给每个返回的行一个固定的槽位，用（token，top-k 排名）来索引。每个 token 由一个
-  program 负责，它按排名顺序读取自己的槽位，在 fp32 下累加，最后只舍入一次。这就是
-  [examples/moe_ep/moe_ep.py](../../examples/moe_ep/moe_ep.py) 里的 `fixed_slot`；做法见
-  [recipe 8](../../skills/batch-invariant-kernel/references/operator-recipes.md#8-moe-routing-dispatch-and-combine)。
-- **成功标准：** L1、L2 和 L5 都通过。这在单个 GPU 上，以及两个节点、最多 16 个 GPU 上得到了证明
-  （[报告](../../examples/moe_ep/REPORT.md#what-the-expert-parallel-results-show)）。
+给每个返回的行一个固定的槽位，用（token，top-k 排名）来索引。每个 token 由一个 program 负责，它按排名
+顺序读取自己的槽位，在 fp32 下累加，最后只舍入一次，这样一个 token 的 k 项之和，顺序和精度都只有一种。
+这就是 [examples/moe_ep/moe_ep.py](../../examples/moe_ep/moe_ep.py) 里的 `fixed_slot`；做法见
+[recipe 8](../../skills/batch-invariant-kernel/references/operator-recipes.md#8-moe-routing-dispatch-and-combine)。
+L1、L2 和 L5 都要通过；这在单个 GPU 上，以及两个节点、最多 16 个 GPU 上得到了证明
+（[报告](../../examples/moe_ep/REPORT.md#what-the-expert-parallel-results-show)）。
 
 | combine 怎么加 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|

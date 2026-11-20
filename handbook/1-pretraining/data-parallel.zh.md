@@ -53,9 +53,7 @@
 
 ### 固定每一个跨 rank 求和的顺序
 
-**目标：** 参数的梯度、梯度范数、loss 和更新后的权重，都不受分桶方式、切分布局或并行度的影响。
-
-**做法：** 按你的运行需要选用下面的选项。代码在 [training_dp.py](../../examples/training_dp/training_dp.py) 里（有序的集合通信、DDP comm hook `Worker.ordered_hook`、logical shard 和逻辑范数），每一次比较都用 [bi_check.py](../../tools/bi_check.py) 逐 bit 进行。
+参数的梯度、梯度范数、loss 和更新后的权重，都不应受分桶方式、切分布局或并行度的影响。按你的运行需要选用下面的选项。代码在 [training_dp.py](../../examples/training_dp/training_dp.py) 里（有序的集合通信、DDP comm hook `Worker.ordered_hook`、logical shard 和逻辑范数），每一次比较都用 [bi_check.py](../../tools/bi_check.py) 逐 bit 进行。
 
 | 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -68,7 +66,7 @@
 
 logical shard 的前提是[训练 step](training-step.md) 已经固定好：每个 shard 的反向计算在每个 rank 上都必须能逐 bit 重复，而用原生算子时，这需要打开严格确定性模式。跨两个节点时，先在节点内部完成交换（两级路由）；在节点之间较慢的链路上直接做扁平的 all-to-all，代价要高得多。
 
-**成功标准：** 在每个 rank 上，梯度、loss、范数、权重和 Adam 状态都和 d = 1 的运行逐 bit 一致；在另一个并行度下弹性恢复的运行，和一直没停的运行一致。
+做到了的标志是：在每个 rank 上，梯度、loss、范数、权重和 Adam 状态都和 d = 1 的运行逐 bit 一致；在另一个并行度下弹性恢复的运行，和一直没停的运行一致。
 
 这一点在 fp32 梯度下得到了证明，最多用到两个节点上的 16 块 GPU，既测了复制权重的情形，也测了模拟的 FSDP（展平的梯度、reduce-scatter、切分的 AdamW；没有运行框架自带的 FSDP）。Tree 和有序集合通信消除了分桶的影响，有序 reduce-scatter 消除了切片归属的影响，logical shard 在测试过的每个并行度下、以及弹性恢复之后，都给出了完全相同的结果（[报告](../../examples/training_dp/REPORT.md#what-this-shows)）。
 

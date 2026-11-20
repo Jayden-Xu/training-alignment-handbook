@@ -16,7 +16,7 @@
 
 ### 2a. 控制五类可避免的变化
 
-**目标：** 消除那些会让两次正确运行产生差异的变化。
+把这五类都写进代码或启动配置，每个 rank 上都要如此，这样两次正确的运行才不会产生差异。
 
 | 会变化的地方 | 要设置什么 | 代价等级 |
 |---|---|---|
@@ -28,15 +28,9 @@
 
 **不要**去控制调度，也不要去压住你自己或第三方 kernel 的不确定性。如果它们改变了结果，这个变化正是 bug 的信号。
 
-**成功标准：** 这五类设置都已写进代码或启动配置，每个 rank 上都是如此。
-
 ### 2b. 从每次运行里读回设置，再做 diff
 
-**目标：** 证明两次运行的实际设置就是你以为的那样。
-
-**做法：** 在每个训练任务里，恢复之后、第一步之前，调用 [determinism_preflight.py](../../tools/determinism_preflight.py) 提供的 `determinism_preflight.report(...)`。它在每个 rank 上读回下列内容，写成 JSON：确定性开关和它的 `warn_only`；cuDNN、TF32 和 matmul 精度；`CUBLAS_WORKSPACE_CONFIG`；SDPA 后端；`NCCL_*` 和 NCCL 版本；RNG 状态；dataloader 的 worker 和生成器；优化器走的代码路径（fused 或 foreach）及其状态；scheduler 的计数器；AMP；是否用了 compile 和 CUDA graph；GPU、驱动和库的版本。装了 OpGuard 时，还会附上它的 `doctor` 输出。之后，`diff(a, b)` 列出两次运行的不同之处，并指出其中哪些会让逐 bit 比较失去意义；`findings` 列出单次运行里没有控制住的东西。
-
-**成功标准：** `findings` 为空，diff 里只剩下声明过的那个差异。
+为了证明两次运行的实际设置就是你以为的那样，在每个训练任务里，恢复之后、第一步之前，调用 [determinism_preflight.py](../../tools/determinism_preflight.py) 提供的 `determinism_preflight.report(...)`。它在每个 rank 上读回下列内容，写成 JSON：确定性开关和它的 `warn_only`；cuDNN、TF32 和 matmul 精度；`CUBLAS_WORKSPACE_CONFIG`；SDPA 后端；`NCCL_*` 和 NCCL 版本；RNG 状态；dataloader 的 worker 和生成器；优化器走的代码路径（fused 或 foreach）及其状态；scheduler 的计数器；AMP；是否用了 compile 和 CUDA graph；GPU、驱动和库的版本。装了 OpGuard 时，还会附上它的 `doctor` 输出。之后，`diff(a, b)` 列出两次运行的不同之处，并指出其中哪些会让逐 bit 比较失去意义；`findings` 列出单次运行里没有控制住的东西。`findings` 为空、diff 里只剩下声明过的那个差异，检查就通过了。
 
 在一次已知答案的演练里（一块 GPU、一个 rank、跑几步），预检在采集之前就发现了两个问题：注意力的反向跑在 `warn_only` 下，以及 step 计数器没有恢复；每一项被故意漏掉的恢复状态，也都出现在各自的字段里。被挪动过的舍入点则没有被发现，因为那是代码的改动，不是设置（[报告](../../examples/pretraining_e2e/REPORT.md#the-determinism-preflight)）。
 

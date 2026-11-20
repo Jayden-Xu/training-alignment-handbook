@@ -53,20 +53,16 @@ batch 变大或者这一行换了位置时，这一行的求和就会从另一�
 
 ### 1. 找出哪些集合通信和设置会改变一行的结果
 
-- **目标：** 知道哪些集合通信、哪些设置会改变一行的结果。
-- **做法：** 把一个固定的切片单独归约一次，再把它放进多种大小的消息、放在多个位置上归约，并从库的
-  tuning 日志里记下每次调用选了什么。
-  [examples/collectives_tp/collectives_tp.py](../../examples/collectives_tp/collectives_tp.py)
-  做的就是这件事，它还带一个诊断工具，能解释每个元素的和是按什么顺序加出来的。
-- **成功标准：** 每个失败的元素都能用一个已知的顺序解释
-  （[报告](../../examples/collectives_tp/REPORT.md#what-this-shows)）。
+把一个固定的切片单独归约一次，再把它放进多种大小的消息、放在多个位置上归约，并从库的 tuning 日志里
+记下每次调用选了什么。[examples/collectives_tp/collectives_tp.py](../../examples/collectives_tp/collectives_tp.py)
+做的就是这件事，它还带一个诊断工具，能解释每个元素的和是按什么顺序加出来的。每个失败的元素都能用一个
+已知的顺序解释，这一步就完成了（[报告](../../examples/collectives_tp/REPORT.md#what-this-shows)）。
 
 ### 2. 固定跨 GPU 求和的顺序（L2）
 
-- **目标：** 一行的跨 GPU 求和，在任何 batch 里都相同。
-- **做法：** 按 [recipe 10](../../skills/batch-invariant-kernel/references/operator-recipes.md#10-collectives-tp--ep--sp) 来做。
-- **成功标准：** TP 层通过 `check_batch`。这在一个 8 GPU 节点和两个 8 GPU 节点上得到了证明
-  （[报告](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)）。
+按 [recipe 10](../../skills/batch-invariant-kernel/references/operator-recipes.md#10-collectives-tp--ep--sp)
+来做，让一行的跨 GPU 求和在任何 batch 里都相同。之后 TP 层要能通过 `check_batch`；这在一个 8 GPU 节点和
+两个 8 GPU 节点上得到了证明（[报告](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)）。
 
 | 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
@@ -81,12 +77,10 @@ batch 变大或者这一行换了位置时，这一行的求和就会从另一�
 
 ### 3. 把部分和本身固定下来（L5）
 
-- **目标：** 同样的行在 TP 为 1、2、4 或更大时，结果都逐 bit 一致。
-- **做法：** 选一个逻辑 TP 规模 C。K 被切成 C 个固定的块，每个 GPU 计算若干个完整的块，输出用
-  fp32，部分和按一棵固定的两两求和树相加。并行度能整除 C 时，每个 GPU 分到的都是完整的块；
-  并行度大于 C 时，把每块的输出列拆给多个 GPU，但绝不拆它在 K 上的范围。
-- **成功标准：** 每个并行度下都得到同一个结果。这在两个节点、最多 16 个 GPU 上得到了证明
-  （[报告](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)）。
+选一个逻辑 TP 规模 C：K 被切成 C 个固定的块，每个 GPU 计算若干个完整的块，输出用 fp32，部分和按一棵
+固定的两两求和树相加。并行度能整除 C 时，每个 GPU 分到的都是完整的块；并行度大于 C 时，把每块的输出列
+拆给多个 GPU，但绝不拆它在 K 上的范围。这样同样的行在 TP 为 1、2、4 或更大时结果都逐 bit 一致；这在
+两个节点、最多 16 个 GPU 上得到了证明（[报告](../../examples/collectives_tp/REPORT.md#what-the-second-node-changes)）。
 
 | 方案 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|

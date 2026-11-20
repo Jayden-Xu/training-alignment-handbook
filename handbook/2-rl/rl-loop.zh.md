@@ -70,45 +70,29 @@ embedding 的输出，跟着每个张量走到使用它的那个算子，直到�
 不使用任何容差。协议和每个字段的含义见 OpGuard 的 `docs/RLAlignment.md`；OpGuard 的
 `rl-alignment` skill（`harness/skills/rl-alignment`）让 agent 按这些步骤执行。
 
-1. **在线记录。**
-   - 目标：以很低的成本记下足够的信息，以后能拆分并重放任何一个抽样到的 batch。
-   - 做法：`RecordWriter` 写入五类记录。`rollout_batch` 包括 token 和 prompt 的 id、
-     位置、每个 token 的策略版本、rollout logprob 的原始 bit、batch 组成，以及引擎当时
-     所持权重的 fingerprint。`forward` 记录每一次前向及其行布局。`weight_sync` 记录每次
-     同步时两端逐行的权重 fingerprint。`snapshot` 记录各版本权重保存在哪里。staleness 为零时，还会记录
-     `trainer_logprob`。
-   - 成功标准：记录摘要里列出了每一类记录；版本快照只按抽样保存，成本有上限。
-2. **检查权重。**
-   - 目标：确认引擎运行的正是 trainer 推送的权重。
-   - 做法：`rl.weight_sync_check` 把逐行 fingerprint 当作多重集合来比较，所以打包方式不同
-     （例如融合的 QKV）不会被算作差异。
-   - 成功标准：每个比较过的版本都没有问题；否则它会在两端分别指出出错的参数和行。
-3. **拆分差距。**
-   - 目标：得到每个 token 的数值误差和 staleness。
-   - 做法：`rl.decompose` 用精确算术完成拆分。它会标出跨越两个版本的 token，并说明每个
-     batch 与哪一份记录下来的权重 fingerprint 相符。对于较旧的版本，`rl.replay_request`
-     会构造重放请求（版本 v 的快照、相同的 token、原来的 batch 组成或 batch-invariant
-     的组成），交给你自己的训练任务离线运行。
-   - 成功标准：每个只属于一个版本的 token，数值误差都为零；或者得到一份数值误差不为零的
-     token 清单。
-4. **离线定位。**
-   - 目标：找到数值误差最先出现的那个算子。
-   - 做法：用逐向量 fingerprint 重新采集两端（OpGuard `OPGUARD_XOR_ROWS=1`），用
-     `rl.forwards` 列出各次前向；再用 `vectors.describe`、`vectors.lookup`、
-     `vectors.coverage` 和 `vectors.compare` 查询，从两端一致的锚点出发，沿数据流往下走。
-     如果引擎用了 torch.compile 或 CUDA graph，就用 [tools/graph_probe.py](../../tools/graph_probe.py)
-     取 fingerprint（见[torch.compile 与 CUDA graph](../1-pretraining/capture-compiled-code.md)）。
-   - 成功标准：找到一对候选：同样的输入行在两端给出了不同的输出行。
-5. **判定原因类别，并检验它。**
-   - 目标：得到一个原因类别，并用一次干预确认它。
-   - 做法：判断原因属于哪一类：舍入点或融合顺序、对 batch 的依赖、算法上的选择、并行布局、
-     logprob 公式不同，还是版本记账或权重同步出了问题。然后做一个最小的改动，让这个算子
-     处的数值误差变为零，再重放。
-   - 成功标准：加上这个改动后的重放结果，等于另一端的结果。
-6. **把修复保留下来。**
-   - 目标：确保修好的问题不会再出现。
-   - 做法：把这项检查连同它的基线，加入[回归](../4-operations/regression.md)套件。
-   - 成功标准：之后的每个版本都必须复现这个结果。
+1. **在线记录**，以很低的成本记下足够的信息，以后能拆分并重放任何一个抽样到的 batch。`RecordWriter`
+   写入五类记录：`rollout_batch` 包括 token 和 prompt 的 id、位置、每个 token 的策略版本、rollout logprob
+   的原始 bit、batch 组成，以及引擎当时所持权重的 fingerprint；`forward` 记录每一次前向及其行布局；
+   `weight_sync` 记录每次同步时两端逐行的权重 fingerprint；`snapshot` 记录各版本权重保存在哪里；
+   staleness 为零时，还会记录 `trainer_logprob`。记录摘要里要列出每一类记录；版本快照只按抽样保存，成本有上限。
+2. **检查权重**，确认引擎运行的正是 trainer 推送的权重。`rl.weight_sync_check` 把逐行 fingerprint
+   当作多重集合来比较，所以打包方式不同（例如融合的 QKV）不会被算作差异。每个比较过的版本都应该没有问题；
+   否则它会在两端分别指出出错的参数和行。
+3. **拆分差距**，得到每个 token 的数值误差和 staleness。`rl.decompose` 用精确算术完成拆分，标出跨越两个版本的
+   token，并说明每个 batch 与哪一份记录下来的权重 fingerprint 相符。对于较旧的版本，`rl.replay_request`
+   会构造重放请求（版本 v 的快照、相同的 token、原来的 batch 组成或 batch-invariant 的组成），交给你自己的
+   训练任务离线运行。每个只属于一个版本的 token，数值误差都应为零；否则会得到一份数值误差不为零的 token 清单。
+4. **离线定位**数值误差最先出现的那个算子。用逐向量 fingerprint 重新采集两端（OpGuard `OPGUARD_XOR_ROWS=1`），
+   用 `rl.forwards` 列出各次前向，再用 `vectors.describe`、`vectors.lookup`、`vectors.coverage` 和
+   `vectors.compare` 查询，从两端一致的锚点出发，沿数据流往下走。如果引擎用了 torch.compile 或 CUDA graph，
+   就用 [tools/graph_probe.py](../../tools/graph_probe.py)
+   取 fingerprint（见[torch.compile 与 CUDA graph](../1-pretraining/capture-compiled-code.md)）。
+   找到一对候选就完成了：同样的输入行在两端给出了不同的输出行。
+5. **判定原因类别，并检验它。** 先判断原因属于哪一类：舍入点或融合顺序、对 batch 的依赖、算法上的选择、
+   并行布局、logprob 公式不同，还是版本记账或权重同步出了问题。然后做一个最小的改动，让这个算子处的数值误差
+   变为零，再重放；加上改动后的重放结果等于另一端的结果，原因就确认了。
+6. **把修复保留下来**：把这项检查连同它的基线加入[回归](../4-operations/regression.md)套件，
+   之后的每个版本都必须复现这个结果。
 
 | 选项 | 能得到什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|

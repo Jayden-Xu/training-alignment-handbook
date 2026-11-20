@@ -101,9 +101,9 @@ control.
 
 ### Step 1: choose a reference run {#step-1-pick-a-reference-run}
 
-**Goal:** choose a reference run that isolates your question. One captured
-suspect run and one reference run are enough, and the suspect run does not
-have to be deterministic.
+Pick the reference run that isolates your question. One captured suspect run
+and one reference run are enough, and the suspect run does not have to be
+deterministic.
 
 | Reference run | The question it answers |
 |---|---|
@@ -114,38 +114,33 @@ have to be deterministic.
 | The same model in another framework | Where do the two implementations disagree? |
 | One GPU, or a TP simulator that keeps logical TP above 1 | Is the parallel implementation wrong? |
 
-**How:** give both runs the same data, seeds and checkpoint. Write down the
-one difference you are testing; you pass it to the preflight diff as
-`declared`.
-
-**Success:** you can name the difference in one sentence, and nothing else is
-meant to differ.
+Give both runs the same data, seeds and checkpoint, and write down the one
+difference you are testing; you pass it to the preflight diff as `declared`.
+You are ready when you can name the difference in one sentence and nothing
+else is meant to differ.
 
 ### Step 2: control the avoidable variation and check it {#step-2-preflight-and-control}
 
-**Goal:** remove the avoidable variation and prove that it is gone. It comes
-from five surfaces: randomness and data order, library kernels, collectives,
-checkpoint resume and the TP degree. Do not pin scheduling or user kernels; if
-they change the bits, that change is the signal you are looking for.
+The avoidable variation comes from five surfaces: randomness and data order,
+library kernels, collectives, checkpoint resume and the TP degree. Set them,
+read them back from inside each job with
+[determinism_preflight.py](../../tools/determinism_preflight.py), and diff the
+two reports ([Determinism and preflight](determinism-and-preflight.md)); the
+diff must list only the declared difference. For the parts of a training
+step, see [Training step](training-step.md); for the collectives that sum
+gradients, see [Data parallel](data-parallel.md).
 
-**How:** set the five surfaces, then read them back from inside each job with
-[determinism_preflight.py](../../tools/determinism_preflight.py) and diff the
-two reports ([Determinism and preflight](determinism-and-preflight.md)). For
-the parts of a training step, see [Training step](training-step.md); for the
-collectives that sum gradients, see [Data parallel](data-parallel.md).
-
-**Success:** the diff lists only the declared difference.
+Do not pin scheduling or user kernels: if they change the bits, that change is
+the signal you are looking for.
 
 ### Step 3: capture fingerprints on both runs {#step-3-capture}
 
-**Goal:** record fingerprints of the inputs and outputs at every model-level
-boundary on both runs. They are computed on the operator's own stream and add
-no synchronization.
-
-**How:** [opguard_bridge.py](../../tools/opguard_bridge.py) runs both sides
-through OpGuard's harness, which discovers the boundaries, plans where to
-instrument, captures and compares. If the code runs under `torch.compile` or
-CUDA graphs, an eager capture does not show the bits that production
+Record fingerprints of the inputs and outputs at every model-level boundary on
+both runs; they are computed on the operator's own stream and add no
+synchronization. [opguard_bridge.py](../../tools/opguard_bridge.py) runs both
+sides through OpGuard's harness, which discovers the boundaries, plans where
+to instrument, captures and compares. If the code runs under `torch.compile`
+or CUDA graphs, an eager capture does not show the bits that production
 computes; use [graph_probe.py](../../tools/graph_probe.py) instead
 ([Compiled code and CUDA graphs](capture-compiled-code.md)).
 
@@ -155,33 +150,30 @@ computes; use [graph_probe.py](../../tools/graph_probe.py) instead
 | A graph probe inside compiled code | The bits that compiled code and graph replays actually produce | small for each probe inside a CUDA graph, large outside one; many probes on a small step add up to large | Production uses `torch.compile` or CUDA graphs |
 | A full tensor dump | The values themselves, not fingerprints | large (2x or more) | Only for a region that a fingerprint has already named |
 
-**Success:** `opguard_bridge.coverage(run)` shows that the region you care
-about, GEMMs included, was captured.
+The capture is complete when `opguard_bridge.coverage(run)` shows that the
+region you care about, GEMMs included, was captured.
 
 ### Step 4: find the first divergence {#step-4-take-the-first-divergence}
 
-**Goal:** find the first boundary, in call order, whose fingerprints differ.
+You want the first boundary, in call order, whose fingerprints differ. The two
+traces never line up position by position, because overlap, fusion and
+rewrites move events around, and one side may have events that the other
+lacks. OpGuard therefore pairs the events with an order-preserving match,
+anchored on boundaries it can identify without doubt, and leaves the uncertain
+events unpaired, as gaps.
 
-**How:** the two traces never line up position by position, because overlap,
-fusion and rewrites move events around, and one side may have events that the
-other lacks. OpGuard therefore pairs the events with an order-preserving
-match, anchored on boundaries it can identify without doubt, and it leaves the
-uncertain events unpaired, as gaps. The first pair that differs is the
-**pivot**. `opguard_bridge.first_divergence(...)` collects the facts about it
-([Localize with OpGuard](localize-with-opguard.md)).
-
-**Success:** you have a pivot with no unaligned event before it. Remember that
-an unpaired event is not a difference.
+The first pair that differs is the **pivot**, and
+`opguard_bridge.first_divergence(...)` collects the facts about it
+([Localize with OpGuard](localize-with-opguard.md)). You are done when the
+pivot has no unaligned event before it; an unpaired event is not a difference.
 
 ### Step 5: decide what kind of cause it is {#step-5-classify}
 
-**Goal:** name the kind of cause, because each kind has its own fix and its
-own page.
-
-**How:** read the pivot's source line, the operators that produced its
-inputs, and the status of each call at its call site.
-`opguard_bridge.suggest(...)` lists possible leads, each with its reason. The
-root causes that OpGuard has pinpointed in production fall into these
+Each kind of cause has its own fix and its own page. Read the pivot's source
+line, the operators that produced its inputs, and the status of each call at
+its call site; `opguard_bridge.suggest(...)` lists possible leads, each with
+its reason. You end with one hypothesis and the evidence that points to it.
+The root causes that OpGuard has pinpointed in production fall into these
 classes:
 
 | Kind of cause | Example | Where to go |
@@ -196,39 +188,28 @@ classes:
 | MoE routing | mismatched histogram bins that make the routing drift | [part 3: MoE](../3-kernels/moe.md) |
 | Silent data corruption in hardware | a boolean scatter that sends one token to the wrong place, which shows up as a shape mismatch many operators later | [SDC](sdc.md) |
 
-**Success:** you have one hypothesis and the evidence that points to it.
-
 ### Step 6: fix the cause {#step-6-fix}
 
-**Goal:** make the smallest change that removes the cause.
-
-**How:** the fix depends on the kind of cause. Correct a setting in the
-preflight. Fix a part of the training step with that page's checklist. Fix a
-kernel with the
+Make the smallest change that removes the cause; how depends on its kind.
+Correct a setting in the preflight, fix a part of the training step with that
+page's checklist, and fix a kernel with the
 [batch-invariant-kernel skill](../../skills/batch-invariant-kernel/SKILL.md)
 and its [recipes](../../skills/batch-invariant-kernel/references/operator-recipes.md).
-OpGuard's harness skill `validate-hypothesis` tests one cause at a time.
-
-**Success:** the change affects the pivot in the way the hypothesis predicts.
+OpGuard's harness skill `validate-hypothesis` tests one cause at a time; the
+change should affect the pivot in the way the hypothesis predicts.
 
 ### Step 7: confirm the fix {#step-7-confirm}
 
-**Goal:** show that the fix, and nothing else, made the runs agree.
-
-**How:** capture the pair again, with the fix applied.
-
-**Success:** no event differs, no event is unaligned, and the final
-parameters are bit-identical.
+Capture the pair again with the fix applied, to show that the fix and nothing
+else made the runs agree. No event may differ, no event may be unaligned, and
+the final parameters must be bit-identical.
 
 ### Step 8: keep the pair as a regression check {#step-8-keep-it-as-a-regression-check}
 
-**Goal:** make sure the runs still agree after the next upgrade.
-
-**How:** add the pair, or the smallest case that reproduces it, to the
-regression suite ([Regression](../4-operations/regression.md)), and record the
-stack on which the agreement holds.
-
-**Success:** the suite runs the case and reports it equal.
+Add the pair, or the smallest case that reproduces it, to the regression suite
+([Regression](../4-operations/regression.md)), and record the stack on which
+the agreement holds, so that the runs still agree after the next upgrade. The
+suite should run the case and report it equal.
 
 ## What can go wrong
 

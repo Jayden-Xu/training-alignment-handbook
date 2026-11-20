@@ -48,30 +48,26 @@ exactly the tokens that decoding without a draft would, at every chunk size.
 
 ## The step
 
-1. **Find out what your engine's sampler depends on.**
-   - Goal: a list of every way in which a request's token depends on its
-     neighbours in the batch or on its own history.
-   - How: read the engine's sampler and note where generators are created,
-     how much noise each request draws per step, what happens on preemption,
-     and how top-p adds up probabilities;
-     [the report](../../examples/sampling/REPORT.md#what-the-engines-do-read-from-source-not-run)
-     contains this reading for two engines.
-   - Success: every dependence is named.
-2. **Use a counter-keyed sampler with exact sums on both sides of the replay.**
-   - Goal: the token depends only on the logit bits, the seed, the position,
-     the purpose, the stream and the sampling parameters.
-   - How: use the reference sampler [tools/bi_sampling.py](../../tools/bi_sampling.py)
-     (`sample`, `spec_verify_exact`, `spec_verify_rejection`).
-   - Success: the tokens stay the same under batching, under preemption with
-     recompute and with rollback, under chunked speculation, and after resuming
-     in a new process.
-3. **Check that it samples the right distribution.**
-   - Goal: the sampler is invariant without being biased.
-   - How: compare the observed frequencies with an independently computed
-     target distribution using a chi-square test, and include a deliberately
-     wrong target as a control.
-   - Success: the test does not reject the true target, and clearly rejects
-     the wrong one.
+1. **Find out what your engine's sampler depends on**: every way in which a
+   request's token depends on its neighbours in the batch or on its own
+   history. Read the engine's sampler and note where generators are created,
+   how much noise each request draws per step, what happens on preemption,
+   and how top-p adds up probabilities;
+   [the report](../../examples/sampling/REPORT.md#what-the-engines-do-read-from-source-not-run)
+   contains this reading for two engines. You are done when every dependence
+   is named.
+2. **Use a counter-keyed sampler with exact sums on both sides of the
+   replay**, so that the token depends only on the logit bits, the seed, the
+   position, the purpose, the stream and the sampling parameters. The
+   reference sampler is [tools/bi_sampling.py](../../tools/bi_sampling.py)
+   (`sample`, `spec_verify_exact`, `spec_verify_rejection`). The tokens must
+   stay the same under batching, under preemption with recompute and with
+   rollback, under chunked speculation, and after resuming in a new process.
+3. **Check that it samples the right distribution**, because a sampler can be
+   invariant and still biased. Compare the observed frequencies with an
+   independently computed target distribution using a chi-square test, and
+   include a deliberately wrong target as a control. The test must not reject
+   the true target, and must clearly reject the wrong one.
 
 | Option | What it gives | Cost class | When to choose it |
 |---|---|---|---|

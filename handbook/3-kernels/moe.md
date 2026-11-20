@@ -55,35 +55,32 @@ fp32, reading them from fixed slots, without atomics.
 
 ### 1. Route each token the same way in every batch
 
-- **Goal:** a token's experts and their weights depend only on the token.
-- **How:** run the router GEMM with the one-configuration kernel, take the
-  top-k with a stable sort by (score descending, expert id ascending),
-  renormalize the weights in fp32 in top-k rank order, and set no capacity
-  limit.
-- **Success:** the router's expert ids and weights are bitwise equal across
-  batches and parallel degrees
-  ([report](../../examples/moe_ep/REPORT.md#under-expert-parallelism)).
+Run the router GEMM with the one-configuration kernel, take the top-k with a
+stable sort by (score descending, expert id ascending), renormalize the
+weights in fp32 in top-k rank order, and set no capacity limit. A token's
+expert ids and weights then depend only on the token, and are bitwise equal
+across batches and parallel degrees
+([report](../../examples/moe_ep/REPORT.md#under-expert-parallelism)).
 
 ### 2. Make the expert GEMMs invariant
 
-- **Goal:** e_i does not change when M_i changes.
-- **How:** call the one-configuration GEMM once per expert
-  ([recipe 3](../../skills/batch-invariant-kernel/references/operator-recipes.md#3-batched-and-grouped-gemm-moe-experts-bmm-vs-mm)).
-- **Success:** `check_batch` passes on every expert shape. This was shown on
-  two GPU types ([report](../../examples/moe_combine/REPORT.md#1-locate-the-variance)).
+Call the one-configuration GEMM once per expert
+([recipe 3](../../skills/batch-invariant-kernel/references/operator-recipes.md#3-batched-and-grouped-gemm-moe-experts-bmm-vs-mm)),
+so that e_i does not change when M_i changes. `check_batch` must pass on
+every expert shape; this was shown on two GPU types
+([report](../../examples/moe_combine/REPORT.md#1-locate-the-variance)).
 
 ### 3. Add each token's expert outputs in a fixed order
 
-- **Goal:** the sum over a token's k terms always has the same order and the
-  same precision.
-- **How:** give each returned row a fixed slot, indexed by (token, top-k
-  rank). One program per token reads its slots in rank order, accumulates them
-  in fp32 and rounds once at the end. This is `fixed_slot` in
-  [examples/moe_ep/moe_ep.py](../../examples/moe_ep/moe_ep.py); see
-  [recipe 8](../../skills/batch-invariant-kernel/references/operator-recipes.md#8-moe-routing-dispatch-and-combine).
-- **Success:** L1, L2 and L5 pass. This was shown on one GPU, and on up to 16
-  GPUs across two nodes
-  ([report](../../examples/moe_ep/REPORT.md#what-the-expert-parallel-results-show)).
+Give each returned row a fixed slot, indexed by (token, top-k rank). One
+program per token reads its slots in rank order, accumulates them in fp32
+and rounds once at the end, so the sum over a token's k terms always has the
+same order and precision. This is `fixed_slot` in
+[examples/moe_ep/moe_ep.py](../../examples/moe_ep/moe_ep.py); see
+[recipe 8](../../skills/batch-invariant-kernel/references/operator-recipes.md#8-moe-routing-dispatch-and-combine).
+L1, L2 and L5 must pass; this was shown on one GPU, and on up to 16 GPUs
+across two nodes
+([report](../../examples/moe_ep/REPORT.md#what-the-expert-parallel-results-show)).
 
 | How the combine adds | What it gives | Cost class | When to choose it |
 |---|---|---|---|
