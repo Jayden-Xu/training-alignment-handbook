@@ -1,0 +1,1289 @@
+{
+ "device": "NVIDIA A40",
+ "torch": "2.5.1+cu121",
+ "triton": "3.1.0",
+ "forward": {
+  "T=200": {
+   "with_lse_equals_plain": true,
+   "train_equals_plain": true
+  },
+  "T=256": {
+   "with_lse_equals_plain": true,
+   "train_equals_plain": true
+  },
+  "T=1000": {
+   "with_lse_equals_plain": true,
+   "train_equals_plain": true
+  }
+ },
+ "accuracy": {
+  "fixed_blocks": {
+   "o": {
+    "max_abs": 0.007207185846656916,
+    "rel_fro": 0.001961885840956609
+   },
+   "dq": {
+    "max_abs": 0.015150264222165033,
+    "rel_fro": 0.0025139434644516766
+   },
+   "dk": {
+    "max_abs": 0.015983313197872384,
+    "rel_fro": 0.0024851767584665053
+   },
+   "dv": {
+    "max_abs": 0.02005438146353189,
+    "rel_fro": 0.002285761317571574
+   }
+  },
+  "sdpa_flash": {
+   "o": {
+    "max_abs": 0.007207185846656916,
+    "rel_fro": 0.001958545614022383
+   },
+   "dq": {
+    "max_abs": 0.015150264222165033,
+    "rel_fro": 0.0025149251856203163
+   },
+   "dk": {
+    "max_abs": 0.020643456521017622,
+    "rel_fro": 0.0030212001726891936
+   },
+   "dv": {
+    "max_abs": 0.02495975327948141,
+    "rel_fro": 0.002843326540852914
+   }
+  },
+  "sdpa_efficient": {
+   "o": {
+    "max_abs": 0.007207185846656916,
+    "rel_fro": 0.0019701634864302113
+   },
+   "dq": {
+    "max_abs": 0.013370665988137187,
+    "rel_fro": 0.002971933644675955
+   },
+   "dk": {
+    "max_abs": 0.023188711907147663,
+    "rel_fro": 0.0034000204387338363
+   },
+   "dv": {
+    "max_abs": 0.02495975327948141,
+    "rel_fro": 0.002842903089928045
+   }
+  }
+ },
+ "repeat": {
+  "fixed_blocks": {
+   "checked": 4,
+   "passed": true,
+   "failures": []
+  },
+  "sdpa_flash": {
+   "checked": 4,
+   "passed": false,
+   "failures": [
+    {
+     "case": "run 1",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      201,
+      109
+     ],
+     "a": 2.477318048477173e-07,
+     "b": 2.4586915969848633e-07,
+     "mismatched_elements": 148,
+     "of": 4194304
+    },
+    {
+     "case": "run 2",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      201,
+      109
+     ],
+     "a": 2.477318048477173e-07,
+     "b": 2.4586915969848633e-07,
+     "mismatched_elements": 166,
+     "of": 4194304
+    },
+    {
+     "case": "run 3",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      201,
+      109
+     ],
+     "a": 2.477318048477173e-07,
+     "b": 2.4586915969848633e-07,
+     "mismatched_elements": 154,
+     "of": 4194304
+    },
+    {
+     "case": "run 4",
+     "tensor": "dq",
+     "index": [
+      0,
+      1,
+      459,
+      45
+     ],
+     "a": 0.0062255859375,
+     "b": 0.006256103515625,
+     "mismatched_elements": 152,
+     "of": 4194304
+    }
+   ]
+  },
+  "sdpa_flash_det": {
+   "checked": 4,
+   "passed": true,
+   "failures": []
+  },
+  "sdpa_efficient": {
+   "checked": 4,
+   "passed": false,
+   "failures": [
+    {
+     "case": "run 1",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      977,
+      54
+     ],
+     "a": -0.05126953125,
+     "b": -0.051513671875,
+     "mismatched_elements": 106,
+     "of": 4194304
+    },
+    {
+     "case": "run 2",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      977,
+      54
+     ],
+     "a": -0.05126953125,
+     "b": -0.051513671875,
+     "mismatched_elements": 103,
+     "of": 4194304
+    },
+    {
+     "case": "run 3",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      1022,
+      97
+     ],
+     "a": 7.860362529754639e-07,
+     "b": 7.897615432739258e-07,
+     "mismatched_elements": 97,
+     "of": 4194304
+    },
+    {
+     "case": "run 4",
+     "tensor": "dq",
+     "index": [
+      0,
+      1,
+      957,
+      40
+     ],
+     "a": 0.00128936767578125,
+     "b": 0.0012969970703125,
+     "mismatched_elements": 119,
+     "of": 4194304
+    }
+   ]
+  },
+  "sdpa_efficient_det": {
+   "checked": 4,
+   "passed": true,
+   "failures": []
+  }
+ },
+ "batch": {
+  "fixed_blocks": {
+   "checked": 8,
+   "passed": true,
+   "failing": [],
+   "failures": []
+  },
+  "sdpa_flash": {
+   "checked": 8,
+   "passed": false,
+   "failing": [
+    "batch 16 first",
+    "batch 16 last",
+    "batch 2 first",
+    "batch 2 last",
+    "batch 3 first",
+    "batch 3 last",
+    "batch 8 first",
+    "batch 8 last"
+   ],
+   "failures": [
+    {
+     "case": "batch 2 first",
+     "tensor": "dq",
+     "index": [
+      0,
+      5,
+      144,
+      17
+     ],
+     "a": -1.150369644165039e-05,
+     "b": -1.1444091796875e-05,
+     "mismatched_elements": 1,
+     "of": 262144
+    },
+    {
+     "case": "batch 2 last",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      232,
+      46
+     ],
+     "a": 0.00457763671875,
+     "b": 0.004547119140625,
+     "mismatched_elements": 3,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 first",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 first",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29564,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 first",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "a": 0.00183868408203125,
+     "b": 0.00176239013671875,
+     "mismatched_elements": 45235,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 first",
+     "tensor": "dv",
+     "index": [
+      0,
+      0,
+      13,
+      8
+     ],
+     "a": -0.0296630859375,
+     "b": -0.02978515625,
+     "mismatched_elements": 167,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 last",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 last",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29564,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 last",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "a": 0.00183868408203125,
+     "b": 0.00176239013671875,
+     "mismatched_elements": 45235,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 last",
+     "tensor": "dv",
+     "index": [
+      0,
+      0,
+      13,
+      8
+     ],
+     "a": -0.0296630859375,
+     "b": -0.02978515625,
+     "mismatched_elements": 167,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 first",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 first",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29564,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 first",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "a": 0.00183868408203125,
+     "b": 0.00176239013671875,
+     "mismatched_elements": 45235,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 first",
+     "tensor": "dv",
+     "index": [
+      0,
+      0,
+      13,
+      8
+     ],
+     "a": -0.0296630859375,
+     "b": -0.02978515625,
+     "mismatched_elements": 167,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 last",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 last",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29565,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 last",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "a": 0.00183868408203125,
+     "b": 0.00176239013671875,
+     "mismatched_elements": 45235,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 last",
+     "tensor": "dv",
+     "index": [
+      0,
+      0,
+      13,
+      8
+     ],
+     "a": -0.0296630859375,
+     "b": -0.02978515625,
+     "mismatched_elements": 167,
+     "of": 262144
+    },
+    {
+     "case": "batch 16 first",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 16 first",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29563,
+     "of": 262144
+    }
+   ]
+  },
+  "sdpa_flash_det": {
+   "checked": 8,
+   "passed": false,
+   "failing": [
+    "batch 16 first",
+    "batch 16 last",
+    "batch 3 first",
+    "batch 3 last",
+    "batch 8 first",
+    "batch 8 last"
+   ],
+   "failures": [
+    {
+     "case": "batch 3 first",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 first",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29563,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 first",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "a": 0.00183868408203125,
+     "b": 0.00176239013671875,
+     "mismatched_elements": 45235,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 first",
+     "tensor": "dv",
+     "index": [
+      0,
+      0,
+      13,
+      8
+     ],
+     "a": -0.0296630859375,
+     "b": -0.02978515625,
+     "mismatched_elements": 167,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 last",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 last",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29563,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 last",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "a": 0.00183868408203125,
+     "b": 0.00176239013671875,
+     "mismatched_elements": 45235,
+     "of": 262144
+    },
+    {
+     "case": "batch 3 last",
+     "tensor": "dv",
+     "index": [
+      0,
+      0,
+      13,
+      8
+     ],
+     "a": -0.0296630859375,
+     "b": -0.02978515625,
+     "mismatched_elements": 167,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 first",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 first",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29565,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 first",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "a": 0.00183868408203125,
+     "b": 0.00176239013671875,
+     "mismatched_elements": 45235,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 first",
+     "tensor": "dv",
+     "index": [
+      0,
+      0,
+      13,
+      8
+     ],
+     "a": -0.0296630859375,
+     "b": -0.02978515625,
+     "mismatched_elements": 167,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 last",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 last",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29565,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 last",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "a": 0.00183868408203125,
+     "b": 0.00176239013671875,
+     "mismatched_elements": 45235,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 last",
+     "tensor": "dv",
+     "index": [
+      0,
+      0,
+      13,
+      8
+     ],
+     "a": -0.0296630859375,
+     "b": -0.02978515625,
+     "mismatched_elements": 167,
+     "of": 262144
+    },
+    {
+     "case": "batch 16 first",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      10
+     ],
+     "a": 0.01239013671875,
+     "b": 0.01251220703125,
+     "mismatched_elements": 45097,
+     "of": 262144
+    },
+    {
+     "case": "batch 16 first",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      64,
+      26
+     ],
+     "a": 0.0693359375,
+     "b": 0.06982421875,
+     "mismatched_elements": 29563,
+     "of": 262144
+    },
+    {
+     "case": "batch 16 first",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      4
+     ],
+     "a": 0.00183868408203125,
+     "b": 0.00176239013671875,
+     "mismatched_elements": 45235,
+     "of": 262144
+    },
+    {
+     "case": "batch 16 first",
+     "tensor": "dv",
+     "index": [
+      0,
+      0,
+      13,
+      8
+     ],
+     "a": -0.0296630859375,
+     "b": -0.02978515625,
+     "mismatched_elements": 167,
+     "of": 262144
+    }
+   ]
+  },
+  "sdpa_efficient": {
+   "checked": 8,
+   "passed": false,
+   "failing": [
+    "batch 16 first",
+    "batch 16 last",
+    "batch 8 first",
+    "batch 8 last"
+   ],
+   "failures": [
+    {
+     "case": "batch 8 first",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      251,
+      105
+     ],
+     "a": -2.8848648071289062e-05,
+     "b": -2.872943878173828e-05,
+     "mismatched_elements": 13,
+     "of": 262144
+    },
+    {
+     "case": "batch 8 last",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      251,
+      105
+     ],
+     "a": -2.8848648071289062e-05,
+     "b": -2.872943878173828e-05,
+     "mismatched_elements": 13,
+     "of": 262144
+    },
+    {
+     "case": "batch 16 first",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      104,
+      125
+     ],
+     "a": 0.10546875,
+     "b": 0.10498046875,
+     "mismatched_elements": 45,
+     "of": 262144
+    },
+    {
+     "case": "batch 16 last",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      104,
+      125
+     ],
+     "a": 0.10546875,
+     "b": 0.10498046875,
+     "mismatched_elements": 45,
+     "of": 262144
+    }
+   ]
+  },
+  "sdpa_efficient_det": {
+   "checked": 8,
+   "passed": true,
+   "failing": [],
+   "failures": []
+  }
+ },
+ "padded": {
+  "fixed_blocks": {
+   "checked": 3,
+   "passed": true,
+   "failing": [],
+   "failures": []
+  },
+  "sdpa_flash": {
+   "checked": 3,
+   "passed": false,
+   "failing": [
+    "T=256 batch 4 pos 0",
+    "T=256 batch 4 pos 3",
+    "T=320 batch 3 pos 1"
+   ],
+   "failures": [
+    {
+     "case": "T=256 batch 4 pos 0",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      97
+     ],
+     "a": 0.0145263671875,
+     "b": 0.01446533203125,
+     "mismatched_elements": 29345,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 0",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      66,
+      112
+     ],
+     "a": -0.000759124755859375,
+     "b": -0.000762939453125,
+     "mismatched_elements": 20438,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 0",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      23
+     ],
+     "a": -0.0291748046875,
+     "b": -0.029296875,
+     "mismatched_elements": 34202,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 0",
+     "tensor": "dv",
+     "index": [
+      0,
+      1,
+      16,
+      8
+     ],
+     "a": 0.0732421875,
+     "b": 0.07275390625,
+     "mismatched_elements": 119,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 3",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      97
+     ],
+     "a": 0.0145263671875,
+     "b": 0.01446533203125,
+     "mismatched_elements": 29345,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 3",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      66,
+      112
+     ],
+     "a": -0.000759124755859375,
+     "b": -0.000762939453125,
+     "mismatched_elements": 20438,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 3",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      23
+     ],
+     "a": -0.0291748046875,
+     "b": -0.029296875,
+     "mismatched_elements": 34202,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 3",
+     "tensor": "dv",
+     "index": [
+      0,
+      1,
+      16,
+      8
+     ],
+     "a": 0.0732421875,
+     "b": 0.07275390625,
+     "mismatched_elements": 119,
+     "of": 204800
+    },
+    {
+     "case": "T=320 batch 3 pos 1",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      97
+     ],
+     "a": 0.0145263671875,
+     "b": 0.01446533203125,
+     "mismatched_elements": 29345,
+     "of": 204800
+    },
+    {
+     "case": "T=320 batch 3 pos 1",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      66,
+      112
+     ],
+     "a": -0.000759124755859375,
+     "b": -0.000762939453125,
+     "mismatched_elements": 20438,
+     "of": 204800
+    },
+    {
+     "case": "T=320 batch 3 pos 1",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      23
+     ],
+     "a": -0.0291748046875,
+     "b": -0.029296875,
+     "mismatched_elements": 34202,
+     "of": 204800
+    },
+    {
+     "case": "T=320 batch 3 pos 1",
+     "tensor": "dv",
+     "index": [
+      0,
+      1,
+      16,
+      8
+     ],
+     "a": 0.0732421875,
+     "b": 0.07275390625,
+     "mismatched_elements": 119,
+     "of": 204800
+    }
+   ]
+  },
+  "sdpa_flash_det": {
+   "checked": 3,
+   "passed": false,
+   "failing": [
+    "T=256 batch 4 pos 0",
+    "T=256 batch 4 pos 3",
+    "T=320 batch 3 pos 1"
+   ],
+   "failures": [
+    {
+     "case": "T=256 batch 4 pos 0",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      97
+     ],
+     "a": 0.0145263671875,
+     "b": 0.01446533203125,
+     "mismatched_elements": 29345,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 0",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      66,
+      112
+     ],
+     "a": -0.000759124755859375,
+     "b": -0.000762939453125,
+     "mismatched_elements": 20436,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 0",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      23
+     ],
+     "a": -0.0291748046875,
+     "b": -0.029296875,
+     "mismatched_elements": 34202,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 0",
+     "tensor": "dv",
+     "index": [
+      0,
+      1,
+      16,
+      8
+     ],
+     "a": 0.0732421875,
+     "b": 0.07275390625,
+     "mismatched_elements": 119,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 3",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      97
+     ],
+     "a": 0.0145263671875,
+     "b": 0.01446533203125,
+     "mismatched_elements": 29345,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 3",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      66,
+      112
+     ],
+     "a": -0.000759124755859375,
+     "b": -0.000762939453125,
+     "mismatched_elements": 20436,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 3",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      23
+     ],
+     "a": -0.0291748046875,
+     "b": -0.029296875,
+     "mismatched_elements": 34202,
+     "of": 204800
+    },
+    {
+     "case": "T=256 batch 4 pos 3",
+     "tensor": "dv",
+     "index": [
+      0,
+      1,
+      16,
+      8
+     ],
+     "a": 0.0732421875,
+     "b": 0.07275390625,
+     "mismatched_elements": 119,
+     "of": 204800
+    },
+    {
+     "case": "T=320 batch 3 pos 1",
+     "tensor": "o",
+     "index": [
+      0,
+      0,
+      64,
+      97
+     ],
+     "a": 0.0145263671875,
+     "b": 0.01446533203125,
+     "mismatched_elements": 29345,
+     "of": 204800
+    },
+    {
+     "case": "T=320 batch 3 pos 1",
+     "tensor": "dq",
+     "index": [
+      0,
+      0,
+      66,
+      112
+     ],
+     "a": -0.000759124755859375,
+     "b": -0.000762939453125,
+     "mismatched_elements": 20436,
+     "of": 204800
+    },
+    {
+     "case": "T=320 batch 3 pos 1",
+     "tensor": "dk",
+     "index": [
+      0,
+      0,
+      0,
+      23
+     ],
+     "a": -0.0291748046875,
+     "b": -0.029296875,
+     "mismatched_elements": 34202,
+     "of": 204800
+    },
+    {
+     "case": "T=320 batch 3 pos 1",
+     "tensor": "dv",
+     "index": [
+      0,
+      1,
+      16,
+      8
+     ],
+     "a": 0.0732421875,
+     "b": 0.07275390625,
+     "mismatched_elements": 119,
+     "of": 204800
+    }
+   ]
+  },
+  "sdpa_efficient": {
+   "checked": 3,
+   "passed": true,
+   "failing": [],
+   "failures": []
+  },
+  "sdpa_efficient_det": {
+   "checked": 3,
+   "passed": true,
+   "failing": [],
+   "failures": []
+  }
+ },
+ "warnings": {},
+ "timing": {
+  "fixed_blocks": {
+   "fwd_ms": 0.634,
+   "fwd_bwd_ms": 2.942
+  },
+  "sdpa_flash": {
+   "fwd_ms": 0.467,
+   "fwd_bwd_ms": 2.131
+  },
+  "sdpa_flash_det": {
+   "fwd_ms": 0.465,
+   "fwd_bwd_ms": 5.202
+  },
+  "sdpa_efficient": {
+   "fwd_ms": 0.737,
+   "fwd_bwd_ms": 10.732
+  },
+  "sdpa_efficient_det": {
+   "fwd_ms": 0.737,
+   "fwd_bwd_ms": 9.418
+  }
+ }
+}

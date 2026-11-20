@@ -1,0 +1,93 @@
+# Regression suite for the handbook's verified examples (tools/bi_suite.py).
+#
+# UNTESTED. This repository has no remote, so this workflow has never run. The commands in
+# it were run by hand on the machines listed in handbook/4-operations/regression.md; the workflow
+# around them (triggers, runner labels, inputs, variables, artifact upload) was not.
+# Before relying on it:
+#   1. register a self-hosted runner with the labels below on a GPU machine that has
+#      torch and Triton installed;
+#   2. set the repository variables it reads (see "env" below);
+#   3. start it once by hand (workflow_dispatch) and fix what breaks.
+#
+# A hosted runner cannot run it: the examples need CUDA GPUs, and the baseline is tied to
+# the GPU model, the driver and the library versions of one machine.
+name: bi-suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "quick (reduced sizes) or full (the sizes behind the case pages)"
+        type: choice
+        options: [quick, full]
+        default: quick
+      only:
+        description: "comma-separated entry names; empty runs every entry that fits the runner"
+        required: false
+        default: ""
+  pull_request:
+    paths:
+      - "tools/**"
+      - "examples/**"
+      - "suite/**"
+      - ".github/workflows/bi-suite.yml"
+  schedule:
+    - cron: "17 6 * * 1"        # weekly: catches driver and library updates on the runner
+
+concurrency:
+  group: bi-suite-${{ github.ref }}
+  cancel-in-progress: false     # a cancelled two-node launch can leave processes on the second node
+
+jobs:
+  suite:
+    # A pull request from a fork would run its code on the GPU machine: same-repository PRs only.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, linux, gpu]
+    timeout-minutes: 360
+    env:
+      # Repository variables (Settings > Variables), all optional:
+      BI_PYTHON: ${{ vars.BI_PYTHON || 'python' }}     # interpreter with torch and Triton
+      BI_LOCK: ${{ vars.BI_LOCK }}                     # lock file when the GPUs are shared with other jobs
+      BI_PEER: ${{ vars.BI_PEER }}                     # second node (SSH name) for the two-node entries
+      BI_LAUNCHER2: ${{ vars.BI_LAUNCHER2 }}           # two-node launcher: <launcher> <workdir> <script.py> [args]
+      OPGUARD_ROOT: ${{ vars.OPGUARD_ROOT }}           # OpGuard checkout, for graph_probe, rl_loop, full pretraining_e2e
+      BI_MODE: ${{ inputs.mode || 'quick' }}
+      BI_ONLY: ${{ inputs.only }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: What runs on this machine
+        run: |
+          "$BI_PYTHON" tools/bi_suite.py --list ${BI_LOCK:+--lock-file "$BI_LOCK"} \
+            ${BI_PEER:+--peer "$BI_PEER"} ${BI_LAUNCHER2:+--launcher2 "$BI_LAUNCHER2"}
+
+      # Two-node entries need this checkout at the same absolute path on the second node.
+      # The suite does not copy it: skip this step, and they are skipped unless the path exists there.
+      - name: Copy the checkout to the second node
+        if: env.BI_PEER != ''
+        run: |
+          ssh -o BatchMode=yes "$BI_PEER" "mkdir -p '$GITHUB_WORKSPACE'"
+          rsync -a --delete --exclude .git --exclude suite/runs "$GITHUB_WORKSPACE/" "$BI_PEER:$GITHUB_WORKSPACE/"
+
+      # Exit code 1 means a required check (expect=pass) failed or an entry gave no result.
+      # Changed stock results, new or missing checks and timings never fail the job.
+      - name: Run the suite
+        run: |
+          "$BI_PYTHON" tools/bi_suite.py "--$BI_MODE" --out suite/runs/ci --vs-committed \
+            ${BI_ONLY:+--only "$BI_ONLY"} ${BI_LOCK:+--lock-file "$BI_LOCK"} \
+            ${BI_PEER:+--peer "$BI_PEER"} ${BI_LAUNCHER2:+--launcher2 "$BI_LAUNCHER2"}
+
+      - name: Keep the report, the per-entry results and the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bi-suite-${{ inputs.mode || 'quick' }}-${{ github.run_id }}
+          path: |
+            suite/runs/ci/report.json
+            suite/runs/ci/*/*.json
+            suite/runs/ci/*/log.txt
+          if-no-files-found: warn
+
+      # Baselines are never recorded here. After a stack change, review the report, then run
+      #   python tools/bi_suite.py --from-report report.json --record-baseline
+      # in a checkout and commit the file it writes under suite/baselines/.

@@ -1,0 +1,907 @@
+{
+ "schema": "bi-results-v1",
+ "example": "ckpt_conversion",
+ "quick": false,
+ "argv": [
+  "ckpt_conversion.py",
+  "--json",
+  "results-cpu.json"
+ ],
+ "env": {
+  "python": "3.10.13",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A40",
+    "sm": "86",
+    "memory_gb": 44.3,
+    "sm_count": 84
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "550.144.03"
+ },
+ "counts": {
+  "ok": 27,
+  "regression": 0,
+  "changed": 0,
+  "info": 6
+ },
+ "checks": [
+  {
+   "name": "the state dict loads strictly into LlamaForCausalLM and the plain forward equals its logits",
+   "impl": "transformers",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "differing_logits": 0
+   }
+  },
+  {
+   "name": "round trip HF -> Megatron-style TP 2 -> HF is bit-exact, tensor by tensor",
+   "impl": "convert.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tensors": 39,
+    "summary": {
+     "params": 39,
+     "equal": 39,
+     "rows_matched": 0,
+     "rows_unmatched": 0,
+     "width_mismatch": 0,
+     "replica_mismatch": 0,
+     "missing": 0,
+     "unreadable": 0,
+     "unmatched_rows_a": 0,
+     "unmatched_rows_b": 0,
+     "dtype_changes": {},
+     "unused_a": 0,
+     "unused_b": 0
+    }
+   }
+  },
+  {
+   "name": "conversion to TP 2: every row of every logical parameter matched",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "summary": {
+     "params": 39,
+     "equal": 39,
+     "rows_matched": 0,
+     "rows_unmatched": 0,
+     "width_mismatch": 0,
+     "replica_mismatch": 0,
+     "missing": 0,
+     "unreadable": 0,
+     "unmatched_rows_a": 0,
+     "unmatched_rows_b": 0,
+     "dtype_changes": {},
+     "unused_a": 0,
+     "unused_b": 0
+    },
+    "report": [
+     "39 logical parameters (hf vs mcore, rows=digest): 39 equal, 0 rows matched, 0 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "all rows matched"
+    ]
+   }
+  },
+  {
+   "name": "forward at the target layout, TP 2, equals the source forward with the same reduction",
+   "impl": "forward check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "logits": 65536,
+    "differing_logits": 0,
+    "max_abs_diff": 0.0
+   }
+  },
+  {
+   "name": "the source forward reduced as at TP 2 equals TP 1",
+   "impl": "row-parallel sum",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "differing_logits": 52363,
+    "logits": 65536,
+    "max_abs_diff": 0.01953125
+   }
+  },
+  {
+   "name": "round trip HF -> Megatron-style TP 4 -> HF is bit-exact, tensor by tensor",
+   "impl": "convert.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tensors": 39,
+    "summary": {
+     "params": 39,
+     "equal": 39,
+     "rows_matched": 0,
+     "rows_unmatched": 0,
+     "width_mismatch": 0,
+     "replica_mismatch": 0,
+     "missing": 0,
+     "unreadable": 0,
+     "unmatched_rows_a": 0,
+     "unmatched_rows_b": 0,
+     "dtype_changes": {},
+     "unused_a": 0,
+     "unused_b": 0
+    }
+   }
+  },
+  {
+   "name": "conversion to TP 4: every row of every logical parameter matched",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "summary": {
+     "params": 39,
+     "equal": 39,
+     "rows_matched": 0,
+     "rows_unmatched": 0,
+     "width_mismatch": 0,
+     "replica_mismatch": 0,
+     "missing": 0,
+     "unreadable": 0,
+     "unmatched_rows_a": 0,
+     "unmatched_rows_b": 0,
+     "dtype_changes": {},
+     "unused_a": 0,
+     "unused_b": 0
+    },
+    "report": [
+     "39 logical parameters (hf vs mcore, rows=digest): 39 equal, 0 rows matched, 0 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "all rows matched"
+    ]
+   }
+  },
+  {
+   "name": "forward at the target layout, TP 4, equals the source forward with the same reduction",
+   "impl": "forward check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "logits": 65536,
+    "differing_logits": 0,
+    "max_abs_diff": 0.0
+   }
+  },
+  {
+   "name": "the source forward reduced as at TP 4 equals TP 1",
+   "impl": "row-parallel sum",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "differing_logits": 52342,
+    "logits": 65536,
+    "max_abs_diff": 0.017578125
+   }
+  },
+  {
+   "name": "resharding TP 2 -> TP 4: every row matched",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "summary": {
+     "params": 39,
+     "equal": 39,
+     "rows_matched": 0,
+     "rows_unmatched": 0,
+     "width_mismatch": 0,
+     "replica_mismatch": 0,
+     "missing": 0,
+     "unreadable": 0,
+     "unmatched_rows_a": 0,
+     "unmatched_rows_b": 0,
+     "dtype_changes": {},
+     "unused_a": 0,
+     "unused_b": 0
+    },
+    "report": [
+     "39 logical parameters (mcore vs mcore, rows=digest): 39 equal, 0 rows matched, 0 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "all rows matched"
+    ]
+   }
+  },
+  {
+   "name": "a widening cast (bf16 -> fp32) is reported per parameter and its rows match exactly",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "summary": {
+     "params": 39,
+     "equal": 0,
+     "rows_matched": 39,
+     "rows_unmatched": 0,
+     "width_mismatch": 0,
+     "replica_mismatch": 0,
+     "missing": 0,
+     "unreadable": 0,
+     "unmatched_rows_a": 0,
+     "unmatched_rows_b": 0,
+     "dtype_changes": {
+      "widening (exact)": 39
+     },
+     "unused_a": 0,
+     "unused_b": 0
+    }
+   }
+  },
+  {
+   "name": "global scope without a map: row-parallel shards cannot match their full rows",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "summary": {
+     "a_tensors": 39,
+     "a_rows": 19465,
+     "a_unmatched_rows": 4096,
+     "b_tensors": 54,
+     "b_rows": 23570,
+     "b_unmatched_rows": 8201
+    },
+    "unmatched_tensors_a": [
+     "model.layers.0.mlp.down_proj.weight",
+     "model.layers.0.self_attn.o_proj.weight",
+     "model.layers.1.mlp.down_proj.weight",
+     "model.layers.1.self_attn.o_proj.weight",
+     "model.layers.2.mlp.down_proj.weight",
+     "model.layers.2.self_attn.o_proj.weight",
+     "model.layers.3.mlp.down_proj.weight",
+     "model.layers.3.self_attn.o_proj.weight"
+    ]
+   }
+  },
+  {
+   "name": "fault, transposed shard (rank 1 gate/up of layer 0 stored transposed): ckpt_compare names the parameters and rows",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "planted": {
+     "physical_rows": 1024,
+     "hf_rows": 1024,
+     "examples": [
+      "mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[0]",
+      "mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[1000]",
+      "mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[1001]"
+     ]
+    },
+    "params_named": [
+     "model.layers.0.mlp.gate_proj.weight",
+     "model.layers.0.mlp.up_proj.weight"
+    ],
+    "a_rows_named": 1024,
+    "b_rows_named": 1024,
+    "seconds": 0.192,
+    "report": [
+     "39 logical parameters (hf vs mcore, rows=digest): 37 equal, 0 rows matched, 2 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "  model.layers.0.mlp.gate_proj.weight: rows_unmatched",
+     "    A 512 of 1024 rows unmatched: row 512 <- model.layers.0.mlp.gate_proj.weight[512]; row 513 <- model.layers.0.mlp.gate_proj.weight[513]; row 514 <- model.layers.0.mlp.gate_proj.weight[514]; ... 509 more",
+     "    B 512 of 1024 rows unmatched: row 512 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[0]; row 513 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[1]; row 514 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[2]; ... 509 more",
+     "  model.layers.0.mlp.up_proj.weight: rows_unmatched",
+     "    A 512 of 1024 rows unmatched: row 512 <- model.layers.0.mlp.up_proj.weight[512]; row 513 <- model.layers.0.mlp.up_proj.weight[513]; row 514 <- model.layers.0.mlp.up_proj.weight[514]; ... 509 more",
+     "    B 512 of 1024 rows unmatched: row 512 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[512]; row 513 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[513]; row 514 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[514]; ... 509 more",
+     "NOT all rows matched"
+    ]
+   }
+  },
+  {
+   "name": "fault, transposed shard (rank 1 gate/up of layer 0 stored transposed): xor row fingerprints name the same rows",
+   "impl": "ckpt_compare.py --rows xor",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "a_rows_named": 1024,
+    "a_rows_missed": 0,
+    "missed_examples": []
+   }
+  },
+  {
+   "name": "fault, transposed shard (rank 1 gate/up of layer 0 stored transposed): the forward check differs",
+   "impl": "forward check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "logits": 65536,
+    "differing_logits": 65297,
+    "max_abs_diff": 1.005859375
+   }
+  },
+  {
+   "name": "fault, wrong QKV interleave (q, k, v stacked, not per query group): ckpt_compare names the parameters and rows",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "planted": {
+     "params": [
+      "model.layers.0.self_attn.k_proj.weight",
+      "model.layers.0.self_attn.q_proj.weight",
+      "model.layers.0.self_attn.v_proj.weight",
+      "model.layers.1.self_attn.k_proj.weight",
+      "model.layers.1.self_attn.q_proj.weight",
+      "model.layers.1.self_attn.v_proj.weight",
+      "model.layers.2.self_attn.k_proj.weight",
+      "model.layers.2.self_attn.q_proj.weight",
+      "model.layers.2.self_attn.v_proj.weight",
+      "model.layers.3.self_attn.k_proj.weight",
+      "model.layers.3.self_attn.q_proj.weight",
+      "model.layers.3.self_attn.v_proj.weight"
+     ]
+    },
+    "params_named": [
+     "model.layers.0.self_attn.k_proj.weight",
+     "model.layers.0.self_attn.q_proj.weight",
+     "model.layers.0.self_attn.v_proj.weight",
+     "model.layers.1.self_attn.k_proj.weight",
+     "model.layers.1.self_attn.q_proj.weight",
+     "model.layers.1.self_attn.v_proj.weight",
+     "model.layers.2.self_attn.k_proj.weight",
+     "model.layers.2.self_attn.q_proj.weight",
+     "model.layers.2.self_attn.v_proj.weight",
+     "model.layers.3.self_attn.k_proj.weight",
+     "model.layers.3.self_attn.q_proj.weight",
+     "model.layers.3.self_attn.v_proj.weight"
+    ],
+    "a_rows_named": 1280,
+    "b_rows_named": 1280,
+    "seconds": 0.197,
+    "report": [
+     "39 logical parameters (hf vs mcore, rows=digest): 27 equal, 0 rows matched, 12 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "  model.layers.0.self_attn.q_proj.weight: rows_unmatched",
+     "    A 128 of 512 rows unmatched: row 128 <- model.layers.0.self_attn.q_proj.weight[128]; row 129 <- model.layers.0.self_attn.q_proj.weight[129]; row 130 <- model.layers.0.self_attn.q_proj.weight[130]; ... 125 more",
+     "    B 128 of 512 rows unmatched: row 384 <- mp_rank_01/model.decoder.layers.0.self_attention.linear_qkv.weight[192]; row 385 <- mp_rank_01/model.decoder.layers.0.self_attention.linear_qkv.weight[193]; row 386 <- mp_rank_01/model.decoder.layers.0.self_attention.linear_qkv.weight[194]; ... 125 more",
+     "  model.layers.1.self_attn.q_proj.weight: rows_unmatched",
+     "    A 128 of 512 rows unmatched: row 128 <- model.layers.1.self_attn.q_proj.weight[128]; row 129 <- model.layers.1.self_attn.q_proj.weight[129]; row 130 <- model.layers.1.self_attn.q_proj.weight[130]; ... 125 more",
+     "    B 128 of 512 rows unmatched: row 384 <- mp_rank_01/model.decoder.layers.1.self_attention.linear_qkv.weight[192]; row 385 <- mp_rank_01/model.decoder.layers.1.self_attention.linear_qkv.weight[193]; row 386 <- mp_rank_01/model.decoder.layers.1.self_attention.linear_qkv.weight[194]; ... 125 more",
+     "  model.layers.2.self_attn.q_proj.weight: rows_unmatched",
+     "    A 128 of 512 rows unmatched: row 128 <- model.layers.2.self_attn.q_proj.weight[128]; row 129 <- model.layers.2.self_attn.q_proj.weight[129]; row 130 <- model.layers.2.self_attn.q_proj.weight[130]; ... 125 more",
+     "    B 128 of 512 rows unmatched: row 384 <- mp_rank_01/model.decoder.layers.2.self_attention.linear_qkv.weight[192]; row 385 <- mp_rank_01/model.decoder.layers.2.self_attention.linear_qkv.weight[193]; row 386 <- mp_rank_01/model.decoder.layers.2.self_attention.linear_qkv.weight[194]; ... 125 more",
+     "  model.layers.3.self_attn.q_proj.weight: rows_unmatched",
+     "    A 128 of 512 rows unmatched: row 128 <- model.layers.3.self_attn.q_proj.weight[128]; row 129 <- model.layers.3.self_attn.q_proj.weight[129]; row 130 <- model.layers.3.self_attn.q_proj.weight[130]; ... 125 more",
+     "... 26 more lines"
+    ]
+   }
+  },
+  {
+   "name": "fault, wrong QKV interleave (q, k, v stacked, not per query group): xor row fingerprints name the same rows",
+   "impl": "ckpt_compare.py --rows xor",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "a_rows_named": 1280,
+    "a_rows_missed": 0,
+    "missed_examples": []
+   }
+  },
+  {
+   "name": "fault, wrong QKV interleave (q, k, v stacked, not per query group): the forward check differs",
+   "impl": "forward check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "logits": 65536,
+    "differing_logits": 65458,
+    "max_abs_diff": 2.6328125
+   }
+  },
+  {
+   "name": "fault, bf16 -> fp16 -> bf16 cast of every tensor: ckpt_compare names the parameters and rows",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "planted": {
+     "physical_rows": 2101,
+     "hf_rows": 2081,
+     "examples": [
+      "mp_rank_00/model.decoder.layers.0.mlp.linear_fc1.weight[1005]",
+      "mp_rank_00/model.decoder.layers.0.mlp.linear_fc1.weight[1012]",
+      "mp_rank_00/model.decoder.layers.0.mlp.linear_fc1.weight[101]"
+     ]
+    },
+    "params_named": [
+     "lm_head.weight",
+     "model.embed_tokens.weight",
+     "model.layers.0.mlp.down_proj.weight",
+     "model.layers.0.mlp.gate_proj.weight",
+     "model.layers.0.mlp.up_proj.weight",
+     "model.layers.0.self_attn.k_proj.weight",
+     "model.layers.0.self_attn.o_proj.weight",
+     "model.layers.0.self_attn.q_proj.weight",
+     "model.layers.0.self_attn.v_proj.weight",
+     "model.layers.1.mlp.down_proj.weight",
+     "model.layers.1.mlp.gate_proj.weight",
+     "model.layers.1.mlp.up_proj.weight",
+     "model.layers.1.self_attn.k_proj.weight",
+     "model.layers.1.self_attn.o_proj.weight",
+     "model.layers.1.self_attn.q_proj.weight",
+     "model.layers.1.self_attn.v_proj.weight",
+     "model.layers.2.mlp.down_proj.weight",
+     "model.layers.2.mlp.gate_proj.weight",
+     "model.layers.2.mlp.up_proj.weight",
+     "model.layers.2.self_attn.k_proj.weight",
+     "model.layers.2.self_attn.o_proj.weight",
+     "model.layers.2.self_attn.q_proj.weight",
+     "model.layers.2.self_attn.v_proj.weight",
+     "model.layers.3.mlp.down_proj.weight",
+     "model.layers.3.mlp.gate_proj.weight",
+     "model.layers.3.mlp.up_proj.weight",
+     "model.layers.3.self_attn.k_proj.weight",
+     "model.layers.3.self_attn.o_proj.weight",
+     "model.layers.3.self_attn.q_proj.weight",
+     "model.layers.3.self_attn.v_proj.weight"
+    ],
+    "a_rows_named": 2081,
+    "b_rows_named": 2081,
+    "seconds": 0.225,
+    "report": [
+     "39 logical parameters (hf vs mcore, rows=digest): 9 equal, 0 rows matched, 30 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "  model.embed_tokens.weight: rows_unmatched",
+     "    A 204 of 2048 rows unmatched: row 37 <- model.embed_tokens.weight[37]; row 46 <- model.embed_tokens.weight[46]; row 67 <- model.embed_tokens.weight[67]; ... 201 more",
+     "    B 204 of 2048 rows unmatched: row 37 <- mp_rank_00/model.embedding.word_embeddings.weight[37]; row 46 <- mp_rank_00/model.embedding.word_embeddings.weight[46]; row 67 <- mp_rank_00/model.embedding.word_embeddings.weight[67]; ... 201 more",
+     "  model.layers.0.self_attn.q_proj.weight: rows_unmatched",
+     "    A 42 of 512 rows unmatched: row 16 <- model.layers.0.self_attn.q_proj.weight[16]; row 20 <- model.layers.0.self_attn.q_proj.weight[20]; row 24 <- model.layers.0.self_attn.q_proj.weight[24]; ... 39 more",
+     "    B 42 of 512 rows unmatched: row 16 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[16]; row 20 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[20]; row 24 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[24]; ... 39 more",
+     "  model.layers.1.self_attn.q_proj.weight: rows_unmatched",
+     "    A 59 of 512 rows unmatched: row 22 <- model.layers.1.self_attn.q_proj.weight[22]; row 24 <- model.layers.1.self_attn.q_proj.weight[24]; row 30 <- model.layers.1.self_attn.q_proj.weight[30]; ... 56 more",
+     "    B 59 of 512 rows unmatched: row 22 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[22]; row 24 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[24]; row 30 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[30]; ... 56 more",
+     "  model.layers.2.self_attn.q_proj.weight: rows_unmatched",
+     "    A 54 of 512 rows unmatched: row 3 <- model.layers.2.self_attn.q_proj.weight[3]; row 5 <- model.layers.2.self_attn.q_proj.weight[5]; row 10 <- model.layers.2.self_attn.q_proj.weight[10]; ... 51 more",
+     "... 80 more lines"
+    ]
+   }
+  },
+  {
+   "name": "fault, bf16 -> fp16 -> bf16 cast of every tensor: xor row fingerprints name the same rows",
+   "impl": "ckpt_compare.py --rows xor",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "a_rows_named": 2070,
+    "a_rows_missed": 11,
+    "missed_examples": [
+     [
+      "model.layers.0.mlp.down_proj.weight",
+      361
+     ],
+     [
+      "model.layers.1.mlp.up_proj.weight",
+      348
+     ],
+     [
+      "model.layers.1.mlp.up_proj.weight",
+      410
+     ],
+     [
+      "model.layers.1.mlp.up_proj.weight",
+      910
+     ]
+    ]
+   }
+  },
+  {
+   "name": "fault, bf16 -> fp16 -> bf16 cast of every tensor: the forward check differs",
+   "impl": "forward check",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "equal": true,
+    "logits": 65536,
+    "differing_logits": 0,
+    "max_abs_diff": 0.0
+   }
+  },
+  {
+   "name": "fault, one flipped bit (layer 1 QKV, rank 0): ckpt_compare names the parameters and rows",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "planted": {
+     "physical_rows": 1,
+     "hf_rows": 1,
+     "examples": [
+      "mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[144]"
+     ]
+    },
+    "params_named": [
+     "model.layers.1.self_attn.k_proj.weight"
+    ],
+    "a_rows_named": 1,
+    "b_rows_named": 1,
+    "seconds": 0.189,
+    "report": [
+     "39 logical parameters (hf vs mcore, rows=digest): 38 equal, 0 rows matched, 1 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "  model.layers.1.self_attn.k_proj.weight: rows_unmatched",
+     "    A 1 of 128 rows unmatched: row 16 <- model.layers.1.self_attn.k_proj.weight[16]",
+     "    B 1 of 128 rows unmatched: row 16 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[144]",
+     "NOT all rows matched"
+    ]
+   }
+  },
+  {
+   "name": "fault, one flipped bit (layer 1 QKV, rank 0): xor row fingerprints name the same rows",
+   "impl": "ckpt_compare.py --rows xor",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "a_rows_named": 1,
+    "a_rows_missed": 0,
+    "missed_examples": []
+   }
+  },
+  {
+   "name": "fault, one flipped bit (layer 1 QKV, rank 0): the forward check differs",
+   "impl": "forward check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "logits": 65536,
+    "differing_logits": 20353,
+    "max_abs_diff": 0.01171875
+   }
+  },
+  {
+   "name": "fault, a missing row (last row of the rank 1 output layer): ckpt_compare names the parameters and rows",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "planted": {
+     "physical": [
+      "mp_rank_01/model.output_layer.weight[1023]"
+     ],
+     "hf_rows": [
+      [
+       "lm_head.weight",
+       2047
+      ]
+     ]
+    },
+    "params_named": [
+     "lm_head.weight"
+    ],
+    "a_rows_named": 1,
+    "b_rows_named": 0,
+    "seconds": 0.191,
+    "report": [
+     "39 logical parameters (hf vs mcore, rows=digest): 38 equal, 0 rows matched, 1 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "  lm_head.weight: rows_unmatched",
+     "    A 1 of 2048 rows unmatched: row 2047 <- lm_head.weight[2047]",
+     "NOT all rows matched"
+    ]
+   }
+  },
+  {
+   "name": "fault, a missing row (last row of the rank 1 output layer): xor row fingerprints name the same rows",
+   "impl": "ckpt_compare.py --rows xor",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "a_rows_named": 1,
+    "a_rows_missed": 0,
+    "missed_examples": []
+   }
+  },
+  {
+   "name": "fault, a missing row (last row of the rank 1 output layer): the forward check differs",
+   "impl": "forward check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "logits": 65504,
+    "differing_logits": -1,
+    "max_abs_diff": null
+   }
+  },
+  {
+   "name": "two q heads swapped inside one parameter: the row multiset sees it",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "summary": {
+     "params": 39,
+     "equal": 38,
+     "rows_matched": 1,
+     "rows_unmatched": 0,
+     "width_mismatch": 0,
+     "replica_mismatch": 0,
+     "missing": 0,
+     "unreadable": 0,
+     "unmatched_rows_a": 0,
+     "unmatched_rows_b": 0,
+     "dtype_changes": {},
+     "unused_a": 0,
+     "unused_b": 0
+    }
+   }
+  },
+  {
+   "name": "two q heads swapped inside one parameter: the forward check sees it",
+   "impl": "forward check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "logits": 65536,
+    "differing_logits": 58975,
+    "max_abs_diff": 0.146484375
+   }
+  },
+  {
+   "name": "row-parallel shards joined in the wrong order: xor rows see it",
+   "impl": "ckpt_compare.py --rows xor",
+   "level": "other",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "summary": {
+     "params": 39,
+     "equal": 38,
+     "rows_matched": 1,
+     "rows_unmatched": 0,
+     "width_mismatch": 0,
+     "replica_mismatch": 0,
+     "missing": 0,
+     "unreadable": 0,
+     "unmatched_rows_a": 0,
+     "unmatched_rows_b": 0,
+     "dtype_changes": {},
+     "unused_a": 0,
+     "unused_b": 0
+    },
+    "report": [
+     "39 logical parameters (hf vs mcore, rows=xor): 38 equal, 1 rows matched, 0 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "all rows matched"
+    ]
+   }
+  },
+  {
+   "name": "row-parallel shards joined in the wrong order: digest rows see it",
+   "impl": "ckpt_compare.py --rows digest",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "summary": {
+     "params": 39,
+     "equal": 38,
+     "rows_matched": 0,
+     "rows_unmatched": 1,
+     "width_mismatch": 0,
+     "replica_mismatch": 0,
+     "missing": 0,
+     "unreadable": 0,
+     "unmatched_rows_a": 512,
+     "unmatched_rows_b": 512,
+     "dtype_changes": {},
+     "unused_a": 0,
+     "unused_b": 0
+    },
+    "report": [
+     "39 logical parameters (hf vs mcore, rows=digest): 38 equal, 0 rows matched, 1 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "  model.layers.1.mlp.down_proj.weight: rows_unmatched",
+     "    A 512 of 512 rows unmatched: row 0 <- model.layers.1.mlp.down_proj.weight[0]; row 1 <- model.layers.1.mlp.down_proj.weight[1]; row 2 <- model.layers.1.mlp.down_proj.weight[2]; ... 509 more",
+     "    B 512 of 512 rows unmatched: row 0 <- mp_rank_00/model.decoder.layers.1.mlp.linear_fc2.weight[0] + mp_rank_01/model.decoder.layers.1.mlp.linear_fc2.weight[0]; row 1 <- mp_rank_00/model.decoder.layers.1.mlp.linear_fc2.weight[1] + mp_rank_01/model.decoder.layers.1.mlp.linear_fc2.weight[1]; row 2 <- mp_rank_00/model.decoder.layers.1.mlp.linear_fc2.weight[2] + mp_rank_01/model.decoder.layers.1.mlp.linear_fc2.weight[2]; ... 509 more",
+     "NOT all rows matched"
+    ]
+   }
+  },
+  {
+   "name": "row-parallel shards joined in the wrong order: the forward check sees it",
+   "impl": "forward check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "logits": 65536,
+    "differing_logits": 65263,
+    "max_abs_diff": 0.811767578125
+   }
+  },
+  {
+   "name": "the command line exits 0 on the clean conversion and 1 on the flipped bit",
+   "impl": "ckpt_compare.py",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "clean": [
+     "all rows matched"
+    ],
+    "fault": [
+     "39 logical parameters (hf vs mcore, rows=digest): 38 equal, 0 rows matched, 1 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+     "  model.layers.1.self_attn.k_proj.weight: rows_unmatched",
+     "    A 1 of 128 rows unmatched: row 16 <- model.layers.1.self_attn.k_proj.weight[16]",
+     "    B 1 of 128 rows unmatched: row 16 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[144]",
+     "NOT all rows matched"
+    ]
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "ckpt_compare HF vs TP 2",
+   "value": 0.182,
+   "unit": "s",
+   "impl": "ckpt_compare.py",
+   "rows": 19465
+  },
+  {
+   "name": "ckpt_compare HF vs TP 4",
+   "value": 0.188,
+   "unit": "s",
+   "impl": "ckpt_compare.py",
+   "rows": 19465
+  }
+ ],
+ "extra": {
+  "config": {
+   "vocab": 2048,
+   "hidden": 512,
+   "intermediate": 1024,
+   "layers": 4,
+   "heads": 16,
+   "kv_heads": 4,
+   "head_dim": 32,
+   "eps": 1e-05,
+   "theta": 10000.0
+  },
+  "torch_threads": 24,
+  "faults": {
+   "transposed shard (rank 1 gate/up of layer 0 stored transposed)": [
+    "39 logical parameters (hf vs mcore, rows=digest): 37 equal, 0 rows matched, 2 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+    "  model.layers.0.mlp.gate_proj.weight: rows_unmatched",
+    "    A 512 of 1024 rows unmatched: row 512 <- model.layers.0.mlp.gate_proj.weight[512]; row 513 <- model.layers.0.mlp.gate_proj.weight[513]; row 514 <- model.layers.0.mlp.gate_proj.weight[514]; ... 509 more",
+    "    B 512 of 1024 rows unmatched: row 512 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[0]; row 513 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[1]; row 514 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[2]; ... 509 more",
+    "  model.layers.0.mlp.up_proj.weight: rows_unmatched",
+    "    A 512 of 1024 rows unmatched: row 512 <- model.layers.0.mlp.up_proj.weight[512]; row 513 <- model.layers.0.mlp.up_proj.weight[513]; row 514 <- model.layers.0.mlp.up_proj.weight[514]; ... 509 more",
+    "    B 512 of 1024 rows unmatched: row 512 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[512]; row 513 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[513]; row 514 <- mp_rank_01/model.decoder.layers.0.mlp.linear_fc1.weight[514]; ... 509 more",
+    "NOT all rows matched"
+   ],
+   "wrong QKV interleave (q, k, v stacked, not per query group)": [
+    "39 logical parameters (hf vs mcore, rows=digest): 27 equal, 0 rows matched, 12 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+    "  model.layers.0.self_attn.q_proj.weight: rows_unmatched",
+    "    A 128 of 512 rows unmatched: row 128 <- model.layers.0.self_attn.q_proj.weight[128]; row 129 <- model.layers.0.self_attn.q_proj.weight[129]; row 130 <- model.layers.0.self_attn.q_proj.weight[130]; ... 125 more",
+    "    B 128 of 512 rows unmatched: row 384 <- mp_rank_01/model.decoder.layers.0.self_attention.linear_qkv.weight[192]; row 385 <- mp_rank_01/model.decoder.layers.0.self_attention.linear_qkv.weight[193]; row 386 <- mp_rank_01/model.decoder.layers.0.self_attention.linear_qkv.weight[194]; ... 125 more",
+    "  model.layers.1.self_attn.q_proj.weight: rows_unmatched",
+    "    A 128 of 512 rows unmatched: row 128 <- model.layers.1.self_attn.q_proj.weight[128]; row 129 <- model.layers.1.self_attn.q_proj.weight[129]; row 130 <- model.layers.1.self_attn.q_proj.weight[130]; ... 125 more",
+    "    B 128 of 512 rows unmatched: row 384 <- mp_rank_01/model.decoder.layers.1.self_attention.linear_qkv.weight[192]; row 385 <- mp_rank_01/model.decoder.layers.1.self_attention.linear_qkv.weight[193]; row 386 <- mp_rank_01/model.decoder.layers.1.self_attention.linear_qkv.weight[194]; ... 125 more",
+    "  model.layers.2.self_attn.q_proj.weight: rows_unmatched",
+    "    A 128 of 512 rows unmatched: row 128 <- model.layers.2.self_attn.q_proj.weight[128]; row 129 <- model.layers.2.self_attn.q_proj.weight[129]; row 130 <- model.layers.2.self_attn.q_proj.weight[130]; ... 125 more",
+    "    B 128 of 512 rows unmatched: row 384 <- mp_rank_01/model.decoder.layers.2.self_attention.linear_qkv.weight[192]; row 385 <- mp_rank_01/model.decoder.layers.2.self_attention.linear_qkv.weight[193]; row 386 <- mp_rank_01/model.decoder.layers.2.self_attention.linear_qkv.weight[194]; ... 125 more",
+    "  model.layers.3.self_attn.q_proj.weight: rows_unmatched",
+    "    A 128 of 512 rows unmatched: row 128 <- model.layers.3.self_attn.q_proj.weight[128]; row 129 <- model.layers.3.self_attn.q_proj.weight[129]; row 130 <- model.layers.3.self_attn.q_proj.weight[130]; ... 125 more",
+    "    B 128 of 512 rows unmatched: row 384 <- mp_rank_01/model.decoder.layers.3.self_attention.linear_qkv.weight[192]; row 385 <- mp_rank_01/model.decoder.layers.3.self_attention.linear_qkv.weight[193]; row 386 <- mp_rank_01/model.decoder.layers.3.self_attention.linear_qkv.weight[194]; ... 125 more",
+    "  model.layers.0.self_attn.k_proj.weight: rows_unmatched",
+    "    A 96 of 128 rows unmatched: row 32 <- model.layers.0.self_attn.k_proj.weight[32]; row 33 <- model.layers.0.self_attn.k_proj.weight[33]; row 34 <- model.layers.0.self_attn.k_proj.weight[34]; ... 93 more",
+    "    B 96 of 128 rows unmatched: row 0 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[128]; row 1 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[129]; row 2 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[130]; ... 93 more",
+    "  model.layers.1.self_attn.k_proj.weight: rows_unmatched",
+    "    A 96 of 128 rows unmatched: row 32 <- model.layers.1.self_attn.k_proj.weight[32]; row 33 <- model.layers.1.self_attn.k_proj.weight[33]; row 34 <- model.layers.1.self_attn.k_proj.weight[34]; ... 93 more",
+    "    B 96 of 128 rows unmatched: row 0 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[128]; row 1 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[129]; row 2 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[130]; ... 93 more",
+    "  model.layers.2.self_attn.k_proj.weight: rows_unmatched",
+    "... 18 more lines"
+   ],
+   "bf16 -> fp16 -> bf16 cast of every tensor": [
+    "39 logical parameters (hf vs mcore, rows=digest): 9 equal, 0 rows matched, 30 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+    "  model.embed_tokens.weight: rows_unmatched",
+    "    A 204 of 2048 rows unmatched: row 37 <- model.embed_tokens.weight[37]; row 46 <- model.embed_tokens.weight[46]; row 67 <- model.embed_tokens.weight[67]; ... 201 more",
+    "    B 204 of 2048 rows unmatched: row 37 <- mp_rank_00/model.embedding.word_embeddings.weight[37]; row 46 <- mp_rank_00/model.embedding.word_embeddings.weight[46]; row 67 <- mp_rank_00/model.embedding.word_embeddings.weight[67]; ... 201 more",
+    "  model.layers.0.self_attn.q_proj.weight: rows_unmatched",
+    "    A 42 of 512 rows unmatched: row 16 <- model.layers.0.self_attn.q_proj.weight[16]; row 20 <- model.layers.0.self_attn.q_proj.weight[20]; row 24 <- model.layers.0.self_attn.q_proj.weight[24]; ... 39 more",
+    "    B 42 of 512 rows unmatched: row 16 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[16]; row 20 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[20]; row 24 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[24]; ... 39 more",
+    "  model.layers.1.self_attn.q_proj.weight: rows_unmatched",
+    "    A 59 of 512 rows unmatched: row 22 <- model.layers.1.self_attn.q_proj.weight[22]; row 24 <- model.layers.1.self_attn.q_proj.weight[24]; row 30 <- model.layers.1.self_attn.q_proj.weight[30]; ... 56 more",
+    "    B 59 of 512 rows unmatched: row 22 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[22]; row 24 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[24]; row 30 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[30]; ... 56 more",
+    "  model.layers.2.self_attn.q_proj.weight: rows_unmatched",
+    "    A 54 of 512 rows unmatched: row 3 <- model.layers.2.self_attn.q_proj.weight[3]; row 5 <- model.layers.2.self_attn.q_proj.weight[5]; row 10 <- model.layers.2.self_attn.q_proj.weight[10]; ... 51 more",
+    "    B 54 of 512 rows unmatched: row 3 <- mp_rank_00/model.decoder.layers.2.self_attention.linear_qkv.weight[3]; row 5 <- mp_rank_00/model.decoder.layers.2.self_attention.linear_qkv.weight[5]; row 10 <- mp_rank_00/model.decoder.layers.2.self_attention.linear_qkv.weight[10]; ... 51 more",
+    "  model.layers.3.self_attn.q_proj.weight: rows_unmatched",
+    "    A 44 of 512 rows unmatched: row 6 <- model.layers.3.self_attn.q_proj.weight[6]; row 41 <- model.layers.3.self_attn.q_proj.weight[41]; row 45 <- model.layers.3.self_attn.q_proj.weight[45]; ... 41 more",
+    "    B 44 of 512 rows unmatched: row 6 <- mp_rank_00/model.decoder.layers.3.self_attention.linear_qkv.weight[6]; row 41 <- mp_rank_00/model.decoder.layers.3.self_attention.linear_qkv.weight[41]; row 45 <- mp_rank_00/model.decoder.layers.3.self_attention.linear_qkv.weight[45]; ... 41 more",
+    "  model.layers.0.self_attn.k_proj.weight: rows_unmatched",
+    "    A 10 of 128 rows unmatched: row 12 <- model.layers.0.self_attn.k_proj.weight[12]; row 17 <- model.layers.0.self_attn.k_proj.weight[17]; row 38 <- model.layers.0.self_attn.k_proj.weight[38]; ... 7 more",
+    "    B 10 of 128 rows unmatched: row 12 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[140]; row 17 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[145]; row 38 <- mp_rank_00/model.decoder.layers.0.self_attention.linear_qkv.weight[326]; ... 7 more",
+    "  model.layers.1.self_attn.k_proj.weight: rows_unmatched",
+    "... 72 more lines"
+   ],
+   "one flipped bit (layer 1 QKV, rank 0)": [
+    "39 logical parameters (hf vs mcore, rows=digest): 38 equal, 0 rows matched, 1 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+    "  model.layers.1.self_attn.k_proj.weight: rows_unmatched",
+    "    A 1 of 128 rows unmatched: row 16 <- model.layers.1.self_attn.k_proj.weight[16]",
+    "    B 1 of 128 rows unmatched: row 16 <- mp_rank_00/model.decoder.layers.1.self_attention.linear_qkv.weight[144]",
+    "NOT all rows matched"
+   ],
+   "a missing row (last row of the rank 1 output layer)": [
+    "39 logical parameters (hf vs mcore, rows=digest): 38 equal, 0 rows matched, 1 with unmatched rows, 0 width mismatch, 0 replica mismatch, 0 missing",
+    "  lm_head.weight: rows_unmatched",
+    "    A 1 of 2048 rows unmatched: row 2047 <- lm_head.weight[2047]",
+    "NOT all rows matched"
+   ]
+  }
+ }
+}

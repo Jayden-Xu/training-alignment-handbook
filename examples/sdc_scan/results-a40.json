@@ -1,0 +1,1649 @@
+{
+ "schema": "bi-results-v1",
+ "example": "sdc_scan",
+ "quick": false,
+ "argv": [
+  "tools/sdc_scan.py",
+  "--merge",
+  "out/a40-replay.json",
+  "out/a40-stress1.json",
+  "out/a40-stress2.json",
+  "--json",
+  "out/results-a40.json",
+  "--record-golden",
+  "out/golden-a40.json"
+ ],
+ "env": {
+  "python": "3.10.0",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A40",
+    "sm": "86",
+    "memory_gb": 44.3,
+    "sm_count": 84
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "550.144.03"
+ },
+ "counts": {
+  "ok": 26,
+  "regression": 0,
+  "changed": 0,
+  "info": 6
+ },
+ "checks": [
+  {
+   "name": "self-test: a bit flip in one repeat is named: device gpu-host:gpu0, op gemm_fp32_1024, repeat 2",
+   "impl": "fault injection",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "key": "gemm_fp32_1024",
+    "odd_repeats": [
+     2
+    ],
+    "first": "f32[1024,1024]:77779e0b:000014278718095d:2d80cf99d91e7c59",
+    "fp": "f32[1024,1024]:77779e8b:00001427871809dd:2d80cf99db00bdd9",
+    "evidence": {
+     "inputs_corrupted": [],
+     "recompute_matches_first": [
+      true
+     ],
+     "diff": {
+      "words_differing": 1,
+      "of_words": 1048576,
+      "first": [
+       {
+        "word": 123457,
+        "element": 123457,
+        "xor": "00000080"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "self-test: its evidence is one word, the injected word and bit (word 123457, bit 7)",
+   "impl": "fault injection",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "inputs_corrupted": [],
+    "recompute_matches_first": [
+     true
+    ],
+    "diff": {
+     "words_differing": 1,
+     "of_words": 1048576,
+     "first": [
+      {
+       "word": 123457,
+       "element": 123457,
+       "xor": "00000080"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "self-test: a bit flip in the first repeat is named as repeat 0: device gpu-host:gpu0, op gemm_bf16_2048",
+   "impl": "fault injection",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "key": "gemm_bf16_2048",
+    "odd_repeats": [
+     0
+    ],
+    "first": "bf16[2048,2048]:8799f650:00002e935e88c53a:932132908b61e8fe",
+    "fp": "bf16[2048,2048]:8799f658:00002e935e88c542:932132908b61edd6",
+    "note": "every later repeat agrees; the first repeat is the odd one",
+    "evidence": {
+     "inputs_corrupted": [],
+     "recompute_matches_first": [
+      false,
+      false,
+      false
+     ]
+    }
+   }
+  },
+  {
+   "name": "self-test: two flips of the same bit, same direction: xor32 does not see them, sum64 and wsum64 do (repeat 1 named)",
+   "impl": "fault injection",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "key": "elementwise_fp32/exp",
+    "odd_repeats": [
+     1
+    ],
+    "first": "f32[4194304]:00adc215:000fde29be53f64f:8a256265d6ea34f9",
+    "fp": "f32[4194304]:00adc215:000fde29be54164f:8a256265d76754f9",
+    "evidence": {
+     "inputs_corrupted": [],
+     "recompute_matches_first": [
+      true
+     ],
+     "diff": {
+      "words_differing": 2,
+      "of_words": 4194304,
+      "first": [
+       {
+        "word": 0,
+        "element": 0,
+        "xor": "00001000"
+       },
+       {
+        "word": 1000,
+        "element": 1000,
+        "xor": "00001000"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "self-test: two flips of the same bit, opposite directions: only wsum64 sees them (repeat 1 named)",
+   "impl": "fault injection",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "key": "elementwise_fp32/tanh",
+    "odd_repeats": [
+     1
+    ],
+    "first": "f32[4194304]:883a7619:ffffb1260cedde9f:2efd9c51c14597b9",
+    "fp": "f32[4194304]:883a7619:ffffb1260cedde9f:2efd9c51c1c297b9",
+    "evidence": {
+     "inputs_corrupted": [],
+     "recompute_matches_first": [
+      true
+     ],
+     "diff": {
+      "words_differing": 2,
+      "of_words": 4194304,
+      "first": [
+       {
+        "word": 0,
+        "element": 0,
+        "xor": "00001000"
+       },
+       {
+        "word": 1000,
+        "element": 1000,
+        "xor": "00001000"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "self-test: two values swapped: only wsum64 sees it (repeat 3 named)",
+   "impl": "fault injection",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "key": "int_arith_int64/muladd",
+    "odd_repeats": [
+     3
+    ],
+    "first": "i64[4194304]:3c9a4dfa:000000d6794cf3ce:0dd3f67bf32dafac",
+    "fp": "i64[4194304]:3c9a4dfa:000000d6794cf3ce:0dd3f533c5557f2c",
+    "evidence": {
+     "inputs_corrupted": [],
+     "recompute_matches_first": [
+      true
+     ],
+     "diff": {
+      "words_differing": 2,
+      "of_words": 8388608,
+      "first": [
+       {
+        "word": 0,
+        "element": 0,
+        "xor": "2b01e72c"
+       },
+       {
+        "word": 2000,
+        "element": 1000,
+        "xor": "2b01e72c"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "self-test: a corrupted input is named: device gpu-host:gpu0, input gemm_fp16_2048.a, repeat 2, and the op that read it",
+   "impl": "fault injection",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "pool": [
+     {
+      "input": "gemm_fp16_2048.a",
+      "repeat": 2,
+      "fp": "f16[2048,2048]:18308fc1:fffee3b3cb4de2f9:4fc1d858c5774a3f",
+      "cpu": "f16[2048,2048]:18308dc1:fffee3b3cb4de4f9:4fc1d858c760f03f",
+      "words_differing": 1,
+      "of_words": 2097152,
+      "first": [
+       {
+        "word": 31337,
+        "element": 62674,
+        "xor": "00000200"
+       }
+      ]
+     }
+    ],
+    "op": {
+     "key": "gemm_fp16_2048",
+     "odd_repeats": [
+      2
+     ],
+     "first": "f16[2048,2048]:3d878cc3:000177ab8ac03199:f407944e24c460d1",
+     "fp": "f16[2048,2048]:6f10c046:000177ab8ac54cc6:f4079437b0030440",
+     "evidence": {
+      "inputs_corrupted": [
+       "gemm_fp16_2048.a"
+      ],
+      "recompute_matches_first": [
+       false,
+       false,
+       false
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "self-test: a fault present in every repeat passes self-replay and is named by the golden file: device gpu-host:gpu0, op layernorm_fp32",
+   "impl": "fault injection",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "differs_from_golden": [
+     [
+      "gpu-host:gpu0",
+      "layernorm_fp32"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "self-test: nothing else is reported (1 devices x 25 fingerprints x 4 repeats)",
+   "impl": "fault injection",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "unexpected": []
+   }
+  },
+  {
+   "name": "self-replay: 20 repeats x 298 fingerprints, each equal to the first",
+   "impl": "gpu-host:gpu0",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "odd": [],
+    "odd_total": 0,
+    "errors": [],
+    "inputs_sha256": "6d819ba0c0bef6ee6e285c4420e4871c",
+    "pass_s_median": 0.788,
+    "addresses_per_tensor": {
+     "min": 1,
+     "median": 2,
+     "max": 2
+    },
+    "burner": null,
+    "smi": {
+     "temp_c": [
+      26.0,
+      31.0
+     ],
+     "util_pct_mean": 29.0,
+     "power_w_max": 127.39,
+     "samples": 8
+    },
+    "skipped_ops": {}
+   }
+  },
+  {
+   "name": "self-replay: 147 exact fingerprints equal the CPU's known answer",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "self-replay: inputs on the device still equal the CPU's after every pass (3120 tensor checks)",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "self-replay: fingerprint code equals the numpy reference on CPU and GPU (61 cases)",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "stress 180.0 s: 93 passes x 298 fingerprints, each equal to the first",
+   "impl": "gpu-host:gpu0",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "odd": [],
+    "odd_total": 0,
+    "errors": [],
+    "inputs_sha256": "0a65595d71ed27d6a551f6e81cbd22a9",
+    "pass_s_median": 1.969,
+    "addresses_per_tensor": {
+     "min": 1,
+     "median": 9,
+     "max": 33
+    },
+    "burner": {
+     "iterations": 44658,
+     "errors": []
+    },
+    "smi": {
+     "temp_c": [
+      28.0,
+      58.0
+     ],
+     "util_pct_mean": 87.4,
+     "power_w_max": 295.1,
+     "samples": 41
+    },
+    "skipped_ops": {}
+   }
+  },
+  {
+   "name": "stress: 147 exact fingerprints equal the CPU's known answer",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "stress: inputs on the device still equal the CPU's after every pass (14508 tensor checks)",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "stress: fingerprint code equals the numpy reference on CPU and GPU (61 cases)",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "stress: memory sweep 34.25 GiB, held 183 s, verified, complemented, verified",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "gib": 34.25,
+    "chunks": 137,
+    "held_s": 183.0,
+    "write_s": 1.61,
+    "verify_s": 4.17,
+    "bad": []
+   }
+  },
+  {
+   "name": "stress #2: 116 repeats x 298 fingerprints, each equal to the first",
+   "impl": "gpu-host:gpu0",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "odd": [],
+    "odd_total": 0,
+    "errors": [],
+    "inputs_sha256": "6d819ba0c0bef6ee6e285c4420e4871c",
+    "pass_s_median": 1.567,
+    "addresses_per_tensor": {
+     "min": 7,
+     "median": 40,
+     "max": 97
+    },
+    "burner": {
+     "iterations": 44590,
+     "errors": []
+    },
+    "smi": {
+     "temp_c": [
+      29.0,
+      58.0
+     ],
+     "util_pct_mean": 88.2,
+     "power_w_max": 292.33,
+     "samples": 41
+    },
+    "skipped_ops": {}
+   }
+  },
+  {
+   "name": "stress #2: 147 exact fingerprints equal the CPU's known answer",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "stress #2: inputs on the device still equal the CPU's after every pass (18096 tensor checks)",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "stress #2: fingerprint code equals the numpy reference on CPU and GPU (61 cases)",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "stress: memory sweep 36.25 GiB, held 183 s, verified, complemented, verified",
+   "impl": "gpu-host:gpu0",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "gib": 36.25,
+    "chunks": 145,
+    "held_s": 182.6,
+    "write_s": 1.7,
+    "verify_s": 4.41,
+    "bad": []
+   }
+  },
+  {
+   "name": "the 3 runs of this device (separate processes) gave the same fingerprints",
+   "impl": "gpu-host:gpu0",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "inputs: every worker generated the same bytes (156 tensors, 2122.5 MiB, SHA-256)",
+   "impl": "inputs",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha256": {
+     "6d819ba0c0bef6ee6e285c4420e4871c": 2
+    }
+   }
+  },
+  {
+   "name": "inputs: every worker generated the same bytes (156 tensors, 2378.5 MiB, SHA-256)",
+   "impl": "inputs",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha256": {
+     "0a65595d71ed27d6a551f6e81cbd22a9": 1
+    }
+   }
+  },
+  {
+   "name": "excluded op cumsum_bf16: identical fingerprints over the repeats",
+   "impl": "probe",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "why_excluded": "torch documents float cumsum on CUDA as non-deterministic (pytorch issue 75240); strict deterministic mode raises an error for it",
+    "max_distinct_fingerprints": 116,
+    "distinct_by_output": {
+     "cumsum_bf16/flat": 116,
+     "cumsum_bf16/dim0": 1,
+     "cumsum_bf16/dim1": 1
+    }
+   }
+  },
+  {
+   "name": "excluded op cumsum_fp32: identical fingerprints over the repeats",
+   "impl": "probe",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "why_excluded": "torch documents float cumsum on CUDA as non-deterministic (pytorch issue 75240); strict deterministic mode raises an error for it",
+    "max_distinct_fingerprints": 116,
+    "distinct_by_output": {
+     "cumsum_fp32/flat": 116,
+     "cumsum_fp32/dim0": 1,
+     "cumsum_fp32/dim1": 1
+    }
+   }
+  },
+  {
+   "name": "excluded op embedding_bwd_fp32_default: identical fingerprints over the repeats",
+   "impl": "probe",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "why_excluded": "listed in handbook chapter 1 as a racy kernel in production; probed here outside deterministic mode",
+    "max_distinct_fingerprints": 1,
+    "distinct_by_output": {
+     "embedding_bwd_fp32_default": 1
+    }
+   }
+  },
+  {
+   "name": "excluded op index_add_fp32_default: identical fingerprints over the repeats",
+   "impl": "probe",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "why_excluded": "float accumulation over duplicate indices: torch documents the default CUDA kernels as non-deterministic",
+    "max_distinct_fingerprints": 116,
+    "distinct_by_output": {
+     "index_add_fp32_default/index_add": 116,
+     "index_add_fp32_default/scatter_add": 116
+    }
+   }
+  },
+  {
+   "name": "excluded op sdpa_bwd_efficient_default: identical fingerprints over the repeats",
+   "impl": "probe",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "why_excluded": "SDPA backward adds dQ with atomics; measured in this handbook: dQ differs run to run unless strict deterministic mode is on",
+    "max_distinct_fingerprints": 1,
+    "distinct_by_output": {
+     "sdpa_bwd_efficient_default/o": 1,
+     "sdpa_bwd_efficient_default/dq": 1,
+     "sdpa_bwd_efficient_default/dk": 1,
+     "sdpa_bwd_efficient_default/dv": 1
+    }
+   }
+  },
+  {
+   "name": "excluded op sdpa_bwd_flash_default: identical fingerprints over the repeats",
+   "impl": "probe",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "why_excluded": "SDPA backward adds dQ with atomics; measured in this handbook: dQ differs run to run unless strict deterministic mode is on",
+    "max_distinct_fingerprints": 90,
+    "distinct_by_output": {
+     "sdpa_bwd_flash_default/o": 1,
+     "sdpa_bwd_flash_default/dq": 90,
+     "sdpa_bwd_flash_default/dk": 1,
+     "sdpa_bwd_flash_default/dv": 1
+    }
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "runtime self-replay",
+   "value": 36.9,
+   "unit": "s",
+   "node": "gpu-host",
+   "devices": 1,
+   "quick": false
+  },
+  {
+   "name": "runtime self-test",
+   "value": 11.3,
+   "unit": "s",
+   "node": "gpu-host",
+   "devices": 1,
+   "quick": false
+  },
+  {
+   "name": "runtime total",
+   "value": 48.7,
+   "unit": "s",
+   "node": "gpu-host",
+   "devices": 1,
+   "quick": false
+  },
+  {
+   "name": "runtime stress",
+   "value": 206.1,
+   "unit": "s",
+   "node": "gpu-host",
+   "devices": 1,
+   "quick": false
+  },
+  {
+   "name": "runtime total",
+   "value": 206.6,
+   "unit": "s",
+   "node": "gpu-host",
+   "devices": 1,
+   "quick": false
+  },
+  {
+   "name": "runtime stress",
+   "value": 204.9,
+   "unit": "s",
+   "node": "gpu-host",
+   "devices": 1,
+   "quick": false
+  },
+  {
+   "name": "runtime total",
+   "value": 205.3,
+   "unit": "s",
+   "node": "gpu-host",
+   "devices": 1,
+   "quick": false
+  }
+ ],
+ "extra": {
+  "devices": [
+   {
+    "device": "gpu-host:gpu0",
+    "gpu": "NVIDIA A40",
+    "uuid": "GPU-ac451e22",
+    "pci": "1C:00.0",
+    "group": "e4ed5c9c",
+    "checks": {
+     "self-replay": true,
+     "stress": true,
+     "stress #2": true,
+     "across runs": true
+    },
+    "ecc": {
+     "before": [
+      "Enabled",
+      "0",
+      "0",
+      "0",
+      "0",
+      "[N/A]"
+     ],
+     "after": [
+      "Enabled",
+      "0",
+      "0",
+      "0",
+      "0",
+      "[N/A]"
+     ]
+    },
+    "verdict": "pass"
+   }
+  ],
+  "groups": {
+   "e4ed5c9c": {
+    "key": {
+     "gpu": "NVIDIA A40",
+     "sm": "86",
+     "sm_count": 84,
+     "memory_mib": 45403,
+     "driver": "550.144.03",
+     "torch": "2.5.1+cu121",
+     "cuda_build": "12.1",
+     "cudnn": 90100,
+     "cublas": "12.1.3.1",
+     "triton": "3.1.0",
+     "nccl": "2.21.5"
+    },
+    "devices": [
+     "gpu-host:gpu0"
+    ],
+    "fingerprints": 305,
+    "inputs_sha256": [
+     "0a65595d71ed27d6a551f6e81cbd22a9",
+     "6d819ba0c0bef6ee6e285c4420e4871c"
+    ],
+    "fp": {
+     "adamw_fp32/foreach": "f32[4194304]:8bb9392e:ffff5817d5fa4d9c:04a32dc8834d3466",
+     "adamw_fp32/fused": "f32[4194304]:884ea4f5:ffff5817d613b81b:04a3352a74fa7145",
+     "attn_fixed_blocks_bf16/decode": "bf16[2,8,1,128]:86ee804d:ffffffe7d3dfa2ab:ffff9fa21e4f57c5",
+     "attn_fixed_blocks_bf16/prefill": "bf16[2,8,512,128]:8ef08df2:ffffbc553b30dda4:a8adef00b8cae992",
+     "attn_fixed_blocks_train/dk": "bf16[2,2,512,128]:8b90f343:fffffa05e2c36c8b:f37d751428ebd95f",
+     "attn_fixed_blocks_train/dq": "bf16[2,8,512,128]:06f99197:ffffe5bf039b5613:2c1ed9afa80eac43",
+     "attn_fixed_blocks_train/dv": "bf16[2,2,512,128]:0002f69f:fffff8790c4136e7:f27047befff37e3d",
+     "attn_fixed_blocks_train/o": "bf16[2,8,512,128]:0c8e87bf:fffff7ccbd3032a1:c2331e64c95a0b25",
+     "bmm_bf16": "bf16[64,128,128]:03730fb6:000005915c55f0e6:2b36efe91ffb2b26",
+     "bmm_fp32": "f32[32,200,100]:f7a9bed5:00000812b72d2a55:506eec3d962f5c63",
+     "cast/bf16_f32": "f32[4194304]:88a90000:ffffb8c867310000:c9d04224d5fb0000",
+     "cast/f32_bf16": "bf16[4194304]:7e47f6ee:ffffdcb3baf4890c:715a08f3ebfbe938",
+     "cast/f32_f16": "f16[4194304]:16effd6a:fffee3dfc6c6bcec:53687dcc4c5368d8",
+     "cast/f32_f64": "f64[4194304]:e15d4d53:fff933f75d0cf9bf:97521900a6efd65d",
+     "cast/f32_i32": "i32[4194304]:00000405:000000000000e907:fffffacd0fb570c9",
+     "cast/i64_f32": "f32[4194304]:0f1fc71b:00078e9ddf053b9d:80368124f4708073",
+     "cast/i64_f64": "f64[4194304]:6cf106a1:0000f143bc5f22df:e5216466db3c682b",
+     "cast/i64_i32": "i32[4194304]:ba4a9281:fffffbff9682ca67:869ca2e0e5c87d47",
+     "cross_entropy_fp32/grad": "f32[256,32000]:0240053c:001807dbc1fb056a:d5f857babc902832",
+     "cross_entropy_fp32/mean": "f32[]:4164f000:000000004164f000:000000004164f000",
+     "cross_entropy_fp32/per_token": "f32[256]:0158a37c:000000415f327722:0000415eb7977fa0",
+     "cumsum_int64/cummax": "i64[4194304]:21527ddc:001cc873bfe54ac0:eb6eba32c2187a1a",
+     "cumsum_int64/dim0": "i64[2048,2048]:a776cce0:fffffe827de50c62:7679c62c4d921b10",
+     "cumsum_int64/dim1": "i64[2048,2048]:5c35306a:fffffb7a312c351a:994099e40d50f882",
+     "cumsum_int64/flat": "i64[4194304]:c9c4caf0:fffffcd1c89c4b7c:cd36af41b28406f4",
+     "cumsum_int64/int32": "i64[4194304]:946635a1:fffffe5b73695c5b:a81aa9e866949c25",
+     "elementwise_bf16/cos": "bf16[4194304]:03c50476:0007299024ace206:2f228dbf65034610",
+     "elementwise_bf16/erf": "bf16[4194304]:8ba08e4f:ffffdc19aff0e351:a73cf54f8260b389",
+     "elementwise_bf16/exp": "bf16[4194304]:7e240129:0007ef1e36514c05:e3d9dcb77a2ea61f",
+     "elementwise_bf16/expm1": "bf16[4194304]:f99d8e0c:ffffde16b8fad81a:e6e129edd7d9226a",
+     "elementwise_bf16/gelu": "bf16[4194304]:814b85bf:ffffc8a5b683a48d:38cf33aeef829333",
+     "elementwise_bf16/log": "bf16[4194304]:452b82da:fffbdf0e71c966b6:e49200b8631c55e4",
+     "elementwise_bf16/log1p": "bf16[4194304]:06ed07ea:0007d6cced0e654c:d98efd438e6c03a8",
+     "elementwise_bf16/pow": "bf16[4194304]:72eb7a8c:0007d343d5fd3c6a:6859d71d86f8626a",
+     "elementwise_bf16/rsqrt": "bf16[4194304]:7eb002ba:0007f86e12d83dd4:0dce4a0d398a71d4",
+     "elementwise_bf16/sigmoid": "bf16[4194304]:023002f3:0007dd436d58923f:a87b1c5a18a007b1",
+     "elementwise_bf16/silu": "bf16[4194304]:86518670:ffffcbbfe77a8e16:9c0ad2f45f613e38",
+     "elementwise_bf16/sin": "bf16[4194304]:856e8dc3:ffffdad59e14c945:7ebae04e2dba51cb",
+     "elementwise_bf16/sqrt": "bf16[4194304]:02c301fb:0007e5ddd77b4c7b:bbafdd56a3fd43fb",
+     "elementwise_bf16/tanh": "bf16[4194304]:85458d99:ffffd98c34803dbd:558ee43e7da9c8a3",
+     "elementwise_fp16/cos": "f16[4194304]:a023b80b:000661cbb67ddfe7:3bfa878144ae05a5",
+     "elementwise_fp16/erf": "f16[4194304]:2dd5b3aa:fffeda6277467002:59a15fc5be95e204",
+     "elementwise_fp16/exp": "f16[4194304]:04aa76ad:000778bd3b2ec8fd:1831b3fbbece80cf",
+     "elementwise_fp16/expm1": "f16[4194304]:7fb8a183:fffeea39b375f25f:5515f5726bde2c1b",
+     "elementwise_fp16/gelu": "f16[4194304]:1539bf2c:fffe3ed1c9c71722:e7f7de0c8b97f634",
+     "elementwise_fp16/log": "f16[4194304]:12c62c70:fffafc3fc2025722:a4545dc11d0a49c0",
+     "elementwise_fp16/log1p": "f16[4194304]:34cd1102:0006b6218a70c88c:c5e13c520178ea4c",
+     "elementwise_fp16/pow": "f16[4194304]:7c267851:000699e9230f64f3:4024493def34a0db",
+     "elementwise_fp16/rsqrt": "f16[4194304]:6fce7514:0007c3499eae4c5a:683c3840128964f2",
+     "elementwise_fp16/sigmoid": "f16[4194304]:1eb8199c:0006e9eed8b0a852:3e0b5e83424a289e",
+     "elementwise_fp16/silu": "f16[4194304]:3784b0fb:fffe579506f3cd87:00643596ff339931",
+     "elementwise_fp16/sin": "f16[4194304]:308688e6:fffed03b8e2b64e8:14df3cf9880c9310",
+     "elementwise_fp16/sqrt": "f16[4194304]:0ad50cec:00072eaeabce39ac:d6e122363080feba",
+     "elementwise_fp16/tanh": "f16[4194304]:345291a4:fffec5f4ec33d032:cbe73e63b3aa4594",
+     "elementwise_fp32/cos": "f32[4194304]:894f6fbe:000e4ee4ec6f2c46:d1cb5a7ab7db27ca",
+     "elementwise_fp32/erf": "f32[4194304]:8d151c0c:ffffb6417a7a3f20:75db492bea56d570",
+     "elementwise_fp32/exp": "f32[4194304]:00adc215:000fde29be53f64f:8a256265d6ea34f9",
+     "elementwise_fp32/expm1": "f32[4194304]:f65ff06d:ffffba36e6129b7b:7303053ffb7d230b",
+     "elementwise_fp32/gelu": "f32[4194304]:8da1eceb:ffff8f59932201fb:bbaed17e20174c71",
+     "elementwise_fp32/log": "f32[4194304]:f55b81be:fff7beb5866957bc:a977e4c67fe730d8",
+     "elementwise_fp32/log1p": "f32[4194304]:02bab4c2:000fad88667bfe9c:625718c8c4b84206",
+     "elementwise_fp32/pow": "f32[4194304]:057bd5c1:000fa67218db8421:9ce1fa6fc1db64b5",
+     "elementwise_fp32/rsqrt": "f32[4194304]:7f71edcf:000ff0cf6982cedf:33ba54b8d5f3b8cd",
+     "elementwise_fp32/sigmoid": "f32[4194304]:030d37a3:000fba778a34b0bd:9dc624957f8c6b75",
+     "elementwise_fp32/silu": "f32[4194304]:8aacf3f1:ffff958c83126cb7:487848337914bb57",
+     "elementwise_fp32/sin": "f32[4194304]:8c89f67a:ffffb3b7a4585e32:d36899d2c3f6e27e",
+     "elementwise_fp32/sqrt": "f32[4194304]:012e079b:000fcbab05fe24b3:eae06307228e4f05",
+     "elementwise_fp32/tanh": "f32[4194304]:883a7619:ffffb1260cedde9f:2efd9c51c14597b9",
+     "elementwise_fp64/cos": "f64[1048576]:be5ad13a:00039fde16828900:07d09ee8c83bcf24",
+     "elementwise_fp64/erf": "f64[1048576]:d0e9a1e8:ffffffc48c0c97b4:e6354153154f8754",
+     "elementwise_fp64/exp": "f64[1048576]:ed1c4266:0003fe974d8e1502:cb0207a5a810900c",
+     "elementwise_fp64/expm1": "f64[1048576]:45d354f0:ffffff6170daa40c:f25cfbfd15196d04",
+     "elementwise_fp64/gelu": "f64[1048576]:e8eb23ba:fffffcf6a8665c6a:b5568dca3d798ee4",
+     "elementwise_fp64/log": "f64[1048576]:cb7fe32a:fffdff6abdcb6bd0:ed0a91ef2834e620",
+     "elementwise_fp64/log1p": "f64[1048576]:93e4f3ef:0003ff495388e059:d15841abc3ba0819",
+     "elementwise_fp64/pow": "f64[1048576]:a12f5bd7:0003fd7c749e3b8d:b187cb95bf649e27",
+     "elementwise_fp64/rsqrt": "f64[1048576]:05ed572b:0003ff7ca79b84f9:dd149383b01869fb",
+     "elementwise_fp64/sigmoid": "f64[1048576]:f8e7bd0a:0003fdb18b5f1fc6:b1a0f29c83bfde5c",
+     "elementwise_fp64/silu": "f64[1048576]:3e552161:fffffdda7f4d09ef:aa269d08ca32a5f9",
+     "elementwise_fp64/sin": "f64[1048576]:45b9a8d7:fffffef72bde5a2d:ea27301084e573bd",
+     "elementwise_fp64/sqrt": "f64[1048576]:f8e2c54e:0003fe8d7de6970e:c8fcaf25c09ee608",
+     "elementwise_fp64/tanh": "f64[1048576]:4c527ab9:fffffdc163c9eacb:d38e11fa17731971",
+     "elementwise_wide_fp32/exp": "f32[4194304]:31c89804:000fddcd585fe160:64a255018994358a",
+     "elementwise_wide_fp32/log": "f32[4194304]:74e663e4:000040ac35c97a80:6719eb8dee0b7a78",
+     "elementwise_wide_fp32/recip": "f32[4194304]:69c3ff1b:ffffdadc5900ba11:9c0a9a07aac5ef47",
+     "elementwise_wide_fp32/rsqrt": "f32[4194304]:0e2d2ac4:000fdd1974919b64:3eec5b4bfc08538c",
+     "elementwise_wide_fp32/sqrt": "f32[4194304]:72157e8d:000fdf3d249dc319:d6bdce811804df43",
+     "elementwise_wide_fp32/square": "f32[4194304]:56d2d7f0:000fe272c9764d12:ba7d60a59e730128",
+     "elementwise_wide_fp32/tanh": "f32[4194304]:19e846bc:fffedea2d0d0a5dc:a3ccc76b4bcd0bac",
+     "embedding_bf16": "bf16[8192,512]:018df253:ffffdda6d43c0075:af522746a0ae82ab",
+     "embedding_bwd_fp32": "f32[32000,256]:0ad4f60a:fffff52d6b02ab54:67e4dc30119fda7e",
+     "gather_fp32/advanced": "f32[1024]:84ccb034:fffffffed2c69f40:00000b06b6a9e4e4",
+     "gather_fp32/gather": "f32[2048,512]:0cfcd269:ffffee38999df6c1:e64f23f047f8c93b",
+     "gather_fp32/index_select": "f32[1024,4096]:05378017:ffffbcf5493886db:314ba054ed25618b",
+     "gemm_bf16_2048": "bf16[2048,2048]:8799f650:00002e935e88c53a:932132908b61e8fe",
+     "gemm_bf16_tokens/m1": "bf16[1,4096]:f8a806c3:fffffffe2fe9a775:000027d503551c59",
+     "gemm_bf16_tokens/m31": "bf16[31,4096]:0d1b0977:ffffff5a0a8a8d55:ff0e2e60ebc0d92f",
+     "gemm_bf16_tokens/m512": "bf16[512,4096]:8ac20674:ffffecc4583c02a0:da909178935a72ac",
+     "gemm_fp16_2048": "f16[2048,2048]:3d878cc3:000177ab8ac03199:f407944e24c460d1",
+     "gemm_fp16_odd": "f16[1000,1333]:886f0506:00005b8bfae822a2:a3ec364047f5771a",
+     "gemm_fp32_1024": "f32[1024,1024]:77779e0b:000014278718095d:2d80cf99d91e7c59",
+     "gemm_fp32_4096": "f32[4096,4096]:0975ac29:0001ba604e6d9561:a10745320c9c2e77",
+     "gemm_fp32_odd": "f32[1000,1333]:767b7a4c:0000177901130b06:d7dcccc71a1cd90e",
+     "gemm_fp32_tn": "f32[1024,512]:846411ae:00000ba410a0f4ac:56e2b4d2980ea6c4",
+     "gemm_fp64_512": "f64[512,512]:d29d66c1:0000003ff27e50a1:06b099e49db673ef",
+     "gemv_fp32": "f32[2048]:826d28ee:000000122c10cb36:000084ddd9893dd0",
+     "ieee_bf16/add": "bf16[4194304]:3dbcc35e:ffffe3f7aa0a59dc:62ac642145bd47e4",
+     "ieee_bf16/div": "bf16[4194304]:8449fcc3:ffffee4c65f69d5f:d66a52c4a5c450c7",
+     "ieee_bf16/max": "bf16[4194304]:f96606eb:0003dce15fd53f6d:956d37229060ce7b",
+     "ieee_bf16/min": "bf16[4194304]:01088917:fffbdc1eb7eab2ed:89a19b11d7a93995",
+     "ieee_bf16/mul": "bf16[4194304]:9b29f99d:ffffc910ee34b127:2eb33047b8d9b8e1",
+     "ieee_bf16/neg": "bf16[4194304]:76358ba0:ffffdcda9e6efbf2:85ed2b631de854de",
+     "ieee_bf16/sub": "bf16[4194304]:bfbcc72a:ffffe35a4650de4a:85adc93f541b1bac",
+     "ieee_fp16/add": "f16[4194304]:75bcd65f:ffff23fbd3cafb19:7786a15541a335f9",
+     "ieee_fp16/div": "f16[4194304]:2148f74b:ffff78129ab8f0ab:0199076022c72b1f",
+     "ieee_fp16/max": "f16[4194304]:087cfc5e:0002e4b18189d95c:a2995909cf00fda4",
+     "ieee_fp16/min": "f16[4194304]:14195ca4:fffae39d5258a12e:87e31fccecee7722",
+     "ieee_fp16/mul": "f16[4194304]:7e79b017:fffe4e1d2f424845:c8799947912cf5f5",
+     "ieee_fp16/neg": "f16[4194304]:b8e368af:fffee31246f6658f:577b9459145575d5",
+     "ieee_fp16/sub": "f16[4194304]:0d8d3f8c:ffff2530b0f54d00:a901a954b1ca4220",
+     "ieee_fp32/add": "f32[4194304]:f0af46e6:ffffc9c415003d04:598fb424cd0557b8",
+     "ieee_fp32/div": "f32[4194304]:03fe2e62:ffffdd0535467306:de53d5c673987db0",
+     "ieee_fp32/max": "f32[4194304]:0fc24f0b:0007b95c65ff342d:324367ea046e50d9",
+     "ieee_fp32/min": "f32[4194304]:00e9cff6:fff7b83edd221148:86a3cc1322b7e39c",
+     "ieee_fp32/mul": "f32[4194304]:76cf7ebe:ffff92930d5e9ab2:40fec6df53a507fa",
+     "ieee_fp32/neg": "f32[4194304]:8f261c9b:ffffb88d89d441b3:2c13a9a3b78d21fd",
+     "ieee_fp32/sub": "f32[4194304]:f02dea78:ffffc9b1f7ffcd92:68d605e7f7c0c6f6",
+     "ieee_fp64/add": "f64[1048576]:73191b2c:fffffec63c854882:cc7643e5d3c2e866",
+     "ieee_fp64/div": "f64[1048576]:071f0a1d:ffffff887e05068f:e25164777dd75a59",
+     "ieee_fp64/max": "f64[1048576]:3fc6d180:0001fe2fdd92aa70:bc85ac8913d36dd4",
+     "ieee_fp64/min": "f64[1048576]:7753c78e:fffdfdc085e96722:bdd164c05741dd2e",
+     "ieee_fp64/mul": "f64[1048576]:1c5036b7:fffffd77e121d839:b5866fc9da8cd641",
+     "ieee_fp64/neg": "f64[1048576]:f3eb2040:fffff8e78889fa5a:24e88d0a1fda230a",
+     "ieee_fp64/sub": "f64[1048576]:5ee6b72e:ffffff9f85f98982:16271cd5b089c22a",
+     "index_add_fp32_det/index_add": "f32[4096]:7aff1062:0000000edeeff916:0000942f0915fb1c",
+     "index_add_fp32_det/scatter_add": "f32[4096]:7aff1062:0000000edeeff916:0000942f0915fb1c",
+     "int_arith_int32/cmp": "b1[4194304]:00000000:00000808857d79a2:8091f68158a53644",
+     "int_arith_int32/logic": "i32[4194304]:62c56316:fffffd91e6c2d8e6:19ed02acbd1084c4",
+     "int_arith_int32/minmax": "i32[4194304]:58cf6bf9:0002a956002f9129:6144e6e636f5a88d",
+     "int_arith_int32/muladd": "i32[4194304]:99564103:fffffed1d8eab045:3c284c67af6c6a61",
+     "int_arith_int32/shift_var": "i32[4194304]:1f9c4ee0:000000065acc47e0:ea443bf77f4475ae",
+     "int_arith_int32/sub": "i32[4194304]:94a503b6:000001f44944c16a:25439a4b3e2fac56",
+     "int_arith_int32/xorshift": "i32[4194304]:8b2497b3:0000013750122e19:fbf93fce2cdee681",
+     "int_arith_int64/cmp": "b1[4194304]:01010100:00000806f3e33ace:80761f1c012cceb2",
+     "int_arith_int64/logic": "i64[4194304]:6540ecb6:000002044de6b4ae:b8183e69b493fef6",
+     "int_arith_int64/minmax": "i64[4194304]:75abac93:0002aa1baf6e3f2f:01242100186fbc45",
+     "int_arith_int64/muladd": "i64[4194304]:3c9a4dfa:000000d6794cf3ce:0dd3f67bf32dafac",
+     "int_arith_int64/shift_var": "i64[4194304]:2d2c2a15:ffffff9eef1f1e75:cfbe6ca951892bc9",
+     "int_arith_int64/sub": "i64[4194304]:711a5a16:fffffb5afbdc1b26:dd3b4823c28b2042",
+     "int_arith_int64/xorshift": "i64[4194304]:2edfefe6:000001636555496a:82f4dce1bdaec590",
+     "int_div_int64/floor": "i64[4194304]:bfdeeeb8:00000270a7dfb3ac:95b37e206c96b068",
+     "int_div_int64/fmod": "i64[4194304]:0000002d:ffffffffffe2cca1:fffff1c066c49c6b",
+     "int_div_int64/remainder": "i64[4194304]:00000190:ffffffffffd47c68:ffffe81da50151ba",
+     "int_div_int64/trunc": "i64[4194304]:bfae3718:00000270a7ff7360:95b38e00e14a6508",
+     "int_reduce/argmax": "i64[]:00199e67:0000000000199e67:0000000000199e67",
+     "int_reduce/count": "i64[]:0020000d:000000000020000d:000000000020000d",
+     "int_reduce/max": "i64[]:d95176a2:0000000026ae86bc:0000000126ae7b1a",
+     "int_reduce/min_dim": "i64[2048]:151b9465:fffffbf90787b90d:ffbebbb5c8219469",
+     "int_reduce/sum": "i64[]:012cda15:ffffffff1d2edc69:fffffffe3b41debd",
+     "int_reduce/sum_dim": "i64[2048]:6a2713e2:fffffffd1d2ed870:0001ba0575265c26",
+     "int_small/bool": "b1[4194304]:01000000:0000080812ae05b0:808728c496637cfe",
+     "int_small/i16_mul": "i16[4194304]:571588cc:fffff13b7354263e:46703a2c8adf3928",
+     "int_small/i8_sub": "i8[4194304]:2b6283d1:00000102ea8aa2c5:11b67cbadcbe80a1",
+     "int_small/u8_logic": "u8[4194304]:f69c9ded:000000e686fc3a95:144be1b6d2a7eed3",
+     "int_small/u8_muladd": "u8[4194304]:f5fc1ab2:ffffe83356fbb64e:898ab83005d2dd8c",
+     "layernorm_bf16": "bf16[4096,1024]:f02d7423:ffffec0619b8519f:945bce3a0e1d1d4f",
+     "layernorm_bwd_fp32/db": "f32[1024]:fff797e4:00000002e2f0ba30:ffffedb0564cac5e",
+     "layernorm_bwd_fp32/dw": "f32[1024]:0166f890:0000000b7b782c9e:000027692d72bede",
+     "layernorm_bwd_fp32/dx": "f32[4096,1024]:0daf8db2:ffffc2aa4842596c:6c0032a9edadb79e",
+     "layernorm_bwd_fp32/o": "f32[4096,1024]:73355b1d:ffffb1229268237f:972f911febfc2141",
+     "layernorm_fp32": "f32[4096,1024]:012c6627:ffffc677ea3d0657:b62ccaec2a85df1d",
+     "linear_bf16_bias": "bf16[1024,4096]:ffbb041e:ffffd62ab3053856:d1e8c07900692860",
+     "masked_fp32/masked_fill": "f32[4194304]:89f6ef8f:ffffcb1557ee322f:66003808cd285ae1",
+     "masked_fp32/masked_scatter": "f32[4194304]:3bef23c9:ffffbaef22f7d64d:a6aa99ac17ade279",
+     "masked_fp32/masked_select": "f32[1049074]:8a392aeb:ffffed97f3d6f069:e2bce5e38575b749",
+     "masked_fp32/nonzero": "i64[1049074,1]:001f94c7:000001ffe480bc47:555d0773f13ed7fb",
+     "masked_fp32/where": "f32[4194304]:03cfc564:ffffb7eb4bc52298:7e522d48d14582f0",
+     "mem_patterns_1m/clone": "i64[131072]:ffffffff:fffffffffffe001f:ffffee1d4957aee5",
+     "mem_patterns_1m/complement": "i64[65536,2]:ffffffff:fffffffffffdffe1:ffffdc3292f0a68f",
+     "mem_patterns_1m/flip": "i64[131072]:ffffffff:fffffffffffe001f:000011d2b7a05119",
+     "mem_patterns_1m/offset_copy": "i64[131072]:ffffffff:fffffffffffe001f:ffffee1d4957aee5",
+     "mem_patterns_1m/readback": "i64[65536,2]:ffffffff:fffffffffffe001f:000023bd6d0f5971",
+     "mem_patterns_1m/roll": "i64[131072]:ffffffff:fffffffffffe001f:000011d2b6cfacb5",
+     "mem_patterns_1m/transpose": "i64[65536,2]:ffffffff:fffffffffffe001f:000023bd6d0f5971",
+     "mem_roundtrip_1m/clone": "i64[131072]:5d23375c:000000cc0308698c:0437da4d5de58e10",
+     "mem_roundtrip_1m/complement": "i64[65536,2]:5d23375c:ffffff33fcf39674:fc683d5de830ec8c",
+     "mem_roundtrip_1m/flip": "i64[131072]:5d23375c:000000cc0308698c:02283d2a6a162718",
+     "mem_roundtrip_1m/offset_copy": "i64[131072]:5d23375c:000000cc0308698c:0437da4d5de58e10",
+     "mem_roundtrip_1m/readback": "i64[65536,2]:5d23375c:000000cc0308698c:0397c29217cf1374",
+     "mem_roundtrip_1m/roll": "i64[131072]:5d23375c:000000cc0308698c:02c8edf7191d27c8",
+     "mem_roundtrip_1m/transpose": "i64[65536,2]:5d23375c:000000cc0308698c:0397c29217cf1374",
+     "mem_roundtrip_256m/clone": "i64[33554432]:1cab6754:000009be11910f82:365704b3192993d2",
+     "mem_roundtrip_256m/complement": "i64[16777216,2]:1cab6754:fffff641ea6ef07e:f6660c6552a6c0de",
+     "mem_roundtrip_256m/flip": "i64[33554432]:1cab6754:000009be11910f82:ba359d166786bb32",
+     "mem_roundtrip_256m/offset_copy": "i64[33554432]:1cab6754:000009be11910f82:365704b3192993d2",
+     "mem_roundtrip_256m/readback": "i64[16777216,2]:1cab6754:000009be11910f82:0989f39aad593f22",
+     "mem_roundtrip_256m/roll": "i64[33554432]:1cab6754:000009be11910f82:25251ebe485a0afa",
+     "mem_roundtrip_256m/transpose": "i64[16777216,2]:1cab6754:000009be11910f82:0989f39aad593f22",
+     "mem_roundtrip_4k/clone": "i64[512]:6a94c6f4:0000000a8e7a489a:00002dbba29e78e8",
+     "mem_roundtrip_4k/complement": "i64[256,2]:6a94c6f4:fffffff57185b366:ffffceb348da6784",
+     "mem_roundtrip_4k/flip": "i64[512]:6a94c6f4:0000000a8e7a489a:000026bbd2f9e6e0",
+     "mem_roundtrip_4k/offset_copy": "i64[512]:6a94c6f4:0000000a8e7a489a:00002dbba29e78e8",
+     "mem_roundtrip_4k/readback": "i64[256,2]:6a94c6f4:0000000a8e7a489a:0000314cb715987c",
+     "mem_roundtrip_4k/roll": "i64[512]:6a94c6f4:0000000a8e7a489a:000034d774e58808",
+     "mem_roundtrip_4k/transpose": "i64[256,2]:6a94c6f4:0000000a8e7a489a:0000314cb715987c",
+     "mem_roundtrip_512m/clone": "i64[67108864]:aec36354:00000fb5c377419e:2e9646e443e8655e",
+     "mem_roundtrip_512m/complement": "i64[33554432,2]:aec36354:fffff04a3488be62:41e673928ca67926",
+     "mem_roundtrip_512m/flip": "i64[67108864]:aec36354:00000fb5c377419e:2da112bd7708e7de",
+     "mem_roundtrip_512m/offset_copy": "i64[67108864]:aec36354:00000fb5c377419e:2e9646e443e8655e",
+     "mem_roundtrip_512m/readback": "i64[33554432,2]:aec36354:00000fb5c377419e:bdd98c6d735986da",
+     "mem_roundtrip_512m/roll": "i64[67108864]:aec36354:00000fb5c377419e:17825a9f5e75d896",
+     "mem_roundtrip_512m/transpose": "i64[33554432,2]:aec36354:00000fb5c377419e:bdd98c6d735986da",
+     "mem_roundtrip_64m/clone": "i64[8388608]:51852d99:fffffaf2248fd95f:1a8b47f8b29b5635",
+     "mem_roundtrip_64m/complement": "i64[4194304,2]:51852d99:0000050dda7026a1:7ec1906f36ffe733",
+     "mem_roundtrip_64m/flip": "i64[8388608]:51852d99:fffffaf2248fd95f:c9bddaf436103941",
+     "mem_roundtrip_64m/offset_copy": "i64[8388608]:51852d99:fffffaf2248fd95f:1a8b47f8b29b5635",
+     "mem_roundtrip_64m/readback": "i64[4194304,2]:51852d99:fffffaf2248fd95f:813d6f90c90018cd",
+     "mem_roundtrip_64m/roll": "i64[8388608]:51852d99:fffffaf2248fd95f:74f57afc493511dd",
+     "mem_roundtrip_64m/transpose": "i64[4194304,2]:51852d99:fffffaf2248fd95f:813d6f90c90018cd",
+     "minmax_bf16_16m/amax_rows": "bf16[4096]:00157ffe:000001ffd946d7ec:000ffece7d3e1b50",
+     "minmax_bf16_16m/amin_cols": "bf16[4096]:0000000d:fffffdffdde3d7c9:ffeffeecc12d6039",
+     "minmax_bf16_16m/max": "bf16[]:00004000:0000000000004000:0000000000004000",
+     "minmax_bf16_16m/min": "bf16[]:0000c000:000000000000c000:000000000000c000",
+     "minmax_fp32_16m/amax_rows": "f32[4096]:000b5894:000003ffaf064706:003ffaf44b6b4c1e",
+     "minmax_fp32_16m/amin_cols": "f32[4096]:00043223:fffffbffb0807f75:ffbffb0bbfdaa271",
+     "minmax_fp32_16m/max": "f32[]:3ffffa7c:000000003ffffa7c:000000003ffffa7c",
+     "minmax_fp32_16m/min": "f32[]:bffffbbb:ffffffffbffffbbb:ffffffffbffffbbb",
+     "mm_one_config_bf16/m1": "bf16[1,1024]:04367cb6:000000067f846086:00000cd46991c2ce",
+     "mm_one_config_bf16/m512": "bf16[512,1024]:065d8488:fffffa366999aa54:e9c4f951d67a770a",
+     "reduce_bf16_16m/mean_dim1": "bf16[4096]:0d388b6a:ffffffefeb0867c4:ffffaa2e7947f686",
+     "reduce_bf16_16m/norm_f32": "f32[]:45511386:0000000045511386:0000000045511386",
+     "reduce_bf16_16m/sum": "bf16[]:00004462:0000000000004462:0000000000004462",
+     "reduce_bf16_16m/sum_dim0": "bf16[4096]:ffe97a9d:0000001bae03e1e3:0001123775c07b97",
+     "reduce_bf16_16m/sum_f32": "f32[]:446236ea:00000000446236ea:00000000446236ea",
+     "reduce_fp16_16m/mean_dim1": "f16[4096]:b0f29bfa:fffffef4631c5d8a:fff7670556fcfa58",
+     "reduce_fp16_16m/norm_f32": "f32[]:45510e27:0000000045510e27:0000000045510e27",
+     "reduce_fp16_16m/sum": "f16[]:000065c9:00000000000065c9:00000000000065c9",
+     "reduce_fp16_16m/sum_dim0": "f16[4096]:0d1072e4:000000896f57b58a:000494cdfb768bba",
+     "reduce_fp16_16m/sum_f32": "f32[]:44b91883:0000000044b91883:0000000044b91883",
+     "reduce_fp32_32m/dot": "f32[]:451b794d:00000000451b794d:00000000451b794d",
+     "reduce_fp32_32m/logsumexp": "f32[4096]:000005ba:0000041155769e64:0041155761949e64",
+     "reduce_fp32_32m/mean": "f32[]:38a38cad:0000000038a38cad:0000000038a38cad",
+     "reduce_fp32_32m/norm": "f32[]:4593cec6:000000004593cec6:000000004593cec6",
+     "reduce_fp32_32m/sum": "f32[]:45238cad:0000000045238cad:0000000045238cad",
+     "reduce_fp32_32m/sum_dim0": "f32[8192]:fdeff700:0000003c89481286:000609a055bb8698",
+     "reduce_fp32_32m/sum_dim1": "f32[4096]:84fffed4:0000002a5e59aae8:000337b293d0f076",
+     "reduce_fp32_32m/var": "f32[]:3f2aae3b:000000003f2aae3b:000000003f2aae3b",
+     "reduce_fp64_4m/dot": "f64[]:9898afd3:0000000018a4cfe3:0000000099b23093",
+     "reduce_fp64_4m/logsumexp": "f64[4096]:23cf03ac:000003e4a6315808:007db2f1fcf3e6ca",
+     "reduce_fp64_4m/mean": "f64[]:a41a3392:ffffffffda9bb39c:00000000591d75a6",
+     "reduce_fp64_4m/norm": "f64[]:4ebca139:000000004ec0de41:00000000cff51dbb",
+     "reduce_fp64_4m/sum": "f64[]:dbfa3392:ffffffffdbfbb39c:000000005d3d75a6",
+     "reduce_fp64_4m/sum_dim0": "f64[1024]:0ab61992:00000004c7894272:000010a5ca8f9678",
+     "reduce_fp64_4m/sum_dim1": "f64[4096]:37fc54b8:ffffffe0849fe1b2:fffd42fbcb3f484e",
+     "reduce_fp64_4m/var": "f64[]:47678924:00000000b8682e48:000000013832d5ac",
+     "rmsnorm_bf16": "bf16[4096,1024]:095df792:ffffcdfec5a4a204:ad8deee15562c13e",
+     "rng_philox/bernoulli": "f32[4194304]:00000000:00019560dc000000:86762b9544000000",
+     "rng_philox/rand": "f32[4194304]:3ae74a1f:000faffaed6524d7:ff0bbebfc49d3059",
+     "rng_philox/randint": "i64[4194304]:000057c1:0000000fa0a69057:07d00d4d43a1e903",
+     "rng_philox/randn": "f32[4194304]:77adfd34:ffffc361eef1a662:0d2c6244e75a8090",
+     "scatter_add_int64/bincount": "i64[65536]:00000060:0000000000400000:0000007fe76ec654",
+     "scatter_add_int64/index_add": "i64[65536]:d6e23dc3:000000bfee30c97f:012a7ab535b84d59",
+     "scatter_add_int64/index_put_acc": "i64[65536]:d6e23dc3:000000bfee30c97f:012a7ab535b84d59",
+     "scatter_add_int64/scatter_add": "i64[65536]:d6e23dc3:000000bfee30c97f:012a7ab535b84d59",
+     "scatter_unique_fp32/index_copy": "f32[4194304]:b2bb48ce:ffffb8a13f75d3c4:e50aa7ba0fa56f58",
+     "scatter_unique_fp32/index_put": "f32[4194304]:b2bb48ce:ffffb8a13f75d3c4:e50aa7ba0fa56f58",
+     "scatter_unique_fp32/permute": "f32[4194304]:b2bb48ce:ffffb8a13f75d3c4:596d418444ba803e",
+     "scatter_unique_fp32/scatter": "f32[4194304]:b2bb48ce:ffffb8a13f75d3c4:e50aa7ba0fa56f58",
+     "sdpa_bwd_efficient_det/dk": "f32[2,4,256,64]:8b17d2cf:fffff93f111e22b5:f1c71770714289c5",
+     "sdpa_bwd_efficient_det/dq": "f32[2,4,256,64]:1f3a4ce9:fffff9985faec6d3:f320515c8150e247",
+     "sdpa_bwd_efficient_det/dv": "f32[2,4,256,64]:fae7a2d8:fffff8a5e20bfad6:ee1a172c024e7c60",
+     "sdpa_bwd_efficient_det/o": "f32[2,4,256,64]:07051695:fffffd6dd2645e1b:f5f1bc0c812f34d5",
+     "sdpa_bwd_flash_det/dk": "bf16[2,8,512,64]:876f056c:fffff21987c94d26:c89efcc3e965538c",
+     "sdpa_bwd_flash_det/dq": "bf16[2,8,512,64]:09368918:fffff2d4ef0a0e3a:cc739976c5486080",
+     "sdpa_bwd_flash_det/dv": "bf16[2,8,512,64]:03fdfd4c:ffffeb40d02deab2:b97ba1538d1d0374",
+     "sdpa_bwd_flash_det/o": "bf16[2,8,512,64]:80bc05b4:fffff04995241e8c:d7dce0e423263e14",
+     "sdpa_efficient_fp32": "f32[2,4,256,64]:83068e25:fffffc680ab38249:f5b8e58e0110b957",
+     "sdpa_flash_bf16": "bf16[2,8,512,64]:8a150515:fffff292a33a2ea5:b53dd3469a9d8bcf",
+     "sdpa_flash_fp16": "f16[2,4,256,128]:0b1b8013:ffffceb2ff1648d9:9a7650645342510d",
+     "sdpa_math_fp32_mask": "f32[2,4,256,64]:0484285e:fffffbd5be474dbc:f937af9237861e84",
+     "searchsorted_fp32/bucketize_right": "i64[4194304]:00050d6a:0000020013a2def4:000fdf058be36bc0",
+     "searchsorted_fp32/searchsorted": "i64[4194304]:0004a814:0000020013a0df1c:000fde053c417564",
+     "softmax_bf16/log_softmax": "bf16[512,32000]:0103013e:ffe16b589a1cff22:6a4abd56161ae7c6",
+     "softmax_bf16/softmax": "bf16[512,32000]:094a10c3:0019fc826d8868d1:4c9850e9ca5ce283",
+     "softmax_fp32/log_softmax": "f32[512,32000]:00d45a69:ffc2d5f8331902ff:f4f0233979da85bd",
+     "softmax_fp32/logsumexp": "f32[512]:000172bc:00000082c6d75d7a:0001058dae7ca1bc",
+     "softmax_fp32/softmax": "f32[512,32000]:0eca55ca:0033f8a3ed6cfb20:c83458e4e51671ea",
+     "sort_fp32/argsort_desc": "i64[4194304]:00000000:000007ffffe00000:ffe7b005ea7a8394",
+     "sort_fp32/indices": "i64[4194304]:00000000:000007ffffe00000:00181ffa15c57c6c",
+     "sort_fp32/values": "f32[4194304]:45000000:00010fffc7000000:fff18fffc7000000",
+     "sort_rows_fp32/argmax": "i64[256]:000075e5:00000000003f7c9f:000000007fbcf123",
+     "sort_rows_fp32/indices": "i64[256,32000]:00000000:0000001e84418000:1dcd27c52e756200",
+     "sort_rows_fp32/max": "f32[256]:00001a08:0000004579fbc9d8:00004579fbe54af8",
+     "sort_rows_fp32/min": "f32[256]:0003fcf4:ffffffc579fc3b84:ffffc579fc312ebc",
+     "sort_rows_fp32/topk_indices": "i64[256,64]:00002219:000000000f96fe33:000007cf4002371b",
+     "sort_rows_fp32/topk_values": "f32[256,64]:00000688:0000115e5f7a44e8:045797d847cc52b0",
+     "sort_rows_fp32/values": "f32[256,32000]:457a0000:00024f88c7000000:c5b8a3ccdb3cdf40",
+     "sort_stable_int32/counts": "i64[1024]:00001f6a:0000000000400000:00000001ffd3ed64",
+     "sort_stable_int32/indices": "i64[4194304]:00000000:000007ffffe00000:003034cb0b006f64",
+     "sort_stable_int32/inverse": "i64[4194304]:00000305:000000007fe4fb59:003ff02cfc7276b9",
+     "sort_stable_int32/unique": "i32[1024]:00000000:000000000007fe00:000000002aa2aa00",
+     "sort_stable_int32/values": "i32[4194304]:00000305:000000007fe4fb59:002aa3a5fb6e4f2b",
+     "train_step_bf16/grad": "f32[2656768]:a3a4c17d:ffff03b9df2029dd:8653ccd14d880fa7",
+     "train_step_bf16/loss": "f32[2]:01f09913:0000000081fd26e3:0000000103eac6d7",
+     "train_step_bf16/params": "f32[2656768]:0fb74134:ffff70327e5c99b8:310b5dc0d72ec660"
+    }
+   }
+  },
+  "workload": {
+   "version": 1,
+   "ops": [
+    {
+     "op": "gemm_fp32_1024",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "gemm_fp32_odd",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "gemm_fp32_4096",
+     "class": "gemm",
+     "mode": "full",
+     "exact": false
+    },
+    {
+     "op": "gemm_bf16_2048",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "gemm_fp16_2048",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "gemm_fp16_odd",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "gemm_fp64_512",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "bmm_bf16",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "bmm_fp32",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "gemm_bf16_tokens",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "gemm_fp32_tn",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "gemv_fp32",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "linear_bf16_bias",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "mm_one_config_bf16",
+     "class": "gemm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "sdpa_flash_bf16",
+     "class": "attention",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "sdpa_flash_fp16",
+     "class": "attention",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "sdpa_efficient_fp32",
+     "class": "attention",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "sdpa_math_fp32_mask",
+     "class": "attention",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "sdpa_bwd_flash_det",
+     "class": "attention",
+     "mode": "quick+full",
+     "exact": false,
+     "why": "pinned: strict deterministic mode selects flash's ordered dQ"
+    },
+    {
+     "op": "sdpa_bwd_efficient_det",
+     "class": "attention",
+     "mode": "quick+full",
+     "exact": false,
+     "why": "pinned: strict deterministic mode"
+    },
+    {
+     "op": "sdpa_bwd_flash_default",
+     "class": "attention",
+     "mode": "probe",
+     "exact": false,
+     "why": "SDPA backward adds dQ with atomics; measured in this handbook: dQ differs run to run unless strict deterministic mode is on"
+    },
+    {
+     "op": "sdpa_bwd_efficient_default",
+     "class": "attention",
+     "mode": "probe",
+     "exact": false,
+     "why": "SDPA backward adds dQ with atomics; measured in this handbook: dQ differs run to run unless strict deterministic mode is on"
+    },
+    {
+     "op": "attn_fixed_blocks_bf16",
+     "class": "attention",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "attn_fixed_blocks_train",
+     "class": "attention",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "layernorm_fp32",
+     "class": "norm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "layernorm_bf16",
+     "class": "norm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "rmsnorm_bf16",
+     "class": "norm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "layernorm_bwd_fp32",
+     "class": "norm",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "softmax_fp32",
+     "class": "softmax",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "softmax_bf16",
+     "class": "softmax",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "cross_entropy_fp32",
+     "class": "softmax",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "elementwise_fp32",
+     "class": "exp_log",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "elementwise_bf16",
+     "class": "exp_log",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "elementwise_fp16",
+     "class": "exp_log",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "elementwise_fp64",
+     "class": "exp_log",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "elementwise_wide_fp32",
+     "class": "exp_log",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "ieee_fp32",
+     "class": "exp_log",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "ieee_fp64",
+     "class": "exp_log",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "ieee_bf16",
+     "class": "exp_log",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "ieee_fp16",
+     "class": "exp_log",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "cast",
+     "class": "integer",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "embedding_bf16",
+     "class": "gather_scatter",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "gather_fp32",
+     "class": "gather_scatter",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "scatter_unique_fp32",
+     "class": "gather_scatter",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "scatter_add_int64",
+     "class": "gather_scatter",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "masked_fp32",
+     "class": "gather_scatter",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "index_add_fp32_det",
+     "class": "gather_scatter",
+     "mode": "quick+full",
+     "exact": false,
+     "why": "pinned: strict deterministic mode selects the ordered kernels"
+    },
+    {
+     "op": "index_add_fp32_default",
+     "class": "gather_scatter",
+     "mode": "probe",
+     "exact": false,
+     "why": "float accumulation over duplicate indices: torch documents the default CUDA kernels as non-deterministic"
+    },
+    {
+     "op": "embedding_bwd_fp32",
+     "class": "gather_scatter",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "embedding_bwd_fp32_default",
+     "class": "gather_scatter",
+     "mode": "probe",
+     "exact": false,
+     "why": "listed in handbook chapter 1 as a racy kernel in production; probed here outside deterministic mode"
+    },
+    {
+     "op": "sort_fp32",
+     "class": "sort_topk",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "sort_rows_fp32",
+     "class": "sort_topk",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "sort_stable_int32",
+     "class": "sort_topk",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "searchsorted_fp32",
+     "class": "sort_topk",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "cumsum_int64",
+     "class": "cumsum",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "cumsum_fp32",
+     "class": "cumsum",
+     "mode": "probe",
+     "exact": false,
+     "why": "torch documents float cumsum on CUDA as non-deterministic (pytorch issue 75240); strict deterministic mode raises an error for it"
+    },
+    {
+     "op": "cumsum_bf16",
+     "class": "cumsum",
+     "mode": "probe",
+     "exact": false,
+     "why": "torch documents float cumsum on CUDA as non-deterministic (pytorch issue 75240); strict deterministic mode raises an error for it"
+    },
+    {
+     "op": "int_arith_int64",
+     "class": "integer",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "int_arith_int32",
+     "class": "integer",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "int_div_int64",
+     "class": "integer",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "int_small",
+     "class": "integer",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "int_reduce",
+     "class": "integer",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "mem_roundtrip_4k",
+     "class": "memory",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "mem_roundtrip_1m",
+     "class": "memory",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "mem_roundtrip_64m",
+     "class": "memory",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "mem_roundtrip_256m",
+     "class": "memory",
+     "mode": "full",
+     "exact": true
+    },
+    {
+     "op": "mem_patterns_1m",
+     "class": "memory",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "reduce_fp32_32m",
+     "class": "reduction",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "reduce_fp64_4m",
+     "class": "reduction",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "reduce_bf16_16m",
+     "class": "reduction",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "reduce_fp16_16m",
+     "class": "reduction",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "minmax_fp32_16m",
+     "class": "reduction",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "minmax_bf16_16m",
+     "class": "reduction",
+     "mode": "quick+full",
+     "exact": true
+    },
+    {
+     "op": "rng_philox",
+     "class": "rng",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "adamw_fp32",
+     "class": "train",
+     "mode": "quick+full",
+     "exact": false
+    },
+    {
+     "op": "train_step_bf16",
+     "class": "train",
+     "mode": "quick+full",
+     "exact": false
+    }
+   ]
+  },
+  "nodes": [
+   {
+    "node": "gpu-host",
+    "time": "2026-11-19T11:04:22",
+    "env": {
+     "python": "3.10.0",
+     "numpy": "2.0.0",
+     "driver": "550.144.03",
+     "cublas_workspace_config": ":4096:8",
+     "torch": "2.5.1+cu121",
+     "cuda_build": "12.1",
+     "cudnn": 90100,
+     "cublas": "12.1.3.1",
+     "triton": "3.1.0",
+     "nccl": "2.21.5"
+    },
+    "argv": [
+     "tools/sdc_scan.py",
+     "--node",
+     "gpu-host",
+     "--phases",
+     "self-replay,self-test",
+     "--part",
+     "out/a40-replay.json"
+    ],
+    "runtime_s": {
+     "self-replay": 36.9,
+     "self-test": 11.3,
+     "total": 48.7
+    }
+   },
+   {
+    "node": "gpu-host",
+    "time": "2026-11-19T10:44:42",
+    "env": {
+     "python": "3.10.0",
+     "numpy": "2.0.0",
+     "driver": "550.144.03",
+     "cublas_workspace_config": ":4096:8",
+     "torch": "2.5.1+cu121",
+     "cuda_build": "12.1",
+     "cudnn": 90100,
+     "cublas": "12.1.3.1",
+     "triton": "3.1.0",
+     "nccl": "2.21.5"
+    },
+    "argv": [
+     "tools/sdc_scan.py",
+     "--node",
+     "gpu-host",
+     "--phases",
+     "stress",
+     "--stress",
+     "180",
+     "--part",
+     "out/a40-stress1.json"
+    ],
+    "runtime_s": {
+     "stress": 206.1,
+     "total": 206.6
+    }
+   },
+   {
+    "node": "gpu-host",
+    "time": "2026-11-19T10:57:30",
+    "env": {
+     "python": "3.10.0",
+     "numpy": "2.0.0",
+     "driver": "550.144.03",
+     "cublas_workspace_config": ":4096:8",
+     "torch": "2.5.1+cu121",
+     "cuda_build": "12.1",
+     "cudnn": 90100,
+     "cublas": "12.1.3.1",
+     "triton": "3.1.0",
+     "nccl": "2.21.5"
+    },
+    "argv": [
+     "tools/sdc_scan.py",
+     "--node",
+     "gpu-host",
+     "--phases",
+     "stress",
+     "--stress",
+     "180",
+     "--offsets",
+     "--part",
+     "out/a40-stress2.json"
+    ],
+    "runtime_s": {
+     "stress": 204.9,
+     "total": 205.3
+    }
+   }
+  ]
+ }
+}

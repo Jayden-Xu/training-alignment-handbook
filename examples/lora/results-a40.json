@@ -1,0 +1,6415 @@
+{
+ "schema": "bi-results-v1",
+ "example": "lora",
+ "quick": false,
+ "argv": [
+  "lora_bi.py",
+  "--json",
+  "results-a40.json"
+ ],
+ "env": {
+  "python": "3.10.0",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A40",
+    "sm": "86",
+    "memory_gb": 44.3,
+    "sm_count": 84
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "550.144.03"
+ },
+ "counts": {
+  "ok": 84,
+  "regression": 0,
+  "changed": 0,
+  "info": 20
+ },
+ "checks": [
+  {
+   "name": "merged (bf16 merge) vs unmerged, H=1024 r=16 s=1.5, same batch",
+   "impl": "merged_vs_unmerged",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 128612,
+    "of": 262144
+   }
+  },
+  {
+   "name": "merged (bf16 merge) vs unmerged, H=4096 r=16 s=1.5, same batch",
+   "impl": "merged_vs_unmerged",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 604021,
+    "of": 1048576
+   }
+  },
+  {
+   "name": "rank padding r=8 -> 64 with zeros, H=1024",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "rank padding r=8 -> 64 with zeros, H=1024",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "rank padding r=8 -> 64 with zeros, H=1024",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "rank padding r=8 -> 64 with zeros, H=1024",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "rank padding r=16 -> 64 with zeros, H=1024",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "rank padding r=16 -> 64 with zeros, H=1024",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer dropout p=0.05 (train mode) vs no dropout, H=1024",
+   "impl": "trainer_cublas",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "train_mode_p0.05_mismatch": 219902,
+    "eval_mode_mismatch": 0,
+    "of": 262144
+   }
+  },
+  {
+   "name": "rank padding r=8 -> 64 with zeros, H=4096",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "rank padding r=8 -> 64 with zeros, H=4096",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 74109
+   }
+  },
+  {
+   "name": "rank padding r=8 -> 64 with zeros, H=4096",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "rank padding r=8 -> 64 with zeros, H=4096",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 72737
+   }
+  },
+  {
+   "name": "rank padding r=16 -> 64 with zeros, H=4096",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "rank padding r=16 -> 64 with zeros, H=4096",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 75626
+   }
+  },
+  {
+   "name": "trainer dropout p=0.05 (train mode) vs no dropout, H=4096",
+   "impl": "trainer_cublas",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "train_mode_p0.05_mismatch": 879282,
+    "eval_mode_mismatch": 0,
+    "of": 1048576
+   }
+  },
+  {
+   "name": "repeat x20, T=300, mixed adapters, H=1024",
+   "impl": "ours",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "runs_differing": 0,
+    "worst_mismatched": 0,
+    "of": 307200
+   }
+  },
+  {
+   "name": "repeat x20, T=300, mixed adapters, H=1024",
+   "impl": "grouped_cublas",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "runs_differing": 0,
+    "worst_mismatched": 0,
+    "of": 307200
+   }
+  },
+  {
+   "name": "repeat x20, T=300, mixed adapters, H=1024",
+   "impl": "vllm_seg_model",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "runs_differing": 0,
+    "worst_mismatched": 0,
+    "of": 307200
+   }
+  },
+  {
+   "name": "repeat x20, T=300, mixed adapters, H=1024",
+   "impl": "vllm_row_model",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "runs_differing": 0,
+    "worst_mismatched": 0,
+    "of": 307200
+   }
+  },
+  {
+   "name": "repeat x20, fp32 shrink buffer, H=1024",
+   "impl": "vllm_seg_model shrink buffer",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "runs_differing": 19,
+    "worst_mismatched": 4853,
+    "of": 19200
+   }
+  },
+  {
+   "name": "repeat x20, fp32 shrink buffer, H=1024",
+   "impl": "vllm_row_model shrink buffer",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "runs_differing": 19,
+    "worst_mismatched": 1035,
+    "of": 19200
+   }
+  },
+  {
+   "name": "repeat x20, T=300, mixed adapters, H=4096",
+   "impl": "ours",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "runs_differing": 0,
+    "worst_mismatched": 0,
+    "of": 1228800
+   }
+  },
+  {
+   "name": "repeat x20, T=300, mixed adapters, H=4096",
+   "impl": "grouped_cublas",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "runs_differing": 0,
+    "worst_mismatched": 0,
+    "of": 1228800
+   }
+  },
+  {
+   "name": "repeat x20, T=300, mixed adapters, H=4096",
+   "impl": "vllm_seg_model",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "runs_differing": 13,
+    "worst_mismatched": 1,
+    "of": 1228800
+   }
+  },
+  {
+   "name": "repeat x20, T=300, mixed adapters, H=4096",
+   "impl": "vllm_row_model",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "runs_differing": 1,
+    "worst_mismatched": 31,
+    "of": 1228800
+   }
+  },
+  {
+   "name": "repeat x20, fp32 shrink buffer, H=4096",
+   "impl": "vllm_seg_model shrink buffer",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "runs_differing": 19,
+    "worst_mismatched": 4679,
+    "of": 19200
+   }
+  },
+  {
+   "name": "repeat x20, fp32 shrink buffer, H=4096",
+   "impl": "vllm_row_model shrink buffer",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "runs_differing": 19,
+    "worst_mismatched": 4900,
+    "of": 19200
+   }
+  },
+  {
+   "name": "request (3 tokens) alone vs co-batched with 1..63 adapters, positions, fillers, group sizes, H=1024",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 723,
+    "failing": 0,
+    "failing_group_sizes": [],
+    "failures": []
+   }
+  },
+  {
+   "name": "request (3 tokens) alone vs co-batched with 1..63 adapters, positions, fillers, group sizes, H=1024",
+   "impl": "grouped_cublas",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 723,
+    "failing": 486,
+    "failing_group_sizes": [
+     3,
+     15,
+     16,
+     17,
+     31,
+     32,
+     33,
+     34,
+     63,
+     64,
+     65,
+     255,
+     256,
+     257,
+     511,
+     512,
+     1024,
+     2048,
+     4096
+    ],
+    "failures": [
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "random",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "large",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 1168
+     }
+    ]
+   }
+  },
+  {
+   "name": "request (3 tokens) alone vs co-batched with 1..63 adapters, positions, fillers, group sizes, H=1024",
+   "impl": "grouped_cublas_lora+bi_base",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 723,
+    "failing": 22,
+    "failing_group_sizes": [
+     17,
+     31,
+     32,
+     33,
+     34,
+     63,
+     64,
+     65,
+     511,
+     512,
+     1024
+    ],
+    "failures": [
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 14,
+      "tokens": 22,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 14,
+      "tokens": 22,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 28,
+      "tokens": 36,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 28,
+      "tokens": 36,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 29,
+      "tokens": 37,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 29,
+      "tokens": 37,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 30,
+      "tokens": 38,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 30,
+      "tokens": 38,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 31,
+      "tokens": 39,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 31,
+      "tokens": 39,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 60,
+      "tokens": 68,
+      "mismatched_elements": 191
+     },
+     {
+      "adapter": 5,
+      "rank": 64,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 60,
+      "tokens": 68,
+      "mismatched_elements": 191
+     }
+    ]
+   }
+  },
+  {
+   "name": "request (3 tokens) alone vs co-batched with 1..63 adapters, positions, fillers, group sizes, H=1024",
+   "impl": "gathered_bmm",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 711,
+    "failing": 474,
+    "failing_group_sizes": [
+     3,
+     15,
+     16,
+     17,
+     31,
+     32,
+     33,
+     34,
+     63,
+     64,
+     65,
+     255,
+     256,
+     257,
+     511,
+     512,
+     1024
+    ],
+    "failures": [
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "random",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 1168
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "large",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 1168
+     }
+    ]
+   }
+  },
+  {
+   "name": "request (3 tokens) alone vs co-batched with 1..63 adapters, positions, fillers, group sizes, H=4096",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 723,
+    "failing": 0,
+    "failing_group_sizes": [],
+    "failures": []
+   }
+  },
+  {
+   "name": "request (3 tokens) alone vs co-batched with 1..63 adapters, positions, fillers, group sizes, H=4096",
+   "impl": "grouped_cublas",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 723,
+    "failing": 506,
+    "failing_group_sizes": [
+     3,
+     8,
+     15,
+     16,
+     17,
+     31,
+     32,
+     33,
+     34,
+     63,
+     64,
+     65,
+     127,
+     128,
+     129,
+     255,
+     256,
+     257,
+     511,
+     512,
+     1024,
+     2048,
+     4096
+    ],
+    "failures": [
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "random",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "large",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "request (3 tokens) alone vs co-batched with 1..63 adapters, positions, fillers, group sizes, H=4096",
+   "impl": "grouped_cublas_lora+bi_base",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 723,
+    "failing": 100,
+    "failing_group_sizes": [
+     8,
+     15,
+     16,
+     17,
+     31,
+     32,
+     33,
+     34,
+     63,
+     64,
+     65,
+     127,
+     128,
+     129,
+     255,
+     256,
+     257,
+     511,
+     512,
+     1024,
+     2048,
+     4096
+    ],
+    "failures": [
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 61,
+      "tokens": 69,
+      "mismatched_elements": 963
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 61,
+      "tokens": 69,
+      "mismatched_elements": 963
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 62,
+      "tokens": 70,
+      "mismatched_elements": 582
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 62,
+      "tokens": 70,
+      "mismatched_elements": 582
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 124,
+      "tokens": 132,
+      "mismatched_elements": 582
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 124,
+      "tokens": 132,
+      "mismatched_elements": 582
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 125,
+      "tokens": 133,
+      "mismatched_elements": 582
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 125,
+      "tokens": 133,
+      "mismatched_elements": 582
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 126,
+      "tokens": 134,
+      "mismatched_elements": 582
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 126,
+      "tokens": 134,
+      "mismatched_elements": 582
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "first",
+      "fill": "random",
+      "g": 252,
+      "tokens": 260,
+      "mismatched_elements": 582
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 5,
+      "pos": "last",
+      "fill": "random",
+      "g": 252,
+      "tokens": 260,
+      "mismatched_elements": 582
+     }
+    ]
+   }
+  },
+  {
+   "name": "request (3 tokens) alone vs co-batched with 1..63 adapters, positions, fillers, group sizes, H=4096",
+   "impl": "gathered_bmm",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 711,
+    "failing": 492,
+    "failing_group_sizes": [
+     3,
+     15,
+     16,
+     17,
+     31,
+     32,
+     33,
+     34,
+     63,
+     64,
+     65,
+     127,
+     128,
+     129,
+     255,
+     256,
+     257,
+     511,
+     512,
+     1024
+    ],
+    "failures": [
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "first",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "middle",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "random",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 1,
+      "m": 17,
+      "pos": "last",
+      "fill": "large",
+      "g": 0,
+      "tokens": 20,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "random",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "zeros",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 10
+     },
+     {
+      "adapter": 3,
+      "rank": 8,
+      "k": 2,
+      "m": 17,
+      "pos": "first",
+      "fill": "large",
+      "g": 0,
+      "tokens": 37,
+      "mismatched_elements": 10
+     }
+    ]
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=8, H=1024",
+   "impl": "ours",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=8, H=1024",
+   "impl": "grouped_cublas",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2686
+   }
+  },
+  {
+   "name": "seg model prefill vs row model decode, r=8, H=1024",
+   "impl": "vllm_seg_vs_row_model",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 645
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=8, H=1024",
+   "impl": "ours (train fn vs engine fn)",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=8, H=1024",
+   "impl": "trainer_cublas vs grouped_cublas",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2686
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=8, H=1024",
+   "impl": "trainer_cublas vs gathered_bmm",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2686
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=8, H=1024",
+   "impl": "trainer_cublas vs vllm_seg_model",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 345
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=8, H=1024",
+   "impl": "ours",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=8, H=1024",
+   "impl": "trainer_cublas vs vllm_row_model",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 738
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=16, H=1024",
+   "impl": "ours",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=16, H=1024",
+   "impl": "grouped_cublas",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2746
+   }
+  },
+  {
+   "name": "seg model prefill vs row model decode, r=16, H=1024",
+   "impl": "vllm_seg_vs_row_model",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 692
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=16, H=1024",
+   "impl": "ours (train fn vs engine fn)",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=16, H=1024",
+   "impl": "trainer_cublas vs grouped_cublas",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2746
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=16, H=1024",
+   "impl": "trainer_cublas vs gathered_bmm",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2746
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=16, H=1024",
+   "impl": "trainer_cublas vs vllm_seg_model",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 419
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=16, H=1024",
+   "impl": "ours",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=16, H=1024",
+   "impl": "trainer_cublas vs vllm_row_model",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 822
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=64, H=1024",
+   "impl": "ours",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=64, H=1024",
+   "impl": "grouped_cublas",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2745
+   }
+  },
+  {
+   "name": "seg model prefill vs row model decode, r=64, H=1024",
+   "impl": "vllm_seg_vs_row_model",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 655
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=64, H=1024",
+   "impl": "ours (train fn vs engine fn)",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=64, H=1024",
+   "impl": "trainer_cublas vs grouped_cublas",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2745
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=64, H=1024",
+   "impl": "trainer_cublas vs gathered_bmm",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2745
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=64, H=1024",
+   "impl": "trainer_cublas vs vllm_seg_model",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 428
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=64, H=1024",
+   "impl": "ours",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=64, H=1024",
+   "impl": "trainer_cublas vs vllm_row_model",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 809
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=8, H=4096",
+   "impl": "ours",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=8, H=4096",
+   "impl": "grouped_cublas",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 18
+   }
+  },
+  {
+   "name": "seg model prefill vs row model decode, r=8, H=4096",
+   "impl": "vllm_seg_vs_row_model",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2769
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=8, H=4096",
+   "impl": "ours (train fn vs engine fn)",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=8, H=4096",
+   "impl": "trainer_cublas vs grouped_cublas",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 18
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=8, H=4096",
+   "impl": "trainer_cublas vs gathered_bmm",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 18
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=8, H=4096",
+   "impl": "trainer_cublas vs vllm_seg_model",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 1548
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=8, H=4096",
+   "impl": "ours",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=8, H=4096",
+   "impl": "trainer_cublas vs vllm_row_model",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 3047
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=16, H=4096",
+   "impl": "ours",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=16, H=4096",
+   "impl": "grouped_cublas",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 17
+   }
+  },
+  {
+   "name": "seg model prefill vs row model decode, r=16, H=4096",
+   "impl": "vllm_seg_vs_row_model",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2904
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=16, H=4096",
+   "impl": "ours (train fn vs engine fn)",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=16, H=4096",
+   "impl": "trainer_cublas vs grouped_cublas",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 17
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=16, H=4096",
+   "impl": "trainer_cublas vs gathered_bmm",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 17
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=16, H=4096",
+   "impl": "trainer_cublas vs vllm_seg_model",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 1746
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=16, H=4096",
+   "impl": "ours",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=16, H=4096",
+   "impl": "trainer_cublas vs vllm_row_model",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 3340
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=64, H=4096",
+   "impl": "ours",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "prefill (M=40) vs decode (M=6 per step), adapter r=64, H=4096",
+   "impl": "grouped_cublas",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 14
+   }
+  },
+  {
+   "name": "seg model prefill vs row model decode, r=64, H=4096",
+   "impl": "vllm_seg_vs_row_model",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 2786
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=64, H=4096",
+   "impl": "ours (train fn vs engine fn)",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=64, H=4096",
+   "impl": "trainer_cublas vs grouped_cublas",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 1611
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=64, H=4096",
+   "impl": "trainer_cublas vs gathered_bmm",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 1611
+   }
+  },
+  {
+   "name": "trainer (one adapter, 2 seqs) vs engine prefill (7 adapters + no-adapter rows), r=64, H=4096",
+   "impl": "trainer_cublas vs vllm_seg_model",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_elements": 2289
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=64, H=4096",
+   "impl": "ours",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 0
+   }
+  },
+  {
+   "name": "trainer vs engine decode, r=64, H=4096",
+   "impl": "trainer_cublas vs vllm_row_model",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "mismatched_elements": 3470
+   }
+  },
+  {
+   "name": "backward repeat x5, T=1024, H=1024: dX, dA, dB",
+   "impl": "ours",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "runs_differing": 0,
+    "mismatched": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ]
+    ]
+   }
+  },
+  {
+   "name": "backward repeat x5, T=1024, H=1024: dX, dA, dB",
+   "impl": "trainer_cublas",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "runs_differing": 0,
+    "mismatched": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ]
+    ]
+   }
+  },
+  {
+   "name": "dA, dB of one adapter: other adapters' rows reordered around it, H=1024",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "dA": 0,
+    "dB": 0
+   }
+  },
+  {
+   "name": "sequence of 37 alone vs right-padded to [38, 64, 65, 128, 129, 256, 512, 1024] (zero output grad): dX, dA, dB, H=1024",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "failures": []
+   }
+  },
+  {
+   "name": "sequence of 37 alone vs right-padded to [38, 64, 65, 128, 129, 256, 512, 1024] (zero output grad): dX, dA, dB, H=1024",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "failures": [
+     {
+      "pad_to": 65,
+      "dX": 17557,
+      "dA": 0,
+      "dB": 0
+     },
+     {
+      "pad_to": 128,
+      "dX": 16585,
+      "dA": 9438,
+      "dB": 0
+     },
+     {
+      "pad_to": 129,
+      "dX": 2243,
+      "dA": 9438,
+      "dB": 0
+     },
+     {
+      "pad_to": 256,
+      "dX": 14516,
+      "dA": 6582,
+      "dB": 0
+     },
+     {
+      "pad_to": 512,
+      "dX": 15267,
+      "dA": 9498,
+      "dB": 0
+     },
+     {
+      "pad_to": 1024,
+      "dX": 14518,
+      "dA": 6582,
+      "dB": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "dX of a sequence alone vs among other sequences, H=1024",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "failures": []
+   }
+  },
+  {
+   "name": "dX of a sequence alone vs among other sequences, H=1024",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "failures": [
+     {
+      "other_seqs": 1,
+      "dX": 17817
+     },
+     {
+      "other_seqs": 2,
+      "dX": 16003
+     },
+     {
+      "other_seqs": 7,
+      "dX": 14518
+     },
+     {
+      "other_seqs": 15,
+      "dX": 15267
+     },
+     {
+      "other_seqs": 31,
+      "dX": 14518
+     }
+    ]
+   }
+  },
+  {
+   "name": "backward repeat x5, T=1024, H=4096: dX, dA, dB",
+   "impl": "ours",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "runs_differing": 0,
+    "mismatched": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ]
+    ]
+   }
+  },
+  {
+   "name": "backward repeat x5, T=1024, H=4096: dX, dA, dB",
+   "impl": "trainer_cublas",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "runs_differing": 0,
+    "mismatched": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ]
+    ]
+   }
+  },
+  {
+   "name": "dA, dB of one adapter: other adapters' rows reordered around it, H=4096",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "dA": 0,
+    "dB": 0
+   }
+  },
+  {
+   "name": "sequence of 37 alone vs right-padded to [38, 64, 65, 128, 129, 256, 512, 1024] (zero output grad): dX, dA, dB, H=4096",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "failures": []
+   }
+  },
+  {
+   "name": "sequence of 37 alone vs right-padded to [38, 64, 65, 128, 129, 256, 512, 1024] (zero output grad): dX, dA, dB, H=4096",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "failures": [
+     {
+      "pad_to": 64,
+      "dX": 37169,
+      "dA": 0,
+      "dB": 0
+     },
+     {
+      "pad_to": 65,
+      "dX": 42100,
+      "dA": 37926,
+      "dB": 36797
+     },
+     {
+      "pad_to": 128,
+      "dX": 10949,
+      "dA": 37926,
+      "dB": 36797
+     },
+     {
+      "pad_to": 129,
+      "dX": 10949,
+      "dA": 37926,
+      "dB": 36797
+     },
+     {
+      "pad_to": 256,
+      "dX": 71735,
+      "dA": 37926,
+      "dB": 36797
+     },
+     {
+      "pad_to": 512,
+      "dX": 11752,
+      "dA": 39261,
+      "dB": 36813
+     },
+     {
+      "pad_to": 1024,
+      "dX": 41474,
+      "dA": 35581,
+      "dB": 37432
+     }
+    ]
+   }
+  },
+  {
+   "name": "dX of a sequence alone vs among other sequences, H=4096",
+   "impl": "ours",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "failures": []
+   }
+  },
+  {
+   "name": "dX of a sequence alone vs among other sequences, H=4096",
+   "impl": "trainer_cublas",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "failures": [
+     {
+      "other_seqs": 1,
+      "dX": 42100
+     },
+     {
+      "other_seqs": 2,
+      "dX": 10949
+     },
+     {
+      "other_seqs": 7,
+      "dX": 10949
+     },
+     {
+      "other_seqs": 15,
+      "dX": 11752
+     },
+     {
+      "other_seqs": 31,
+      "dX": 9686
+     }
+    ]
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=1",
+   "value": 2574535,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.0249,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=1",
+   "value": 2585383,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.0248,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=1",
+   "value": 254962,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.251,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=1",
+   "value": 273700,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2338,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=1",
+   "value": 567817,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.1127,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=1",
+   "value": 707719,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.0904,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=1",
+   "value": 308957,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2071,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=8",
+   "value": 60019,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.0663,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=8",
+   "value": 281149,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2276,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=8",
+   "value": 573369,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.1116,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=8",
+   "value": 717442,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.0892,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=8",
+   "value": 316167,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2024,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=64",
+   "value": 8745,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.3183,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=64",
+   "value": 280392,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2283,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=64",
+   "value": 564459,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.1134,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=64",
+   "value": 660358,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.0969,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=64 adapters=64",
+   "value": 312572,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2048,
+   "H": 1024,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=1",
+   "value": 9982492,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.0256,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=1",
+   "value": 9916230,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.0258,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=1",
+   "value": 1036399,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.247,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=1",
+   "value": 1149944,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2226,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=1",
+   "value": 1247472,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2052,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=1",
+   "value": 2860570,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.0895,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=1",
+   "value": 1233145,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2076,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=8",
+   "value": 241835,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.0586,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=8",
+   "value": 1144619,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2237,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=8",
+   "value": 1244941,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2056,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=8",
+   "value": 2849066,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.0899,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=8",
+   "value": 1231708,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2078,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=64",
+   "value": 34747,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.3676,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=64",
+   "value": 1147083,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2232,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=64",
+   "value": 1238189,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2068,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=64",
+   "value": 2662410,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.0962,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=256 adapters=64",
+   "value": 1224946,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.209,
+   "H": 1024,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=1",
+   "value": 25596229,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.04,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=1",
+   "value": 25660746,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.0399,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=1",
+   "value": 4019270,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.2548,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=1",
+   "value": 4578475,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2237,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=1",
+   "value": 1630413,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.6281,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=1",
+   "value": 8859599,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1156,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=1",
+   "value": 2229776,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.4592,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=8",
+   "value": 964985,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.0612,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=8",
+   "value": 4598312,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2227,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=8",
+   "value": 1630230,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.6281,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=8",
+   "value": 8861312,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1156,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=8",
+   "value": 2225119,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.4602,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=64",
+   "value": 138874,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.3736,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=64",
+   "value": 4447359,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2302,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=64",
+   "value": 1618833,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.6326,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=64",
+   "value": 8730995,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1173,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=1024 adapters=64",
+   "value": 2142162,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.478,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=1",
+   "value": 37173292,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.1102,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=1",
+   "value": 37271581,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.1099,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=1",
+   "value": 8355333,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.4902,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=1",
+   "value": 12812133,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3197,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=1",
+   "value": 1715545,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 2.3876,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=1",
+   "value": 18273419,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.2242,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=1",
+   "value": 2430386,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.6853,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=8",
+   "value": 3509352,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.1672,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=8",
+   "value": 12754320,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3211,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=8",
+   "value": 1711347,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 2.3934,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=8",
+   "value": 18032171,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.2271,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=8",
+   "value": 2430800,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.685,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=64",
+   "value": 547952,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.4751,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=64",
+   "value": 12647805,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3239,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=64",
+   "value": 1690282,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 2.4233,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=64",
+   "value": 17348475,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.2361,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=16 T=4096 adapters=64",
+   "value": 2419588,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.6929,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "fwd+bwd H=1024 r=16 T=1024 adapters=1",
+   "value": 921435,
+   "unit": "tokens/s",
+   "impl": "trainer_cublas",
+   "ms": 1.1113,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=1024 r=16 T=1024 adapters=1",
+   "value": 531664,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 1.926,
+   "H": 1024,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=1024 r=16 T=4096 adapters=1",
+   "value": 5027281,
+   "unit": "tokens/s",
+   "impl": "trainer_cublas",
+   "ms": 0.8148,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=1024 r=16 T=4096 adapters=1",
+   "value": 1579366,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 2.5934,
+   "H": 1024,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=1",
+   "value": 1419355,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.0451,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=1",
+   "value": 1412237,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.0453,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=1",
+   "value": 185682,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.3447,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=1",
+   "value": 239685,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.267,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=1",
+   "value": 278307,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.23,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=1",
+   "value": 615589,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.104,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=1",
+   "value": 291793,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2193,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=8",
+   "value": 60706,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.0543,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=8",
+   "value": 283080,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2261,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=8",
+   "value": 283440,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2258,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=8",
+   "value": 627621,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.102,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=8",
+   "value": 313948,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2039,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=64",
+   "value": 8910,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.1831,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=64",
+   "value": 278483,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2298,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=64",
+   "value": 221060,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2895,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=64",
+   "value": 523123,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1223,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=64 adapters=64",
+   "value": 316109,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2025,
+   "H": 1024,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=1",
+   "value": 10102834,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.0253,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=1",
+   "value": 9994107,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.0256,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=1",
+   "value": 1049313,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.244,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=1",
+   "value": 1173829,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2181,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=1",
+   "value": 371320,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.6894,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=1",
+   "value": 2524502,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1014,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=1",
+   "value": 603628,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.4241,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=8",
+   "value": 240540,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.0643,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=8",
+   "value": 1170749,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2187,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=8",
+   "value": 370282,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.6914,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=8",
+   "value": 2512228,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1019,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=8",
+   "value": 601099,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.4259,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=64",
+   "value": 35175,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.2779,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=64",
+   "value": 1128751,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2268,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=64",
+   "value": 308644,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.8294,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=64",
+   "value": 2123331,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1206,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=256 adapters=64",
+   "value": 572839,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.4469,
+   "H": 1024,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=1",
+   "value": 25781083,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.0397,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=1",
+   "value": 25764168,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.0397,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=1",
+   "value": 4082790,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.2508,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=1",
+   "value": 4661397,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2197,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=1",
+   "value": 398408,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 2.5702,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=1",
+   "value": 7279798,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1407,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=1",
+   "value": 728790,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.4051,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=8",
+   "value": 974009,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.0513,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=8",
+   "value": 4633268,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.221,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=8",
+   "value": 395380,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 2.5899,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=8",
+   "value": 7010046,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1461,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=8",
+   "value": 727656,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.4073,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=64",
+   "value": 139726,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.3287,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=64",
+   "value": 4352709,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2353,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=64",
+   "value": 344662,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 2.971,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=64",
+   "value": 6225718,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1645,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=1024 adapters=64",
+   "value": 720515,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.4212,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=1",
+   "value": 37381825,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.1096,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=1",
+   "value": 37378013,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.1096,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=1",
+   "value": 8350193,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.4905,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=1",
+   "value": 11717001,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3496,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=1",
+   "value": 361681,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 11.3249,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=1",
+   "value": 10112963,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.405,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=1",
+   "value": 745646,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 5.4932,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=8",
+   "value": 3456529,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.185,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=8",
+   "value": 11708890,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3498,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=8",
+   "value": 358163,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 11.4361,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=8",
+   "value": 9660771,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.424,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=8",
+   "value": 745186,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 5.4966,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=64",
+   "value": 539872,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.587,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=64",
+   "value": 11295811,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3626,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=64",
+   "value": 353063,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 11.6013,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=64",
+   "value": 8557909,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.4786,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=1024 r=64 T=4096 adapters=64",
+   "value": 738707,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 5.5448,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "fwd+bwd H=1024 r=64 T=1024 adapters=1",
+   "value": 1325594,
+   "unit": "tokens/s",
+   "impl": "trainer_cublas",
+   "ms": 0.7725,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=1024 r=64 T=1024 adapters=1",
+   "value": 555098,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 1.8447,
+   "H": 1024,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=1024 r=64 T=4096 adapters=1",
+   "value": 5358975,
+   "unit": "tokens/s",
+   "impl": "trainer_cublas",
+   "ms": 0.7643,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=1024 r=64 T=4096 adapters=1",
+   "value": 1534386,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 2.6695,
+   "H": 1024,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=1",
+   "value": 662369,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.0966,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=1",
+   "value": 661502,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.0967,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=1",
+   "value": 181387,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.3528,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=1",
+   "value": 205917,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3108,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=1",
+   "value": 509154,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.1257,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=1",
+   "value": 438161,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1461,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=1",
+   "value": 275160,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2326,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=8",
+   "value": 57237,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.1182,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=8",
+   "value": 240147,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2665,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=8",
+   "value": 508055,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.126,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=8",
+   "value": 436647,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1466,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=8",
+   "value": 271889,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2354,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=64",
+   "value": 8432,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.5903,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=64",
+   "value": 224365,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2852,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=64",
+   "value": 482947,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.1325,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=64",
+   "value": 423535,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1511,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=64 adapters=64",
+   "value": 259307,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.2468,
+   "H": 4096,
+   "r": 16,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=1",
+   "value": 1830420,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.1399,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=1",
+   "value": 1828132,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.14,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=1",
+   "value": 711927,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.3596,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=1",
+   "value": 839435,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.305,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=1",
+   "value": 936935,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2732,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=1",
+   "value": 1245595,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.2055,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=1",
+   "value": 456426,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.5609,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=8",
+   "value": 217037,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.1795,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=8",
+   "value": 840636,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3045,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=8",
+   "value": 938957,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2726,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=8",
+   "value": 1231532,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.2079,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=8",
+   "value": 454774,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.5629,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=64",
+   "value": 34104,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.5065,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=64",
+   "value": 787210,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3252,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=64",
+   "value": 915418,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2797,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=64",
+   "value": 1210489,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.2115,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=256 adapters=64",
+   "value": 439228,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.5828,
+   "H": 4096,
+   "r": 16,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=1",
+   "value": 3098054,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.3305,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=1",
+   "value": 3099591,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.3304,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=1",
+   "value": 1429066,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.7166,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=1",
+   "value": 1869320,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.5478,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=1",
+   "value": 1100696,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.9303,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=1",
+   "value": 1659460,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.6171,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=1",
+   "value": 526164,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.9462,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=8",
+   "value": 728308,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.406,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=8",
+   "value": 1861396,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.5501,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=8",
+   "value": 1100225,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.9307,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=8",
+   "value": 1654854,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.6188,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=8",
+   "value": 528787,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.9365,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=64",
+   "value": 133275,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.6834,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=64",
+   "value": 1790316,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.572,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=64",
+   "value": 1085401,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.9434,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=64",
+   "value": 1652248,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.6198,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=1024 adapters=64",
+   "value": 522042,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.9615,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=1",
+   "value": 3483127,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 1.176,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=1",
+   "value": 3321085,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 1.2333,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=1",
+   "value": 1757967,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 2.33,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=1",
+   "value": 2612008,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 1.5681,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=1",
+   "value": 1144230,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 3.5797,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=1",
+   "value": 1484691,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 2.7588,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=1",
+   "value": 547462,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 7.4818,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=8",
+   "value": 1552272,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 2.6387,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=8",
+   "value": 2674931,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 1.5313,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=8",
+   "value": 1152079,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 3.5553,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=8",
+   "value": 1481684,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 2.7644,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=8",
+   "value": 549972,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 7.4477,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=64",
+   "value": 465726,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 8.7949,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=64",
+   "value": 2633763,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 1.5552,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=64",
+   "value": 1149393,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 3.5636,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=64",
+   "value": 1233741,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 3.32,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=16 T=4096 adapters=64",
+   "value": 549103,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 7.4594,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "fwd+bwd H=4096 r=16 T=1024 adapters=1",
+   "value": 1017655,
+   "unit": "tokens/s",
+   "impl": "trainer_cublas",
+   "ms": 1.0062,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=4096 r=16 T=1024 adapters=1",
+   "value": 452110,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 2.2649,
+   "H": 4096,
+   "r": 16,
+   "T": 1024,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=4096 r=16 T=4096 adapters=1",
+   "value": 1154538,
+   "unit": "tokens/s",
+   "impl": "trainer_cublas",
+   "ms": 3.5477,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=4096 r=16 T=4096 adapters=1",
+   "value": 600217,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 6.8242,
+   "H": 4096,
+   "r": 16,
+   "T": 4096,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=1",
+   "value": 667387,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.0959,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=1",
+   "value": 668660,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.0957,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=1",
+   "value": 148286,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.4316,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=1",
+   "value": 211153,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3031,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=1",
+   "value": 246947,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2592,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=1",
+   "value": 386316,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1657,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=1",
+   "value": 133354,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.4799,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=8",
+   "value": 56216,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.1385,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=8",
+   "value": 240949,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.2656,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=8",
+   "value": 237978,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.2689,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=8",
+   "value": 377995,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.1693,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=8",
+   "value": 133259,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.4803,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=64",
+   "value": 8441,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.582,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=64",
+   "value": 178579,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3584,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=64",
+   "value": 197411,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.3242,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=64",
+   "value": 290397,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.2204,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=64 adapters=64",
+   "value": 121357,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 0.5274,
+   "H": 4096,
+   "r": 64,
+   "T": 64,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=1",
+   "value": 1824201,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.1403,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=1",
+   "value": 1837960,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.1393,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=1",
+   "value": 712377,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.3594,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=1",
+   "value": 834785,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3067,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=1",
+   "value": 324591,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.7887,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=1",
+   "value": 1066046,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.2401,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=1",
+   "value": 166589,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.5367,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=8",
+   "value": 217230,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.1785,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=8",
+   "value": 837440,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.3057,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=8",
+   "value": 296664,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.8629,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=8",
+   "value": 1016636,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.2518,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=8",
+   "value": 166301,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.5394,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=64",
+   "value": 34062,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.5158,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=64",
+   "value": 626922,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.4083,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=64",
+   "value": 279192,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 0.9169,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=64",
+   "value": 842295,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.3039,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=256 adapters=64",
+   "value": 165091,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 1.5507,
+   "H": 4096,
+   "r": 64,
+   "T": 256,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=1",
+   "value": 3080658,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 0.3324,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=1",
+   "value": 3079968,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 0.3325,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=1",
+   "value": 1403190,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 0.7298,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=1",
+   "value": 1797269,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.5698,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=1",
+   "value": 312713,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 3.2746,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=1",
+   "value": 1342453,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.7628,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=1",
+   "value": 173518,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 5.9014,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=8",
+   "value": 723660,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 1.415,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=8",
+   "value": 1787336,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.5729,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=8",
+   "value": 313255,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 3.2689,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=8",
+   "value": 1297910,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.789,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=8",
+   "value": 172464,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 5.9375,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=64",
+   "value": 130899,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 7.8228,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=64",
+   "value": 1522903,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 0.6724,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=64",
+   "value": 306155,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 3.3447,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=64",
+   "value": 1207098,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 0.8483,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=1024 adapters=64",
+   "value": 172010,
+   "unit": "tokens/s",
+   "impl": "gathered_bmm",
+   "ms": 5.9531,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=1",
+   "value": 3435630,
+   "unit": "tokens/s",
+   "impl": "merged single GEMM (1 adapter)",
+   "ms": 1.1922,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=1",
+   "value": 3436436,
+   "unit": "tokens/s",
+   "impl": "cuBLAS base only",
+   "ms": 1.1919,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=1",
+   "value": 1729602,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 2.3682,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=1",
+   "value": 2459681,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 1.6653,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=1",
+   "value": 319999,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 12.8,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=1",
+   "value": 1290384,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 3.1742,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=8",
+   "value": 1474823,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 2.7773,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=8",
+   "value": 2547477,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 1.6079,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=8",
+   "value": 319744,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 12.8102,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=8",
+   "value": 970166,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 4.222,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 8
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=64",
+   "value": 462215,
+   "unit": "tokens/s",
+   "impl": "grouped_cublas",
+   "ms": 8.8617,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=64",
+   "value": 2453380,
+   "unit": "tokens/s",
+   "impl": "vllm_seg_model",
+   "ms": 1.6695,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=64",
+   "value": 317239,
+   "unit": "tokens/s",
+   "impl": "vllm_row_model",
+   "ms": 12.9114,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "forward H=4096 r=64 T=4096 adapters=64",
+   "value": 918708,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 4.4584,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 64
+  },
+  {
+   "name": "fwd+bwd H=4096 r=64 T=1024 adapters=1",
+   "value": 988471,
+   "unit": "tokens/s",
+   "impl": "trainer_cublas",
+   "ms": 1.0359,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=4096 r=64 T=1024 adapters=1",
+   "value": 279082,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 3.6692,
+   "H": 4096,
+   "r": 64,
+   "T": 1024,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=4096 r=64 T=4096 adapters=1",
+   "value": 1132215,
+   "unit": "tokens/s",
+   "impl": "trainer_cublas",
+   "ms": 3.6177,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1,
+   "fwd_bwd": true
+  },
+  {
+   "name": "fwd+bwd H=4096 r=64 T=4096 adapters=1",
+   "value": 458802,
+   "unit": "tokens/s",
+   "impl": "ours",
+   "ms": 8.9276,
+   "H": 4096,
+   "r": 64,
+   "T": 4096,
+   "adapters": 1,
+   "fwd_bwd": true
+  }
+ ],
+ "extra": {
+  "vllm_0.6.3.post1_read": {
+   "source": "read from source, vLLM 0.6.3.post1 (vllm/lora/punica.py, layers.py, lora.py, ops/*.py); not run; newer versions untested",
+   "form": "unmerged; gathered by adapter index inside Triton kernels (Punica SGMV for prefill, BGMV for decode); no per-adapter cuBLAS GEMM, no merge",
+   "base": "base_layer.quant_method.apply(x) first (the model's normal GEMM over all tokens), then add_lora adds the update in place into that bf16 output",
+   "scale": "LoRALayerWeights.optimize folds scaling into lora_b in the LoRA dtype at load; kernels get scale 1.0",
+   "shrink": "x @ A into a zeroed fp32 buffer; sgmv_shrink: tiles 32x16x32 per segment of consecutive same-adapter tokens, SPLIT_K=8, tl.atomic_add; bgmv_shrink: SPLIT_K=64, BLOCK_K=256, products and sum in bf16 (tl.sum of a*b), tl.atomic_add",
+   "expand": "buffer cast to bf16 (CAST_TYPE), @ B; sgmv_expand: fp32 accumulate, cast to bf16, then + the bf16 output; bgmv_expand: bf16 products and sum + output",
+   "prefill_vs_decode": "PunicaWrapper picks sgmv in prefill (mapping.is_prefill) and bgmv in decode: two kernels, two rounding orders",
+   "rank": "lora_a/b_stacked sized max_lora_rank; smaller ranks zero-padded (set_lora copies into [:r])",
+   "grouping": "compute_meta merges consecutive tokens with the same adapter into one segment, so a segment's M depends on the neighbours; the grid is cdiv(max segment length, 32) x tiles x segments"
+  },
+  "setup": {
+   "dtype": "bf16 weights and activations",
+   "ranks": [
+    8,
+    16,
+    64
+   ],
+   "alphas": [
+    16.0,
+    24.0,
+    40.0
+   ],
+   "adapters": 64,
+   "max_rank_padding": 64,
+   "scales": "alpha/r on even adapters, alpha/sqrt(r) on odd",
+   "probe_adapters": "3, 4, 5: r=8 s=8.485, r=16 s=1.5, r=64 s=3"
+  },
+  "merge_accuracy": {
+   "H=1024 rho=0.1 r=8": {
+    "merged_bf16": {
+     "y_rel": 0.0023629711941801955,
+     "update_rel": 0.02461755325555671,
+     "delta_rel": 0.017267174508830082,
+     "delta_lost_frac": 0.019021034240722656
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0023396577199613806,
+     "update_rel": 0.02437467230357251,
+     "delta_rel": 0.016980772759441563,
+     "delta_lost_frac": 0.01900196075439453
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0023678195012798962,
+     "update_rel": 0.024668063163811257
+    },
+    "ours": {
+     "y_rel": 0.001654680634424879,
+     "update_rel": 0.017238546427996153
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016546801648143837
+    },
+    "merged_vs_unmerged_mismatch": 130576
+   },
+   "H=1024 rho=0.1 r=16": {
+    "merged_bf16": {
+     "y_rel": 0.002369558778739118,
+     "update_rel": 0.023799542513475505,
+     "delta_rel": 0.01718681278128319,
+     "delta_lost_frac": 0.0182342529296875
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.002346592662999304,
+     "update_rel": 0.02356887381142712,
+     "delta_rel": 0.01680308966452727,
+     "delta_lost_frac": 0.01819324493408203
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0023777046127224756,
+     "update_rel": 0.02388135821854858
+    },
+    "ours": {
+     "y_rel": 0.001659688069990588,
+     "update_rel": 0.016669692744177303
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016596878035773975
+    },
+    "merged_vs_unmerged_mismatch": 131058
+   },
+   "H=1024 rho=0.1 r=64": {
+    "merged_bf16": {
+     "y_rel": 0.0023790370259302433,
+     "update_rel": 0.02360757738879115,
+     "delta_rel": 0.01708867867862308,
+     "delta_lost_frac": 0.017861366271972656
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.002350344838018355,
+     "update_rel": 0.023322860068631417,
+     "delta_rel": 0.016700284145787576,
+     "delta_lost_frac": 0.017835617065429688
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.002386247617613372,
+     "update_rel": 0.023679129281142162
+    },
+    "ours": {
+     "y_rel": 0.001664750811581539,
+     "update_rel": 0.016519597294664554
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.001664750438193395
+    },
+    "merged_vs_unmerged_mismatch": 131399
+   },
+   "H=1024 rho=0.01 r=8": {
+    "merged_bf16": {
+     "y_rel": 0.0023513298276276024,
+     "update_rel": 0.24386161762162986,
+     "delta_rel": 0.16881746641393885,
+     "delta_lost_frac": 0.18419742584228516
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0023498297180243994,
+     "update_rel": 0.243706037936403,
+     "delta_rel": 0.16878659633119233,
+     "delta_lost_frac": 0.18411922454833984
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.002353868323501147,
+     "update_rel": 0.24412489064388937
+    },
+    "ours": {
+     "y_rel": 0.00166165753110198,
+     "update_rel": 0.17233417817717975
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016616568715574936
+    },
+    "merged_vs_unmerged_mismatch": 129100
+   },
+   "H=1024 rho=0.01 r=16": {
+    "merged_bf16": {
+     "y_rel": 0.0023489639500214265,
+     "update_rel": 0.2347194344862642,
+     "delta_rel": 0.1672481640255405,
+     "delta_lost_frac": 0.1781444549560547
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0023492835310306675,
+     "update_rel": 0.23475136851137382,
+     "delta_rel": 0.16720272418530036,
+     "delta_lost_frac": 0.17780399322509766
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.00235068384254575,
+     "update_rel": 0.23489129416962914
+    },
+    "ours": {
+     "y_rel": 0.0016614737132588308,
+     "update_rel": 0.16602220327236142
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.001661473412125488
+    },
+    "merged_vs_unmerged_mismatch": 128612
+   },
+   "H=1024 rho=0.01 r=64": {
+    "merged_bf16": {
+     "y_rel": 0.0023556118285090535,
+     "update_rel": 0.2326019957447957,
+     "delta_rel": 0.16618959742098532,
+     "delta_lost_frac": 0.17471981048583984
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0023528708510422735,
+     "update_rel": 0.23233134129258567,
+     "delta_rel": 0.1661414762140677,
+     "delta_lost_frac": 0.17439842224121094
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0023440996198714884,
+     "update_rel": 0.23146523684754436
+    },
+    "ours": {
+     "y_rel": 0.0016613174050462,
+     "update_rel": 0.16404474595625254
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016613169458568895
+    },
+    "merged_vs_unmerged_mismatch": 128796
+   },
+   "H=1024 rho=0.001 r=8": {
+    "merged_bf16": {
+     "y_rel": 0.0018313074167242017,
+     "update_rel": 1.899178452592433,
+     "delta_rel": 0.796198942005482,
+     "delta_lost_frac": 0.7819185256958008
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0018314128885869477,
+     "update_rel": 1.899287833402696,
+     "delta_rel": 0.7961895435898679,
+     "delta_lost_frac": 0.7818107604980469
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0018240112358088906,
+     "update_rel": 1.8916118641245274
+    },
+    "ours": {
+     "y_rel": 0.0016600436645596275,
+     "update_rel": 1.7215674055062435
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016600431884653602
+    },
+    "merged_vs_unmerged_mismatch": 72046
+   },
+   "H=1024 rho=0.001 r=16": {
+    "merged_bf16": {
+     "y_rel": 0.0018377584267943317,
+     "update_rel": 1.8363856807265468,
+     "delta_rel": 0.7989614046349732,
+     "delta_lost_frac": 0.7786722183227539
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0018373516397200904,
+     "update_rel": 1.8359791975090847,
+     "delta_rel": 0.7989538020169387,
+     "delta_lost_frac": 0.7782440185546875
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0018384680379720788,
+     "update_rel": 1.8370947618477098
+    },
+    "ours": {
+     "y_rel": 0.0016575607461854663,
+     "update_rel": 1.6563226019531965
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.001657560244895141
+    },
+    "merged_vs_unmerged_mismatch": 75429
+   },
+   "H=1024 rho=0.001 r=64": {
+    "merged_bf16": {
+     "y_rel": 0.0018420551886867184,
+     "update_rel": 1.818915003843257,
+     "delta_rel": 0.7984747992080959,
+     "delta_lost_frac": 0.7758216857910156
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.001842358264854173,
+     "update_rel": 1.819214272720583,
+     "delta_rel": 0.7984672392298081,
+     "delta_lost_frac": 0.7754364013671875
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0018442914285580266,
+     "update_rel": 1.8211231517202027
+    },
+    "ours": {
+     "y_rel": 0.001658809111453984,
+     "update_rel": 1.63797089243926
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016588088064494143
+    },
+    "merged_vs_unmerged_mismatch": 76688
+   },
+   "H=4096 rho=0.1 r=8": {
+    "merged_bf16": {
+     "y_rel": 0.0029099272728243925,
+     "update_rel": 0.02874990628071811,
+     "delta_rel": 0.016959027679564465,
+     "delta_lost_frac": 0.01868438720703125
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.00289392794896622,
+     "update_rel": 0.02859183392414308,
+     "delta_rel": 0.01667094148311448,
+     "delta_lost_frac": 0.01867145299911499
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.002905969723133139,
+     "update_rel": 0.02871080592800916
+    },
+    "ours": {
+     "y_rel": 0.0016628818674493272,
+     "update_rel": 0.01642917274653096
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016628740193244335
+    },
+    "merged_vs_unmerged_mismatch": 610090
+   },
+   "H=4096 rho=0.1 r=16": {
+    "merged_bf16": {
+     "y_rel": 0.002912914040544129,
+     "update_rel": 0.02898595992314725,
+     "delta_rel": 0.01707063843861545,
+     "delta_lost_frac": 0.018317103385925293
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.002892981343849028,
+     "update_rel": 0.02878761272184895,
+     "delta_rel": 0.01668079138151007,
+     "delta_lost_frac": 0.01828223466873169
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.002910178725067762,
+     "update_rel": 0.028958741219240584
+    },
+    "ours": {
+     "y_rel": 0.0016617175551250664,
+     "update_rel": 0.016535495996801867
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016617082513713602
+    },
+    "merged_vs_unmerged_mismatch": 610630
+   },
+   "H=4096 rho=0.1 r=64": {
+    "merged_bf16": {
+     "y_rel": 0.0029148843507194678,
+     "update_rel": 0.029223905545268266,
+     "delta_rel": 0.017087680451058088,
+     "delta_lost_frac": 0.018044590950012207
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0028912139367207653,
+     "update_rel": 0.028986591861538506,
+     "delta_rel": 0.016696658947405407,
+     "delta_lost_frac": 0.018009066581726074
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0029131664658955617,
+     "update_rel": 0.029206682459275476
+    },
+    "ours": {
+     "y_rel": 0.0016638083753663152,
+     "update_rel": 0.016680928968976095
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016637989835976447
+    },
+    "merged_vs_unmerged_mismatch": 611485
+   },
+   "H=4096 rho=0.01 r=8": {
+    "merged_bf16": {
+     "y_rel": 0.002893054058089832,
+     "update_rel": 0.28436432878707635,
+     "delta_rel": 0.16571329374305824,
+     "delta_lost_frac": 0.1804942488670349
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0028929567039565284,
+     "update_rel": 0.28435475964587964,
+     "delta_rel": 0.16568192984892252,
+     "delta_lost_frac": 0.18040317296981812
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0028857560863432847,
+     "update_rel": 0.2836469958940352
+    },
+    "ours": {
+     "y_rel": 0.0016621753857300728,
+     "update_rel": 0.16337869199776123
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016621678139629858
+    },
+    "merged_vs_unmerged_mismatch": 604231
+   },
+   "H=4096 rho=0.01 r=16": {
+    "merged_bf16": {
+     "y_rel": 0.002885109114451365,
+     "update_rel": 0.2856212634052628,
+     "delta_rel": 0.1659478816960389,
+     "delta_lost_frac": 0.17769980430603027
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.002886108113418702,
+     "update_rel": 0.2857201627313791,
+     "delta_rel": 0.16590084395163845,
+     "delta_lost_frac": 0.17737829685211182
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0028897861343130022,
+     "update_rel": 0.2860842810135609
+    },
+    "ours": {
+     "y_rel": 0.0016616915915583508,
+     "update_rel": 0.1645048533497324
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016616828034929291
+    },
+    "merged_vs_unmerged_mismatch": 604021
+   },
+   "H=4096 rho=0.01 r=64": {
+    "merged_bf16": {
+     "y_rel": 0.0028908358699023555,
+     "update_rel": 0.28842347967396714,
+     "delta_rel": 0.16610361708901655,
+     "delta_lost_frac": 0.1752569079399109
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0028922887740318584,
+     "update_rel": 0.2885684383238258,
+     "delta_rel": 0.1660576383892765,
+     "delta_lost_frac": 0.17492586374282837
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0028951485998329266,
+     "update_rel": 0.28885376787760403
+    },
+    "ours": {
+     "y_rel": 0.0016640290799919402,
+     "update_rel": 0.16602293562455236
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016640216241213465
+    },
+    "merged_vs_unmerged_mismatch": 604334
+   },
+   "H=4096 rho=0.001 r=8": {
+    "merged_bf16": {
+     "y_rel": 0.002494847886719358,
+     "update_rel": 2.4522420084917522,
+     "delta_rel": 0.7924834580696567,
+     "delta_lost_frac": 0.7786278128623962
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.002495732563151605,
+     "update_rel": 2.4531115768220007,
+     "delta_rel": 0.7924741868423613,
+     "delta_lost_frac": 0.778511106967926
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.0024938945583457646,
+     "update_rel": 2.4513049606268074
+    },
+    "ours": {
+     "y_rel": 0.001663332936496797,
+     "update_rel": 1.634927292641076
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016633242556578112
+    },
+    "merged_vs_unmerged_mismatch": 352056
+   },
+   "H=4096 rho=0.001 r=16": {
+    "merged_bf16": {
+     "y_rel": 0.002498335493960352,
+     "update_rel": 2.4731663879701817,
+     "delta_rel": 0.7957938745379042,
+     "delta_lost_frac": 0.777522623538971
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0024983932524163264,
+     "update_rel": 2.47322356454726,
+     "delta_rel": 0.7957863095730092,
+     "delta_lost_frac": 0.7771292328834534
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.002496453586767407,
+     "update_rel": 2.4713034397688203
+    },
+    "ours": {
+     "y_rel": 0.001662300953338516,
+     "update_rel": 1.6455543518579376
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.0016622933293507943
+    },
+    "merged_vs_unmerged_mismatch": 359815
+   },
+   "H=4096 rho=0.001 r=64": {
+    "merged_bf16": {
+     "y_rel": 0.0025001202433007747,
+     "update_rel": 2.4942723924288708,
+     "delta_rel": 0.7985930374772491,
+     "delta_lost_frac": 0.776287853717804
+    },
+    "merged_fp32_then_bf16": {
+     "y_rel": 0.0025001374578939237,
+     "update_rel": 2.4942895667566067,
+     "delta_rel": 0.798585605929926,
+     "delta_lost_frac": 0.7758911848068237
+    },
+    "trainer_unmerged": {
+     "y_rel": 0.002495794289291314,
+     "update_rel": 2.4899565569463062
+    },
+    "ours": {
+     "y_rel": 0.0016605503560505489,
+     "update_rel": 1.6566662825250889
+    },
+    "floor_bf16_of_fp64": {
+     "y_rel": 0.001660540723769933
+    },
+    "merged_vs_unmerged_mismatch": 363838
+   }
+  },
+  "section_seconds": {
+   "merge": 1.2,
+   "rounding": 0.2,
+   "l1": 0.5,
+   "l2": 7.9,
+   "modes": 0.2,
+   "backward": 0.8,
+   "accuracy": 0.1,
+   "cost": 8.3
+  },
+  "rounding_points": {
+   "H=1024 r=8 s=2": {
+    "s on B output (PEFT)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 72673,
+     "y_rel": 0.0023432360806938312
+    },
+    "s folded into B in bf16 (vLLM load)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 72673,
+     "y_rel": 0.0023432360806938312
+    },
+    "s on A output": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 72673,
+     "y_rel": 0.0023432360806938312
+    },
+    "fp32 update, base+update in fp32, one cast": {
+     "mismatch_vs_peft": 15305,
+     "mismatch_vs_ours": 70751,
+     "y_rel": 0.0023388420421992726
+    },
+    "ours (one fp32 fma, one cast)": {
+     "mismatch_vs_peft": 72673,
+     "mismatch_vs_ours": 0,
+     "y_rel": 0.0016571768155380841
+    },
+    "ours, two bf16 values added (rejected)": {
+     "mismatch_vs_peft": 10230,
+     "mismatch_vs_ours": 70954,
+     "y_rel": 0.0023405577772907236
+    },
+    "ours, bf16 update scaled in bf16 (rejected)": {
+     "mismatch_vs_peft": 10230,
+     "mismatch_vs_ours": 70954,
+     "y_rel": 0.0023405577772907236
+    },
+    "rank_padding": {
+     "cublas_mismatch": 0,
+     "ours_mismatch": 0
+    }
+   },
+   "H=1024 r=8 s=8.485": {
+    "s on B output (PEFT)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 74048,
+     "y_rel": 0.0023518524401222106
+    },
+    "s folded into B in bf16 (vLLM load)": {
+     "mismatch_vs_peft": 13005,
+     "mismatch_vs_ours": 74380,
+     "y_rel": 0.0023516512560789065
+    },
+    "s on A output": {
+     "mismatch_vs_peft": 13099,
+     "mismatch_vs_ours": 74290,
+     "y_rel": 0.002353051690371592
+    },
+    "fp32 update, base+update in fp32, one cast": {
+     "mismatch_vs_peft": 16636,
+     "mismatch_vs_ours": 71492,
+     "y_rel": 0.0023473866066237243
+    },
+    "ours (one fp32 fma, one cast)": {
+     "mismatch_vs_peft": 74048,
+     "mismatch_vs_ours": 0,
+     "y_rel": 0.001661839015679521
+    },
+    "ours, two bf16 values added (rejected)": {
+     "mismatch_vs_peft": 13145,
+     "mismatch_vs_ours": 71810,
+     "y_rel": 0.0023511222638118836
+    },
+    "ours, bf16 update scaled in bf16 (rejected)": {
+     "mismatch_vs_peft": 9735,
+     "mismatch_vs_ours": 72810,
+     "y_rel": 0.0023506770588631403
+    },
+    "rank_padding": {
+     "cublas_mismatch": 0,
+     "ours_mismatch": 0
+    }
+   },
+   "H=1024 r=16 s=1.5": {
+    "s on B output (PEFT)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 74370,
+     "y_rel": 0.0023496722882519953
+    },
+    "s folded into B in bf16 (vLLM load)": {
+     "mismatch_vs_peft": 15308,
+     "mismatch_vs_ours": 74492,
+     "y_rel": 0.0023485983716895554
+    },
+    "s on A output": {
+     "mismatch_vs_peft": 15030,
+     "mismatch_vs_ours": 74259,
+     "y_rel": 0.0023485253804680357
+    },
+    "fp32 update, base+update in fp32, one cast": {
+     "mismatch_vs_peft": 19786,
+     "mismatch_vs_ours": 71329,
+     "y_rel": 0.002343288234546251
+    },
+    "ours (one fp32 fma, one cast)": {
+     "mismatch_vs_peft": 74370,
+     "mismatch_vs_ours": 0,
+     "y_rel": 0.001659107473552707
+    },
+    "ours, two bf16 values added (rejected)": {
+     "mismatch_vs_peft": 14632,
+     "mismatch_vs_ours": 71549,
+     "y_rel": 0.002344130281776035
+    },
+    "ours, bf16 update scaled in bf16 (rejected)": {
+     "mismatch_vs_peft": 10291,
+     "mismatch_vs_ours": 73023,
+     "y_rel": 0.002348313617011498
+    },
+    "rank_padding": {
+     "cublas_mismatch": 0,
+     "ours_mismatch": 0
+    }
+   },
+   "H=1024 r=64 s=3": {
+    "s on B output (PEFT)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 74663,
+     "y_rel": 0.0023557549099713733
+    },
+    "s folded into B in bf16 (vLLM load)": {
+     "mismatch_vs_peft": 15497,
+     "mismatch_vs_ours": 74923,
+     "y_rel": 0.0023531578797075098
+    },
+    "s on A output": {
+     "mismatch_vs_peft": 15608,
+     "mismatch_vs_ours": 74960,
+     "y_rel": 0.0023529450365112232
+    },
+    "fp32 update, base+update in fp32, one cast": {
+     "mismatch_vs_peft": 19758,
+     "mismatch_vs_ours": 71712,
+     "y_rel": 0.0023490597711009666
+    },
+    "ours (one fp32 fma, one cast)": {
+     "mismatch_vs_peft": 74663,
+     "mismatch_vs_ours": 0,
+     "y_rel": 0.0016618522986042725
+    },
+    "ours, two bf16 values added (rejected)": {
+     "mismatch_vs_peft": 14921,
+     "mismatch_vs_ours": 71660,
+     "y_rel": 0.002350274350199923
+    },
+    "ours, bf16 update scaled in bf16 (rejected)": {
+     "mismatch_vs_peft": 10488,
+     "mismatch_vs_ours": 72973,
+     "y_rel": 0.002354207292544477
+    }
+   },
+   "H=1024 dropout": {
+    "train_mode_p0.05_mismatch": 219902,
+    "eval_mode_mismatch": 0,
+    "of": 262144
+   },
+   "H=4096 r=8 s=2": {
+    "s on B output (PEFT)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 463280,
+     "y_rel": 0.0028918365931669392
+    },
+    "s folded into B in bf16 (vLLM load)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 463280,
+     "y_rel": 0.0028918365931669392
+    },
+    "s on A output": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 463280,
+     "y_rel": 0.0028918365931669392
+    },
+    "fp32 update, base+update in fp32, one cast": {
+     "mismatch_vs_peft": 61736,
+     "mismatch_vs_ours": 461428,
+     "y_rel": 0.002889648345220531
+    },
+    "ours (one fp32 fma, one cast)": {
+     "mismatch_vs_peft": 463280,
+     "mismatch_vs_ours": 0,
+     "y_rel": 0.0016618488892442599
+    },
+    "ours, two bf16 values added (rejected)": {
+     "mismatch_vs_peft": 371375,
+     "mismatch_vs_ours": 285708,
+     "y_rel": 0.002349014527972527
+    },
+    "ours, bf16 update scaled in bf16 (rejected)": {
+     "mismatch_vs_peft": 371375,
+     "mismatch_vs_ours": 285708,
+     "y_rel": 0.002349014527972527
+    },
+    "rank_padding": {
+     "cublas_mismatch": 74109,
+     "ours_mismatch": 0
+    }
+   },
+   "H=4096 r=8 s=8.485": {
+    "s on B output (PEFT)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 463680,
+     "y_rel": 0.002895290872726069
+    },
+    "s folded into B in bf16 (vLLM load)": {
+     "mismatch_vs_peft": 52803,
+     "mismatch_vs_ours": 463472,
+     "y_rel": 0.0028947400496606808
+    },
+    "s on A output": {
+     "mismatch_vs_peft": 52784,
+     "mismatch_vs_ours": 463772,
+     "y_rel": 0.002894822454689785
+    },
+    "fp32 update, base+update in fp32, one cast": {
+     "mismatch_vs_peft": 66007,
+     "mismatch_vs_ours": 461655,
+     "y_rel": 0.0028902425478802094
+    },
+    "ours (one fp32 fma, one cast)": {
+     "mismatch_vs_peft": 463680,
+     "mismatch_vs_ours": 0,
+     "y_rel": 0.0016639425542962507
+    },
+    "ours, two bf16 values added (rejected)": {
+     "mismatch_vs_peft": 375711,
+     "mismatch_vs_ours": 285964,
+     "y_rel": 0.0023575322736770245
+    },
+    "ours, bf16 update scaled in bf16 (rejected)": {
+     "mismatch_vs_peft": 371455,
+     "mismatch_vs_ours": 289493,
+     "y_rel": 0.0023586062147755225
+    },
+    "rank_padding": {
+     "cublas_mismatch": 72737,
+     "ours_mismatch": 0
+    }
+   },
+   "H=4096 r=16 s=1.5": {
+    "s on B output (PEFT)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 464384,
+     "y_rel": 0.0028957205317833995
+    },
+    "s folded into B in bf16 (vLLM load)": {
+     "mismatch_vs_peft": 61192,
+     "mismatch_vs_ours": 463932,
+     "y_rel": 0.0028944059893349625
+    },
+    "s on A output": {
+     "mismatch_vs_peft": 60201,
+     "mismatch_vs_ours": 463952,
+     "y_rel": 0.002894694628562965
+    },
+    "fp32 update, base+update in fp32, one cast": {
+     "mismatch_vs_peft": 77997,
+     "mismatch_vs_ours": 461611,
+     "y_rel": 0.002890416298873152
+    },
+    "ours (one fp32 fma, one cast)": {
+     "mismatch_vs_peft": 464384,
+     "mismatch_vs_ours": 0,
+     "y_rel": 0.0016626982546690907
+    },
+    "ours, two bf16 values added (rejected)": {
+     "mismatch_vs_peft": 375489,
+     "mismatch_vs_ours": 286355,
+     "y_rel": 0.0023537672097283737
+    },
+    "ours, bf16 update scaled in bf16 (rejected)": {
+     "mismatch_vs_peft": 368815,
+     "mismatch_vs_ours": 291756,
+     "y_rel": 0.002357235681546646
+    },
+    "rank_padding": {
+     "cublas_mismatch": 75626,
+     "ours_mismatch": 0
+    }
+   },
+   "H=4096 r=64 s=3": {
+    "s on B output (PEFT)": {
+     "mismatch_vs_peft": 0,
+     "mismatch_vs_ours": 464110,
+     "y_rel": 0.0028965136284707788
+    },
+    "s folded into B in bf16 (vLLM load)": {
+     "mismatch_vs_peft": 63195,
+     "mismatch_vs_ours": 463334,
+     "y_rel": 0.0028939172839656385
+    },
+    "s on A output": {
+     "mismatch_vs_peft": 63157,
+     "mismatch_vs_ours": 463515,
+     "y_rel": 0.002893811274139887
+    },
+    "fp32 update, base+update in fp32, one cast": {
+     "mismatch_vs_peft": 79981,
+     "mismatch_vs_ours": 460915,
+     "y_rel": 0.0028897549005724036
+    },
+    "ours (one fp32 fma, one cast)": {
+     "mismatch_vs_peft": 464110,
+     "mismatch_vs_ours": 0,
+     "y_rel": 0.0016612976708676964
+    },
+    "ours, two bf16 values added (rejected)": {
+     "mismatch_vs_peft": 375469,
+     "mismatch_vs_ours": 285938,
+     "y_rel": 0.002349643019643703
+    },
+    "ours, bf16 update scaled in bf16 (rejected)": {
+     "mismatch_vs_peft": 368721,
+     "mismatch_vs_ours": 291629,
+     "y_rel": 0.002353974867739236
+    }
+   },
+   "H=4096 dropout": {
+    "train_mode_p0.05_mismatch": 879282,
+    "eval_mode_mismatch": 0,
+    "of": 1048576
+   }
+  },
+  "form_mismatch": {
+   "H=1024": {
+    "grouped_vs_gathered_bmm": 0,
+    "gathered_bmm_vs_einsum": 0,
+    "grouped_vs_ours": 30994,
+    "of": 110592
+   },
+   "H=4096": {
+    "grouped_vs_gathered_bmm": 9220,
+    "gathered_bmm_vs_einsum": 0,
+    "grouped_vs_ours": 124721,
+    "of": 442368
+   }
+  },
+  "backward_accuracy": {
+   "H=1024 r=16 T=1024": {
+    "ours": {
+     "dX": 0.0016589074726691025,
+     "dA": 3.695638162607119e-06,
+     "dB": 3.6847979763236527e-06
+    },
+    "trainer_cublas": {
+     "dX": 0.0023537862767282996,
+     "dA": 0.0034352989288217997,
+     "dB": 0.0029613616045590127
+    }
+   },
+   "H=4096 r=16 T=1024": {
+    "ours": {
+     "dX": 0.0016621286589490797,
+     "dA": 3.7192159623707747e-06,
+     "dB": 3.696368674089671e-06
+    },
+    "trainer_cublas": {
+     "dX": 0.0026322536181744346,
+     "dA": 0.0029482889603074016,
+     "dB": 0.0034165728312742414
+    }
+   }
+  },
+  "forward_accuracy_rel_fro": {
+   "H=1024": {
+    "ours": 0.001661950735461685,
+    "grouped_cublas (= trainer rounding)": 0.0023448391512149763,
+    "gathered_bmm": 0.002344380156044512,
+    "vllm_seg_model": 0.0023515450824516428,
+    "vllm_row_model": 0.0023497131202382757,
+    "floor bf16(fp64)": 0.0016619503794574736
+   },
+   "H=4096": {
+    "ours": 0.0016621538516274556,
+    "grouped_cublas (= trainer rounding)": 0.0023469142759481145,
+    "gathered_bmm": 0.0023466834307048125,
+    "vllm_seg_model": 0.002352914180553121,
+    "vllm_row_model": 0.0023522358083726204,
+    "floor bf16(fp64)": 0.0016621444524391763
+   }
+  },
+  "total_seconds": 19.1
+ }
+}

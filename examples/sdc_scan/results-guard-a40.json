@@ -1,0 +1,124 @@
+{
+ "schema": "bi-results-v1",
+ "example": "sdc_scan_guard",
+ "quick": false,
+ "argv": [
+  "guard_demo.py",
+  "--part",
+  "guard",
+  "--json",
+  "results-guard-a40.json"
+ ],
+ "env": {
+  "python": "3.10.0",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A40",
+    "sm": "86",
+    "memory_gb": 44.3,
+    "sm_count": 84
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "550.144.03"
+ },
+ "counts": {
+  "ok": 2,
+  "regression": 0,
+  "changed": 0,
+  "info": 0
+ },
+ "checks": [
+  {
+   "name": "sdc_guard: 20 healthy training steps, recomputed forward equals the first (no false alarm)",
+   "impl": "sdc_guard",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "alarms": 0
+   }
+  },
+  {
+   "name": "sdc_guard: a bit flipped in the recomputed logits raises SDCMismatch with the differing word",
+   "impl": "sdc_guard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "name": "sdc_guard",
+    "ok": false,
+    "outputs": 1,
+    "repeats": 1,
+    "mismatches": [
+     {
+      "repeat": 1,
+      "output": "",
+      "first": [
+       {
+        "word": 61728,
+        "element": 123456,
+        "xor": "00080000"
+       }
+      ],
+      "recomputed": "bf16[8,512,32000]:c72f02d1:fff3ef8f17f5479b:6cdd366d6ec73d19",
+      "words_differing": 1,
+      "of_words": 65536000
+     }
+    ]
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "training step",
+   "value": 82.9,
+   "unit": "ms",
+   "impl": "baseline",
+   "shape": "d=1024, 8 layers, 134M params, batch 8x512, logits 250 MiB bf16"
+  },
+  {
+   "name": "training step with sdc_guard on the forward",
+   "value": 113.67,
+   "unit": "ms",
+   "impl": "sdc_guard",
+   "shape": "d=1024, 8 layers, 134M params, batch 8x512, logits 250 MiB bf16"
+  },
+  {
+   "name": "forward alone (no grad)",
+   "value": 18.85,
+   "unit": "ms",
+   "impl": "baseline",
+   "shape": "d=1024, 8 layers, 134M params, batch 8x512, logits 250 MiB bf16"
+  },
+  {
+   "name": "fingerprint of the logits",
+   "value": 5.954,
+   "unit": "ms",
+   "impl": "sdc_guard",
+   "shape": "d=1024, 8 layers, 134M params, batch 8x512, logits 250 MiB bf16"
+  },
+  {
+   "name": "guard cost / step",
+   "value": 0.371,
+   "unit": "fraction",
+   "impl": "sdc_guard",
+   "shape": "d=1024, 8 layers, 134M params, batch 8x512, logits 250 MiB bf16"
+  }
+ ],
+ "extra": {
+  "guard": {
+   "shape": "d=1024, 8 layers, 134M params, batch 8x512, logits 250 MiB bf16",
+   "step_ms": 82.90190286934376,
+   "guarded_step_ms": 113.67300488054752,
+   "forward_ms": 18.852797895669937,
+   "fingerprint_ms": 5.953626334667206
+  }
+ }
+}

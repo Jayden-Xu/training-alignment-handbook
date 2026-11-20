@@ -1,0 +1,2932 @@
+{
+ "schema": "bi-results-v1",
+ "example": "graph_probe",
+ "quick": false,
+ "argv": [
+  "graph_probe_cases.py",
+  "--merge",
+  "part-probe.json",
+  "part-modes.json",
+  "part-buckets.json",
+  "part-opaque.json",
+  "part-cost.json",
+  "--json",
+  "results-a40.json"
+ ],
+ "env": {
+  "python": "3.10.0",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A40",
+    "sm": "86",
+    "memory_gb": 44.3,
+    "sm_count": 84
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "550.144.03"
+ },
+ "counts": {
+  "ok": 36,
+  "regression": 0,
+  "changed": 0,
+  "info": 16
+ },
+ "checks": [
+  {
+   "name": "lazy RoPE cos table built inside torch.compile = built in eager",
+   "impl": "model.py _Ctx.tables",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "elements_differing": 178,
+    "elements": 131072
+   }
+  },
+  {
+   "name": "probe fingerprints = opguard_bridge.xor_signature/xor_vectors (eager)",
+   "impl": "graph_probe",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "records": 99,
+    "mismatching_by_impl": {
+     "torch": 0,
+     "opguard": 0
+    }
+   }
+  },
+  {
+   "name": "probe fingerprints = opguard_bridge.xor_signature/xor_vectors (compile:default)",
+   "impl": "graph_probe",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "records": 99,
+    "mismatching_by_impl": {
+     "torch": 0,
+     "opguard": 0
+    }
+   }
+  },
+  {
+   "name": "probe in a CUDA graph: replay 3 writes step 3; fingerprints = opguard_bridge (5 dtypes/layouts)",
+   "impl": "graph_probe",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "records": 5,
+    "mismatching": 0,
+    "bridge_impl": "opguard"
+   }
+  },
+  {
+   "name": "stock compile:default vs eager: logits bitwise",
+   "impl": "stock",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    }
+   }
+  },
+  {
+   "name": "stock compile:default vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_norm>",
+    "counter": 1,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "diff": 792
+     },
+     "run2": {
+      "diff": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 3.7
+   }
+  },
+  {
+   "name": "stock compile:max-autotune-no-cudagraphs vs eager: logits bitwise",
+   "impl": "stock",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    }
+   }
+  },
+  {
+   "name": "stock compile:max-autotune-no-cudagraphs vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_norm>",
+    "counter": 1,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "diff": 792
+     },
+     "run2": {
+      "diff": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 3.7
+   }
+  },
+  {
+   "name": "stock compile:reduce-overhead vs eager: logits bitwise",
+   "impl": "stock",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    }
+   }
+  },
+  {
+   "name": "stock compile:reduce-overhead vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_norm>",
+    "counter": 1,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "diff": 792
+     },
+     "run2": {
+      "diff": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 3.6
+   }
+  },
+  {
+   "name": "stock graph vs eager: logits bitwise",
+   "impl": "stock",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "first_diff": null
+   }
+  },
+  {
+   "name": "stock graph vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": false,
+    "fn": null,
+    "counter": null,
+    "diff_fields": null,
+    "status_counts": {
+     "run1": {
+      "ok": 792
+     },
+     "run2": {
+      "ok": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff"
+    ],
+    "regional": [],
+    "seconds": 3.3
+   }
+  },
+  {
+   "name": "stock graph bucket 8 vs 1: row 0 bitwise through every probe",
+   "impl": "stock",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_res",
+     "index": 0,
+     "call": 0,
+     "records_differing": 768,
+     "vectors_differing": 768,
+     "records_compared": 792
+    }
+   }
+  },
+  {
+   "name": "stock graph bucket 8 vs 1: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_res>",
+    "counter": 2,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "ok": 24,
+      "diff": 768
+     },
+     "run2": {
+      "ok": 24,
+      "diff": 768
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 2.7
+   }
+  },
+  {
+   "name": "stock graph bucket 16 vs 1: row 0 bitwise through every probe",
+   "impl": "stock",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_res",
+     "index": 0,
+     "call": 0,
+     "records_differing": 768,
+     "vectors_differing": 768,
+     "records_compared": 792
+    }
+   }
+  },
+  {
+   "name": "stock graph bucket 16 vs 1: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_res>",
+    "counter": 2,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "ok": 24,
+      "diff": 768
+     },
+     "run2": {
+      "ok": 24,
+      "diff": 768
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 2.7
+   }
+  },
+  {
+   "name": "bi graph bucket 8 vs 1: row 0 bitwise through every probe",
+   "impl": "bi",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "first_diff": null
+   }
+  },
+  {
+   "name": "bi graph bucket 8 vs 1: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": false,
+    "fn": null,
+    "counter": null,
+    "diff_fields": null,
+    "status_counts": {
+     "run1": {
+      "ok": 792
+     },
+     "run2": {
+      "ok": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff"
+    ],
+    "regional": [],
+    "seconds": 2.1
+   }
+  },
+  {
+   "name": "bi graph bucket 16 vs 1: row 0 bitwise through every probe",
+   "impl": "bi",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "first_diff": null
+   }
+  },
+  {
+   "name": "bi graph bucket 16 vs 1: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": false,
+    "fn": null,
+    "counter": null,
+    "diff_fields": null,
+    "status_counts": {
+     "run1": {
+      "ok": 792
+     },
+     "run2": {
+      "ok": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff"
+    ],
+    "regional": [],
+    "seconds": 2.1
+   }
+  },
+  {
+   "name": "bi_opaque_all graph bucket 8 vs 1: row 0 bitwise through every probe",
+   "impl": "bi_opaque_all",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "first_diff": null
+   }
+  },
+  {
+   "name": "bi_opaque_all graph bucket 8 vs 1: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": false,
+    "fn": null,
+    "counter": null,
+    "diff_fields": null,
+    "status_counts": {
+     "run1": {
+      "ok": 792
+     },
+     "run2": {
+      "ok": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff"
+    ],
+    "regional": [],
+    "seconds": 2.4
+   }
+  },
+  {
+   "name": "bi_opaque_all graph bucket 16 vs 1: row 0 bitwise through every probe",
+   "impl": "bi_opaque_all",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "first_diff": null
+   }
+  },
+  {
+   "name": "bi_opaque_all graph bucket 16 vs 1: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": false,
+    "fn": null,
+    "counter": null,
+    "diff_fields": null,
+    "status_counts": {
+     "run1": {
+      "ok": 792
+     },
+     "run2": {
+      "ok": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff"
+    ],
+    "regional": [],
+    "seconds": 2.4
+   }
+  },
+  {
+   "name": "bi compile:default = eager through every probe",
+   "impl": "bi",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    },
+    "compile_s": 10.1,
+    "inductor_kernels": 42
+   }
+  },
+  {
+   "name": "bi compile:default vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_norm>",
+    "counter": 1,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "diff": 792
+     },
+     "run2": {
+      "diff": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 3.5
+   }
+  },
+  {
+   "name": "bi compile:max-autotune-no-cudagraphs = eager through every probe",
+   "impl": "bi",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    },
+    "compile_s": 7.1,
+    "inductor_kernels": 42
+   }
+  },
+  {
+   "name": "bi compile:max-autotune-no-cudagraphs vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_norm>",
+    "counter": 1,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "diff": 792
+     },
+     "run2": {
+      "diff": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 3.2
+   }
+  },
+  {
+   "name": "bi compile:reduce-overhead = eager through every probe",
+   "impl": "bi",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    },
+    "compile_s": 25.8,
+    "inductor_kernels": 42
+   }
+  },
+  {
+   "name": "bi compile:reduce-overhead vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_norm>",
+    "counter": 1,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "diff": 792
+     },
+     "run2": {
+      "diff": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 3.3
+   }
+  },
+  {
+   "name": "bi_opaque_kernels compile:default = eager through every probe",
+   "impl": "bi_opaque_kernels",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    },
+    "compile_s": 7.6,
+    "inductor_kernels": 77
+   }
+  },
+  {
+   "name": "bi_opaque_kernels compile:default vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_norm>",
+    "counter": 1,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "diff": 792
+     },
+     "run2": {
+      "diff": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 3.3
+   }
+  },
+  {
+   "name": "bi_opaque_kernels compile:max-autotune-no-cudagraphs = eager through every probe",
+   "impl": "bi_opaque_kernels",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    },
+    "compile_s": 7.0,
+    "inductor_kernels": 77
+   }
+  },
+  {
+   "name": "bi_opaque_kernels compile:max-autotune-no-cudagraphs vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_norm>",
+    "counter": 1,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "diff": 792
+     },
+     "run2": {
+      "diff": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 3.3
+   }
+  },
+  {
+   "name": "bi_opaque_kernels compile:reduce-overhead = eager through every probe",
+   "impl": "bi_opaque_kernels",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    },
+    "compile_s": 5.2,
+    "inductor_kernels": 77
+   }
+  },
+  {
+   "name": "bi_opaque_kernels compile:reduce-overhead vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": true,
+    "fn": "<L0.attn_norm>",
+    "counter": 1,
+    "diff_fields": [
+     "outputs"
+    ],
+    "status_counts": {
+     "run1": {
+      "diff": 792
+     },
+     "run2": {
+      "diff": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events"
+    ],
+    "regional": [
+     [
+      0,
+      1,
+      2,
+      3
+     ]
+    ],
+    "seconds": 3.3
+   }
+  },
+  {
+   "name": "bi_opaque_all compile:default = eager through every probe",
+   "impl": "bi_opaque_all",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "first_diff": null,
+    "compile_s": 2.7,
+    "inductor_kernels": 60
+   }
+  },
+  {
+   "name": "bi_opaque_all compile:default vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": false,
+    "fn": null,
+    "counter": null,
+    "diff_fields": null,
+    "status_counts": {
+     "run1": {
+      "ok": 792
+     },
+     "run2": {
+      "ok": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff"
+    ],
+    "regional": [],
+    "seconds": 2.1
+   }
+  },
+  {
+   "name": "bi_opaque_all compile:max-autotune-no-cudagraphs = eager through every probe",
+   "impl": "bi_opaque_all",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "first_diff": null,
+    "compile_s": 5.5,
+    "inductor_kernels": 60
+   }
+  },
+  {
+   "name": "bi_opaque_all compile:max-autotune-no-cudagraphs vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": false,
+    "fn": null,
+    "counter": null,
+    "diff_fields": null,
+    "status_counts": {
+     "run1": {
+      "ok": 792
+     },
+     "run2": {
+      "ok": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff"
+    ],
+    "regional": [],
+    "seconds": 2.4
+   }
+  },
+  {
+   "name": "bi_opaque_all compile:reduce-overhead = eager through every probe",
+   "impl": "bi_opaque_all",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "first_diff": null,
+    "compile_s": 3.1,
+    "inductor_kernels": 60
+   }
+  },
+  {
+   "name": "bi_opaque_all compile:reduce-overhead vs eager: OpGuard first_diff = host first difference",
+   "impl": "graph_probe+OpGuard",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "diverged": false,
+    "fn": null,
+    "counter": null,
+    "diff_fields": null,
+    "status_counts": {
+     "run1": {
+      "ok": 792
+     },
+     "run2": {
+      "ok": 792
+     }
+    },
+    "tools": [
+     "trace_summary",
+     "first_diff"
+    ],
+    "regional": [],
+    "seconds": 2.1
+   }
+  },
+  {
+   "name": "stock eager: probes do not change the logits (bitwise, 24 steps)",
+   "impl": "graph_probe",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "no_probes": {
+     "ms_per_step_median": 6.1732
+    },
+    "probes": {
+     "ms_per_step_median": 32.4997
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 6.1292
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true
+   }
+  },
+  {
+   "name": "stock graph: probes do not change the logits (bitwise, 24 steps)",
+   "impl": "graph_probe",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "no_probes": {
+     "ms_per_step_median": 1.3312
+    },
+    "probes": {
+     "ms_per_step_median": 3.157
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 1.3302
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true
+   }
+  },
+  {
+   "name": "stock compile:default: probes without isolation do not change the logits",
+   "impl": "graph_probe(isolate=False)",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "inductor_kernels": 75
+   }
+  },
+  {
+   "name": "stock compile:default: probes do not change the logits (bitwise, 24 steps)",
+   "impl": "graph_probe",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "no_probes": {
+     "ms_per_step_median": 3.3638,
+     "compile_s": 7.4,
+     "inductor_kernels": 75
+    },
+    "probes": {
+     "ms_per_step_median": 48.6651,
+     "compile_s": 6.9,
+     "inductor_kernels": 76
+    },
+    "probes_not_isolated": {
+     "ms_per_step_median": 29.4185,
+     "compile_s": 7.7,
+     "inductor_kernels": 75
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 2.0649,
+     "compile_s": 4.9,
+     "inductor_kernels": 75
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true,
+    "not_isolated_logits_equal": false
+   }
+  },
+  {
+   "name": "stock compile:max-autotune-no-cudagraphs: probes without isolation do not change the logits",
+   "impl": "graph_probe(isolate=False)",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "inductor_kernels": 1085
+   }
+  },
+  {
+   "name": "stock compile:max-autotune-no-cudagraphs: probes do not change the logits (bitwise, 24 steps)",
+   "impl": "graph_probe",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "no_probes": {
+     "ms_per_step_median": 2.006,
+     "compile_s": 8.0,
+     "inductor_kernels": 1069
+    },
+    "probes": {
+     "ms_per_step_median": 28.9111,
+     "compile_s": 7.7,
+     "inductor_kernels": 1071
+    },
+    "probes_not_isolated": {
+     "ms_per_step_median": 29.1456,
+     "compile_s": 29.4,
+     "inductor_kernels": 1085
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 2.0311,
+     "compile_s": 6.9,
+     "inductor_kernels": 1069
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true,
+    "not_isolated_logits_equal": false
+   }
+  },
+  {
+   "name": "stock compile:reduce-overhead: probes without isolation do not change the logits",
+   "impl": "graph_probe(isolate=False)",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "inductor_kernels": 75
+   }
+  },
+  {
+   "name": "stock compile:reduce-overhead: probes do not change the logits (bitwise, 24 steps)",
+   "impl": "graph_probe",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "no_probes": {
+     "ms_per_step_median": 1.0875,
+     "compile_s": 5.3,
+     "inductor_kernels": 75
+    },
+    "probes": {
+     "ms_per_step_median": 2.924,
+     "compile_s": 6.3,
+     "inductor_kernels": 76
+    },
+    "probes_not_isolated": {
+     "ms_per_step_median": 2.9215,
+     "compile_s": 5.8,
+     "inductor_kernels": 75
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 1.088,
+     "compile_s": 5.2,
+     "inductor_kernels": 75
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true,
+    "not_isolated_logits_equal": false
+   }
+  },
+  {
+   "name": "bi_opaque_all compile:default: probes without isolation do not change the logits",
+   "impl": "graph_probe(isolate=False)",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "inductor_kernels": 27
+   }
+  },
+  {
+   "name": "bi_opaque_all compile:default: probes do not change the logits (bitwise, 24 steps)",
+   "impl": "graph_probe",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "no_probes": {
+     "ms_per_step_median": 23.7532,
+     "compile_s": 4.8,
+     "inductor_kernels": 27
+    },
+    "probes": {
+     "ms_per_step_median": 42.2559,
+     "compile_s": 4.9,
+     "inductor_kernels": 60
+    },
+    "probes_not_isolated": {
+     "ms_per_step_median": 41.6558,
+     "compile_s": 2.5,
+     "inductor_kernels": 27
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 13.6243,
+     "compile_s": 1.7,
+     "inductor_kernels": 27
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true,
+    "not_isolated_logits_equal": true
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "stock eager ms/step without probes",
+   "value": 6.1732,
+   "unit": "ms"
+  },
+  {
+   "name": "stock eager ms/step with probes",
+   "value": 32.4997,
+   "unit": "ms"
+  },
+  {
+   "name": "stock graph ms/step without probes",
+   "value": 1.3312,
+   "unit": "ms"
+  },
+  {
+   "name": "stock graph ms/step with probes",
+   "value": 3.157,
+   "unit": "ms"
+  },
+  {
+   "name": "stock compile:default ms/step without probes",
+   "value": 3.3638,
+   "unit": "ms"
+  },
+  {
+   "name": "stock compile:default ms/step with probes",
+   "value": 48.6651,
+   "unit": "ms"
+  },
+  {
+   "name": "stock compile:max-autotune-no-cudagraphs ms/step without probes",
+   "value": 2.006,
+   "unit": "ms"
+  },
+  {
+   "name": "stock compile:max-autotune-no-cudagraphs ms/step with probes",
+   "value": 28.9111,
+   "unit": "ms"
+  },
+  {
+   "name": "stock compile:reduce-overhead ms/step without probes",
+   "value": 1.0875,
+   "unit": "ms"
+  },
+  {
+   "name": "stock compile:reduce-overhead ms/step with probes",
+   "value": 2.924,
+   "unit": "ms"
+  },
+  {
+   "name": "bi_opaque_all compile:default ms/step without probes",
+   "value": 23.7532,
+   "unit": "ms"
+  },
+  {
+   "name": "bi_opaque_all compile:default ms/step with probes",
+   "value": 42.2559,
+   "unit": "ms"
+  }
+ ],
+ "extra": {
+  "config": {
+   "hidden": 1024,
+   "layers": 8,
+   "heads": 16,
+   "kv_heads": 4,
+   "intermediate": 3584,
+   "vocab": 32000,
+   "dtype": "bf16"
+  },
+  "steps": 24,
+  "opguard": true,
+  "bridge_impl": "opguard",
+  "probes_per_step": 33,
+  "probe": {
+   "eager": {
+    "records": 99,
+    "mismatching": {
+     "torch": 0,
+     "opguard": 0
+    }
+   },
+   "compile:default": {
+    "records": 99,
+    "mismatching": {
+     "torch": 0,
+     "opguard": 0
+    }
+   }
+  },
+  "runtime_s": 124.0,
+  "opguard_exports": 0,
+  "modes": {
+   "eager": {
+    "records": 792
+   },
+   "compile:default": {
+    "logits_equal_eager": false,
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    },
+    "differing_steps_by_probe": {
+     "L0.attn_norm": 24,
+     "L0.attn_res": 24,
+     "L0.mlp_norm": 24,
+     "L0.out": 24,
+     "L1.attn_norm": 24,
+     "L1.attn_res": 24,
+     "L1.mlp_norm": 24,
+     "L1.out": 24,
+     "L2.attn_norm": 24,
+     "L2.attn_res": 24,
+     "L2.mlp_norm": 24,
+     "L2.out": 24,
+     "L3.attn_norm": 24,
+     "L3.attn_res": 24,
+     "L3.mlp_norm": 24,
+     "L3.out": 24,
+     "L4.attn_norm": 24,
+     "L4.attn_res": 24,
+     "L4.mlp_norm": 24,
+     "L4.out": 24,
+     "L5.attn_norm": 24,
+     "L5.attn_res": 24,
+     "L5.mlp_norm": 24,
+     "L5.out": 24,
+     "L6.attn_norm": 24,
+     "L6.attn_res": 24,
+     "L6.mlp_norm": 24,
+     "L6.out": 24,
+     "L7.attn_norm": 24,
+     "L7.attn_res": 24,
+     "L7.mlp_norm": 24,
+     "L7.out": 24,
+     "logits": 24
+    },
+    "opguard": {
+     "diverged": true,
+     "fn": "<L0.attn_norm>",
+     "counter": 1,
+     "diff_fields": [
+      "outputs"
+     ],
+     "status_counts": {
+      "run1": {
+       "diff": 792
+      },
+      "run2": {
+       "diff": 792
+      }
+     },
+     "tools": [
+      "trace_summary",
+      "first_diff",
+      "inspect_event",
+      "compare_events"
+     ],
+     "regional": [
+      [
+       0,
+       1,
+       2,
+       3
+      ]
+     ],
+     "seconds": 3.7
+    },
+    "opguard_matches_host": true,
+    "compile_s": 7.9,
+    "inductor_kernels": 76
+   },
+   "compile:max-autotune-no-cudagraphs": {
+    "logits_equal_eager": false,
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    },
+    "differing_steps_by_probe": {
+     "L0.attn_norm": 24,
+     "L0.attn_res": 24,
+     "L0.mlp_norm": 24,
+     "L0.out": 24,
+     "L1.attn_norm": 24,
+     "L1.attn_res": 24,
+     "L1.mlp_norm": 24,
+     "L1.out": 24,
+     "L2.attn_norm": 24,
+     "L2.attn_res": 24,
+     "L2.mlp_norm": 24,
+     "L2.out": 24,
+     "L3.attn_norm": 24,
+     "L3.attn_res": 24,
+     "L3.mlp_norm": 24,
+     "L3.out": 24,
+     "L4.attn_norm": 24,
+     "L4.attn_res": 24,
+     "L4.mlp_norm": 24,
+     "L4.out": 24,
+     "L5.attn_norm": 24,
+     "L5.attn_res": 24,
+     "L5.mlp_norm": 24,
+     "L5.out": 24,
+     "L6.attn_norm": 24,
+     "L6.attn_res": 24,
+     "L6.mlp_norm": 24,
+     "L6.out": 24,
+     "L7.attn_norm": 24,
+     "L7.attn_res": 24,
+     "L7.mlp_norm": 24,
+     "L7.out": 24,
+     "logits": 24
+    },
+    "opguard": {
+     "diverged": true,
+     "fn": "<L0.attn_norm>",
+     "counter": 1,
+     "diff_fields": [
+      "outputs"
+     ],
+     "status_counts": {
+      "run1": {
+       "diff": 792
+      },
+      "run2": {
+       "diff": 792
+      }
+     },
+     "tools": [
+      "trace_summary",
+      "first_diff",
+      "inspect_event",
+      "compare_events"
+     ],
+     "regional": [
+      [
+       0,
+       1,
+       2,
+       3
+      ]
+     ],
+     "seconds": 3.7
+    },
+    "opguard_matches_host": true,
+    "compile_s": 57.4,
+    "inductor_kernels": 1071
+   },
+   "compile:reduce-overhead": {
+    "logits_equal_eager": false,
+    "first_diff": {
+     "step": 1,
+     "name": "L0.attn_norm",
+     "index": 0,
+     "call": 0,
+     "records_differing": 792,
+     "vectors_differing": 792,
+     "records_compared": 792
+    },
+    "differing_steps_by_probe": {
+     "L0.attn_norm": 24,
+     "L0.attn_res": 24,
+     "L0.mlp_norm": 24,
+     "L0.out": 24,
+     "L1.attn_norm": 24,
+     "L1.attn_res": 24,
+     "L1.mlp_norm": 24,
+     "L1.out": 24,
+     "L2.attn_norm": 24,
+     "L2.attn_res": 24,
+     "L2.mlp_norm": 24,
+     "L2.out": 24,
+     "L3.attn_norm": 24,
+     "L3.attn_res": 24,
+     "L3.mlp_norm": 24,
+     "L3.out": 24,
+     "L4.attn_norm": 24,
+     "L4.attn_res": 24,
+     "L4.mlp_norm": 24,
+     "L4.out": 24,
+     "L5.attn_norm": 24,
+     "L5.attn_res": 24,
+     "L5.mlp_norm": 24,
+     "L5.out": 24,
+     "L6.attn_norm": 24,
+     "L6.attn_res": 24,
+     "L6.mlp_norm": 24,
+     "L6.out": 24,
+     "L7.attn_norm": 24,
+     "L7.attn_res": 24,
+     "L7.mlp_norm": 24,
+     "L7.out": 24,
+     "logits": 24
+    },
+    "opguard": {
+     "diverged": true,
+     "fn": "<L0.attn_norm>",
+     "counter": 1,
+     "diff_fields": [
+      "outputs"
+     ],
+     "status_counts": {
+      "run1": {
+       "diff": 792
+      },
+      "run2": {
+       "diff": 792
+      }
+     },
+     "tools": [
+      "trace_summary",
+      "first_diff",
+      "inspect_event",
+      "compare_events"
+     ],
+     "regional": [
+      [
+       0,
+       1,
+       2,
+       3
+      ]
+     ],
+     "seconds": 3.6
+    },
+    "opguard_matches_host": true,
+    "compile_s": 6.6,
+    "inductor_kernels": 76
+   },
+   "graph": {
+    "logits_equal_eager": true,
+    "first_diff": null,
+    "differing_steps_by_probe": {
+     "L0.attn_norm": 0,
+     "L0.attn_res": 0,
+     "L0.mlp_norm": 0,
+     "L0.out": 0,
+     "L1.attn_norm": 0,
+     "L1.attn_res": 0,
+     "L1.mlp_norm": 0,
+     "L1.out": 0,
+     "L2.attn_norm": 0,
+     "L2.attn_res": 0,
+     "L2.mlp_norm": 0,
+     "L2.out": 0,
+     "L3.attn_norm": 0,
+     "L3.attn_res": 0,
+     "L3.mlp_norm": 0,
+     "L3.out": 0,
+     "L4.attn_norm": 0,
+     "L4.attn_res": 0,
+     "L4.mlp_norm": 0,
+     "L4.out": 0,
+     "L5.attn_norm": 0,
+     "L5.attn_res": 0,
+     "L5.mlp_norm": 0,
+     "L5.out": 0,
+     "L6.attn_norm": 0,
+     "L6.attn_res": 0,
+     "L6.mlp_norm": 0,
+     "L6.out": 0,
+     "L7.attn_norm": 0,
+     "L7.attn_res": 0,
+     "L7.mlp_norm": 0,
+     "L7.out": 0,
+     "logits": 0
+    },
+    "opguard": {
+     "diverged": false,
+     "fn": null,
+     "counter": null,
+     "diff_fields": null,
+     "status_counts": {
+      "run1": {
+       "ok": 792
+      },
+      "run2": {
+       "ok": 792
+      }
+     },
+     "tools": [
+      "trace_summary",
+      "first_diff"
+     ],
+     "regional": [],
+     "seconds": 3.3
+    },
+    "opguard_matches_host": true
+   }
+  },
+  "buckets": {
+   "stock": {
+    "1": {
+     "reference": true
+    },
+    "8": {
+     "row0_logits_equal_B1": false,
+     "first_diff": {
+      "step": 1,
+      "name": "L0.attn_res",
+      "index": 0,
+      "call": 0,
+      "records_differing": 768,
+      "vectors_differing": 768,
+      "records_compared": 792
+     },
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 0,
+      "L0.attn_res": 24,
+      "L0.mlp_norm": 24,
+      "L0.out": 24,
+      "L1.attn_norm": 24,
+      "L1.attn_res": 24,
+      "L1.mlp_norm": 24,
+      "L1.out": 24,
+      "L2.attn_norm": 24,
+      "L2.attn_res": 24,
+      "L2.mlp_norm": 24,
+      "L2.out": 24,
+      "L3.attn_norm": 24,
+      "L3.attn_res": 24,
+      "L3.mlp_norm": 24,
+      "L3.out": 24,
+      "L4.attn_norm": 24,
+      "L4.attn_res": 24,
+      "L4.mlp_norm": 24,
+      "L4.out": 24,
+      "L5.attn_norm": 24,
+      "L5.attn_res": 24,
+      "L5.mlp_norm": 24,
+      "L5.out": 24,
+      "L6.attn_norm": 24,
+      "L6.attn_res": 24,
+      "L6.mlp_norm": 24,
+      "L6.out": 24,
+      "L7.attn_norm": 24,
+      "L7.attn_res": 24,
+      "L7.mlp_norm": 24,
+      "L7.out": 24,
+      "logits": 24
+     },
+     "opguard": {
+      "diverged": true,
+      "fn": "<L0.attn_res>",
+      "counter": 2,
+      "diff_fields": [
+       "outputs"
+      ],
+      "status_counts": {
+       "run1": {
+        "ok": 24,
+        "diff": 768
+       },
+       "run2": {
+        "ok": 24,
+        "diff": 768
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff",
+       "inspect_event",
+       "compare_events"
+      ],
+      "regional": [
+       [
+        0,
+        1,
+        2,
+        3
+       ]
+      ],
+      "seconds": 2.7
+     },
+     "opguard_matches_host": true
+    },
+    "16": {
+     "row0_logits_equal_B1": false,
+     "first_diff": {
+      "step": 1,
+      "name": "L0.attn_res",
+      "index": 0,
+      "call": 0,
+      "records_differing": 768,
+      "vectors_differing": 768,
+      "records_compared": 792
+     },
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 0,
+      "L0.attn_res": 24,
+      "L0.mlp_norm": 24,
+      "L0.out": 24,
+      "L1.attn_norm": 24,
+      "L1.attn_res": 24,
+      "L1.mlp_norm": 24,
+      "L1.out": 24,
+      "L2.attn_norm": 24,
+      "L2.attn_res": 24,
+      "L2.mlp_norm": 24,
+      "L2.out": 24,
+      "L3.attn_norm": 24,
+      "L3.attn_res": 24,
+      "L3.mlp_norm": 24,
+      "L3.out": 24,
+      "L4.attn_norm": 24,
+      "L4.attn_res": 24,
+      "L4.mlp_norm": 24,
+      "L4.out": 24,
+      "L5.attn_norm": 24,
+      "L5.attn_res": 24,
+      "L5.mlp_norm": 24,
+      "L5.out": 24,
+      "L6.attn_norm": 24,
+      "L6.attn_res": 24,
+      "L6.mlp_norm": 24,
+      "L6.out": 24,
+      "L7.attn_norm": 24,
+      "L7.attn_res": 24,
+      "L7.mlp_norm": 24,
+      "L7.out": 24,
+      "logits": 24
+     },
+     "opguard": {
+      "diverged": true,
+      "fn": "<L0.attn_res>",
+      "counter": 2,
+      "diff_fields": [
+       "outputs"
+      ],
+      "status_counts": {
+       "run1": {
+        "ok": 24,
+        "diff": 768
+       },
+       "run2": {
+        "ok": 24,
+        "diff": 768
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff",
+       "inspect_event",
+       "compare_events"
+      ],
+      "regional": [
+       [
+        0,
+        1,
+        2,
+        3
+       ]
+      ],
+      "seconds": 2.7
+     },
+     "opguard_matches_host": true
+    }
+   },
+   "bi": {
+    "1": {
+     "reference": true
+    },
+    "8": {
+     "row0_logits_equal_B1": true,
+     "first_diff": null,
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 0,
+      "L0.attn_res": 0,
+      "L0.mlp_norm": 0,
+      "L0.out": 0,
+      "L1.attn_norm": 0,
+      "L1.attn_res": 0,
+      "L1.mlp_norm": 0,
+      "L1.out": 0,
+      "L2.attn_norm": 0,
+      "L2.attn_res": 0,
+      "L2.mlp_norm": 0,
+      "L2.out": 0,
+      "L3.attn_norm": 0,
+      "L3.attn_res": 0,
+      "L3.mlp_norm": 0,
+      "L3.out": 0,
+      "L4.attn_norm": 0,
+      "L4.attn_res": 0,
+      "L4.mlp_norm": 0,
+      "L4.out": 0,
+      "L5.attn_norm": 0,
+      "L5.attn_res": 0,
+      "L5.mlp_norm": 0,
+      "L5.out": 0,
+      "L6.attn_norm": 0,
+      "L6.attn_res": 0,
+      "L6.mlp_norm": 0,
+      "L6.out": 0,
+      "L7.attn_norm": 0,
+      "L7.attn_res": 0,
+      "L7.mlp_norm": 0,
+      "L7.out": 0,
+      "logits": 0
+     },
+     "opguard": {
+      "diverged": false,
+      "fn": null,
+      "counter": null,
+      "diff_fields": null,
+      "status_counts": {
+       "run1": {
+        "ok": 792
+       },
+       "run2": {
+        "ok": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff"
+      ],
+      "regional": [],
+      "seconds": 2.1
+     },
+     "opguard_matches_host": true
+    },
+    "16": {
+     "row0_logits_equal_B1": true,
+     "first_diff": null,
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 0,
+      "L0.attn_res": 0,
+      "L0.mlp_norm": 0,
+      "L0.out": 0,
+      "L1.attn_norm": 0,
+      "L1.attn_res": 0,
+      "L1.mlp_norm": 0,
+      "L1.out": 0,
+      "L2.attn_norm": 0,
+      "L2.attn_res": 0,
+      "L2.mlp_norm": 0,
+      "L2.out": 0,
+      "L3.attn_norm": 0,
+      "L3.attn_res": 0,
+      "L3.mlp_norm": 0,
+      "L3.out": 0,
+      "L4.attn_norm": 0,
+      "L4.attn_res": 0,
+      "L4.mlp_norm": 0,
+      "L4.out": 0,
+      "L5.attn_norm": 0,
+      "L5.attn_res": 0,
+      "L5.mlp_norm": 0,
+      "L5.out": 0,
+      "L6.attn_norm": 0,
+      "L6.attn_res": 0,
+      "L6.mlp_norm": 0,
+      "L6.out": 0,
+      "L7.attn_norm": 0,
+      "L7.attn_res": 0,
+      "L7.mlp_norm": 0,
+      "L7.out": 0,
+      "logits": 0
+     },
+     "opguard": {
+      "diverged": false,
+      "fn": null,
+      "counter": null,
+      "diff_fields": null,
+      "status_counts": {
+       "run1": {
+        "ok": 792
+       },
+       "run2": {
+        "ok": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff"
+      ],
+      "regional": [],
+      "seconds": 2.1
+     },
+     "opguard_matches_host": true
+    }
+   },
+   "bi_opaque_all": {
+    "1": {
+     "reference": true
+    },
+    "8": {
+     "row0_logits_equal_B1": true,
+     "first_diff": null,
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 0,
+      "L0.attn_res": 0,
+      "L0.mlp_norm": 0,
+      "L0.out": 0,
+      "L1.attn_norm": 0,
+      "L1.attn_res": 0,
+      "L1.mlp_norm": 0,
+      "L1.out": 0,
+      "L2.attn_norm": 0,
+      "L2.attn_res": 0,
+      "L2.mlp_norm": 0,
+      "L2.out": 0,
+      "L3.attn_norm": 0,
+      "L3.attn_res": 0,
+      "L3.mlp_norm": 0,
+      "L3.out": 0,
+      "L4.attn_norm": 0,
+      "L4.attn_res": 0,
+      "L4.mlp_norm": 0,
+      "L4.out": 0,
+      "L5.attn_norm": 0,
+      "L5.attn_res": 0,
+      "L5.mlp_norm": 0,
+      "L5.out": 0,
+      "L6.attn_norm": 0,
+      "L6.attn_res": 0,
+      "L6.mlp_norm": 0,
+      "L6.out": 0,
+      "L7.attn_norm": 0,
+      "L7.attn_res": 0,
+      "L7.mlp_norm": 0,
+      "L7.out": 0,
+      "logits": 0
+     },
+     "opguard": {
+      "diverged": false,
+      "fn": null,
+      "counter": null,
+      "diff_fields": null,
+      "status_counts": {
+       "run1": {
+        "ok": 792
+       },
+       "run2": {
+        "ok": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff"
+      ],
+      "regional": [],
+      "seconds": 2.4
+     },
+     "opguard_matches_host": true
+    },
+    "16": {
+     "row0_logits_equal_B1": true,
+     "first_diff": null,
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 0,
+      "L0.attn_res": 0,
+      "L0.mlp_norm": 0,
+      "L0.out": 0,
+      "L1.attn_norm": 0,
+      "L1.attn_res": 0,
+      "L1.mlp_norm": 0,
+      "L1.out": 0,
+      "L2.attn_norm": 0,
+      "L2.attn_res": 0,
+      "L2.mlp_norm": 0,
+      "L2.out": 0,
+      "L3.attn_norm": 0,
+      "L3.attn_res": 0,
+      "L3.mlp_norm": 0,
+      "L3.out": 0,
+      "L4.attn_norm": 0,
+      "L4.attn_res": 0,
+      "L4.mlp_norm": 0,
+      "L4.out": 0,
+      "L5.attn_norm": 0,
+      "L5.attn_res": 0,
+      "L5.mlp_norm": 0,
+      "L5.out": 0,
+      "L6.attn_norm": 0,
+      "L6.attn_res": 0,
+      "L6.mlp_norm": 0,
+      "L6.out": 0,
+      "L7.attn_norm": 0,
+      "L7.attn_res": 0,
+      "L7.mlp_norm": 0,
+      "L7.out": 0,
+      "logits": 0
+     },
+     "opguard": {
+      "diverged": false,
+      "fn": null,
+      "counter": null,
+      "diff_fields": null,
+      "status_counts": {
+       "run1": {
+        "ok": 792
+       },
+       "run2": {
+        "ok": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff"
+      ],
+      "regional": [],
+      "seconds": 2.4
+     },
+     "opguard_matches_host": true
+    }
+   }
+  },
+  "opaque": {
+   "bi": {
+    "eager": {
+     "records": 792
+    },
+    "compile:default": {
+     "first_diff": {
+      "step": 1,
+      "name": "L0.attn_norm",
+      "index": 0,
+      "call": 0,
+      "records_differing": 792,
+      "vectors_differing": 792,
+      "records_compared": 792
+     },
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 24,
+      "L0.attn_res": 24,
+      "L0.mlp_norm": 24,
+      "L0.out": 24,
+      "L1.attn_norm": 24,
+      "L1.attn_res": 24,
+      "L1.mlp_norm": 24,
+      "L1.out": 24,
+      "L2.attn_norm": 24,
+      "L2.attn_res": 24,
+      "L2.mlp_norm": 24,
+      "L2.out": 24,
+      "L3.attn_norm": 24,
+      "L3.attn_res": 24,
+      "L3.mlp_norm": 24,
+      "L3.out": 24,
+      "L4.attn_norm": 24,
+      "L4.attn_res": 24,
+      "L4.mlp_norm": 24,
+      "L4.out": 24,
+      "L5.attn_norm": 24,
+      "L5.attn_res": 24,
+      "L5.mlp_norm": 24,
+      "L5.out": 24,
+      "L6.attn_norm": 24,
+      "L6.attn_res": 24,
+      "L6.mlp_norm": 24,
+      "L6.out": 24,
+      "L7.attn_norm": 24,
+      "L7.attn_res": 24,
+      "L7.mlp_norm": 24,
+      "L7.out": 24,
+      "logits": 24
+     },
+     "logits_equal_eager": false,
+     "opguard": {
+      "diverged": true,
+      "fn": "<L0.attn_norm>",
+      "counter": 1,
+      "diff_fields": [
+       "outputs"
+      ],
+      "status_counts": {
+       "run1": {
+        "diff": 792
+       },
+       "run2": {
+        "diff": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff",
+       "inspect_event",
+       "compare_events"
+      ],
+      "regional": [
+       [
+        0,
+        1,
+        2,
+        3
+       ]
+      ],
+      "seconds": 3.5
+     },
+     "opguard_matches_host": true,
+     "compile_s": 10.1,
+     "inductor_kernels": 42
+    },
+    "compile:max-autotune-no-cudagraphs": {
+     "first_diff": {
+      "step": 1,
+      "name": "L0.attn_norm",
+      "index": 0,
+      "call": 0,
+      "records_differing": 792,
+      "vectors_differing": 792,
+      "records_compared": 792
+     },
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 24,
+      "L0.attn_res": 24,
+      "L0.mlp_norm": 24,
+      "L0.out": 24,
+      "L1.attn_norm": 24,
+      "L1.attn_res": 24,
+      "L1.mlp_norm": 24,
+      "L1.out": 24,
+      "L2.attn_norm": 24,
+      "L2.attn_res": 24,
+      "L2.mlp_norm": 24,
+      "L2.out": 24,
+      "L3.attn_norm": 24,
+      "L3.attn_res": 24,
+      "L3.mlp_norm": 24,
+      "L3.out": 24,
+      "L4.attn_norm": 24,
+      "L4.attn_res": 24,
+      "L4.mlp_norm": 24,
+      "L4.out": 24,
+      "L5.attn_norm": 24,
+      "L5.attn_res": 24,
+      "L5.mlp_norm": 24,
+      "L5.out": 24,
+      "L6.attn_norm": 24,
+      "L6.attn_res": 24,
+      "L6.mlp_norm": 24,
+      "L6.out": 24,
+      "L7.attn_norm": 24,
+      "L7.attn_res": 24,
+      "L7.mlp_norm": 24,
+      "L7.out": 24,
+      "logits": 24
+     },
+     "logits_equal_eager": false,
+     "opguard": {
+      "diverged": true,
+      "fn": "<L0.attn_norm>",
+      "counter": 1,
+      "diff_fields": [
+       "outputs"
+      ],
+      "status_counts": {
+       "run1": {
+        "diff": 792
+       },
+       "run2": {
+        "diff": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff",
+       "inspect_event",
+       "compare_events"
+      ],
+      "regional": [
+       [
+        0,
+        1,
+        2,
+        3
+       ]
+      ],
+      "seconds": 3.2
+     },
+     "opguard_matches_host": true,
+     "compile_s": 7.1,
+     "inductor_kernels": 42
+    },
+    "compile:reduce-overhead": {
+     "first_diff": {
+      "step": 1,
+      "name": "L0.attn_norm",
+      "index": 0,
+      "call": 0,
+      "records_differing": 792,
+      "vectors_differing": 792,
+      "records_compared": 792
+     },
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 24,
+      "L0.attn_res": 24,
+      "L0.mlp_norm": 24,
+      "L0.out": 24,
+      "L1.attn_norm": 24,
+      "L1.attn_res": 24,
+      "L1.mlp_norm": 24,
+      "L1.out": 24,
+      "L2.attn_norm": 24,
+      "L2.attn_res": 24,
+      "L2.mlp_norm": 24,
+      "L2.out": 24,
+      "L3.attn_norm": 24,
+      "L3.attn_res": 24,
+      "L3.mlp_norm": 24,
+      "L3.out": 24,
+      "L4.attn_norm": 24,
+      "L4.attn_res": 24,
+      "L4.mlp_norm": 24,
+      "L4.out": 24,
+      "L5.attn_norm": 24,
+      "L5.attn_res": 24,
+      "L5.mlp_norm": 24,
+      "L5.out": 24,
+      "L6.attn_norm": 24,
+      "L6.attn_res": 24,
+      "L6.mlp_norm": 24,
+      "L6.out": 24,
+      "L7.attn_norm": 24,
+      "L7.attn_res": 24,
+      "L7.mlp_norm": 24,
+      "L7.out": 24,
+      "logits": 24
+     },
+     "logits_equal_eager": false,
+     "opguard": {
+      "diverged": true,
+      "fn": "<L0.attn_norm>",
+      "counter": 1,
+      "diff_fields": [
+       "outputs"
+      ],
+      "status_counts": {
+       "run1": {
+        "diff": 792
+       },
+       "run2": {
+        "diff": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff",
+       "inspect_event",
+       "compare_events"
+      ],
+      "regional": [
+       [
+        0,
+        1,
+        2,
+        3
+       ]
+      ],
+      "seconds": 3.3
+     },
+     "opguard_matches_host": true,
+     "compile_s": 25.8,
+     "inductor_kernels": 42
+    }
+   },
+   "bi_opaque_kernels": {
+    "eager": {
+     "records": 792
+    },
+    "compile:default": {
+     "first_diff": {
+      "step": 1,
+      "name": "L0.attn_norm",
+      "index": 0,
+      "call": 0,
+      "records_differing": 792,
+      "vectors_differing": 792,
+      "records_compared": 792
+     },
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 24,
+      "L0.attn_res": 24,
+      "L0.mlp_norm": 24,
+      "L0.out": 24,
+      "L1.attn_norm": 24,
+      "L1.attn_res": 24,
+      "L1.mlp_norm": 24,
+      "L1.out": 24,
+      "L2.attn_norm": 24,
+      "L2.attn_res": 24,
+      "L2.mlp_norm": 24,
+      "L2.out": 24,
+      "L3.attn_norm": 24,
+      "L3.attn_res": 24,
+      "L3.mlp_norm": 24,
+      "L3.out": 24,
+      "L4.attn_norm": 24,
+      "L4.attn_res": 24,
+      "L4.mlp_norm": 24,
+      "L4.out": 24,
+      "L5.attn_norm": 24,
+      "L5.attn_res": 24,
+      "L5.mlp_norm": 24,
+      "L5.out": 24,
+      "L6.attn_norm": 24,
+      "L6.attn_res": 24,
+      "L6.mlp_norm": 24,
+      "L6.out": 24,
+      "L7.attn_norm": 24,
+      "L7.attn_res": 24,
+      "L7.mlp_norm": 24,
+      "L7.out": 24,
+      "logits": 24
+     },
+     "logits_equal_eager": false,
+     "opguard": {
+      "diverged": true,
+      "fn": "<L0.attn_norm>",
+      "counter": 1,
+      "diff_fields": [
+       "outputs"
+      ],
+      "status_counts": {
+       "run1": {
+        "diff": 792
+       },
+       "run2": {
+        "diff": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff",
+       "inspect_event",
+       "compare_events"
+      ],
+      "regional": [
+       [
+        0,
+        1,
+        2,
+        3
+       ]
+      ],
+      "seconds": 3.3
+     },
+     "opguard_matches_host": true,
+     "compile_s": 7.6,
+     "inductor_kernels": 77
+    },
+    "compile:max-autotune-no-cudagraphs": {
+     "first_diff": {
+      "step": 1,
+      "name": "L0.attn_norm",
+      "index": 0,
+      "call": 0,
+      "records_differing": 792,
+      "vectors_differing": 792,
+      "records_compared": 792
+     },
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 24,
+      "L0.attn_res": 24,
+      "L0.mlp_norm": 24,
+      "L0.out": 24,
+      "L1.attn_norm": 24,
+      "L1.attn_res": 24,
+      "L1.mlp_norm": 24,
+      "L1.out": 24,
+      "L2.attn_norm": 24,
+      "L2.attn_res": 24,
+      "L2.mlp_norm": 24,
+      "L2.out": 24,
+      "L3.attn_norm": 24,
+      "L3.attn_res": 24,
+      "L3.mlp_norm": 24,
+      "L3.out": 24,
+      "L4.attn_norm": 24,
+      "L4.attn_res": 24,
+      "L4.mlp_norm": 24,
+      "L4.out": 24,
+      "L5.attn_norm": 24,
+      "L5.attn_res": 24,
+      "L5.mlp_norm": 24,
+      "L5.out": 24,
+      "L6.attn_norm": 24,
+      "L6.attn_res": 24,
+      "L6.mlp_norm": 24,
+      "L6.out": 24,
+      "L7.attn_norm": 24,
+      "L7.attn_res": 24,
+      "L7.mlp_norm": 24,
+      "L7.out": 24,
+      "logits": 24
+     },
+     "logits_equal_eager": false,
+     "opguard": {
+      "diverged": true,
+      "fn": "<L0.attn_norm>",
+      "counter": 1,
+      "diff_fields": [
+       "outputs"
+      ],
+      "status_counts": {
+       "run1": {
+        "diff": 792
+       },
+       "run2": {
+        "diff": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff",
+       "inspect_event",
+       "compare_events"
+      ],
+      "regional": [
+       [
+        0,
+        1,
+        2,
+        3
+       ]
+      ],
+      "seconds": 3.3
+     },
+     "opguard_matches_host": true,
+     "compile_s": 7.0,
+     "inductor_kernels": 77
+    },
+    "compile:reduce-overhead": {
+     "first_diff": {
+      "step": 1,
+      "name": "L0.attn_norm",
+      "index": 0,
+      "call": 0,
+      "records_differing": 792,
+      "vectors_differing": 792,
+      "records_compared": 792
+     },
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 24,
+      "L0.attn_res": 24,
+      "L0.mlp_norm": 24,
+      "L0.out": 24,
+      "L1.attn_norm": 24,
+      "L1.attn_res": 24,
+      "L1.mlp_norm": 24,
+      "L1.out": 24,
+      "L2.attn_norm": 24,
+      "L2.attn_res": 24,
+      "L2.mlp_norm": 24,
+      "L2.out": 24,
+      "L3.attn_norm": 24,
+      "L3.attn_res": 24,
+      "L3.mlp_norm": 24,
+      "L3.out": 24,
+      "L4.attn_norm": 24,
+      "L4.attn_res": 24,
+      "L4.mlp_norm": 24,
+      "L4.out": 24,
+      "L5.attn_norm": 24,
+      "L5.attn_res": 24,
+      "L5.mlp_norm": 24,
+      "L5.out": 24,
+      "L6.attn_norm": 24,
+      "L6.attn_res": 24,
+      "L6.mlp_norm": 24,
+      "L6.out": 24,
+      "L7.attn_norm": 24,
+      "L7.attn_res": 24,
+      "L7.mlp_norm": 24,
+      "L7.out": 24,
+      "logits": 24
+     },
+     "logits_equal_eager": false,
+     "opguard": {
+      "diverged": true,
+      "fn": "<L0.attn_norm>",
+      "counter": 1,
+      "diff_fields": [
+       "outputs"
+      ],
+      "status_counts": {
+       "run1": {
+        "diff": 792
+       },
+       "run2": {
+        "diff": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff",
+       "inspect_event",
+       "compare_events"
+      ],
+      "regional": [
+       [
+        0,
+        1,
+        2,
+        3
+       ]
+      ],
+      "seconds": 3.3
+     },
+     "opguard_matches_host": true,
+     "compile_s": 5.2,
+     "inductor_kernels": 77
+    }
+   },
+   "bi_opaque_all": {
+    "eager": {
+     "records": 792
+    },
+    "compile:default": {
+     "first_diff": null,
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 0,
+      "L0.attn_res": 0,
+      "L0.mlp_norm": 0,
+      "L0.out": 0,
+      "L1.attn_norm": 0,
+      "L1.attn_res": 0,
+      "L1.mlp_norm": 0,
+      "L1.out": 0,
+      "L2.attn_norm": 0,
+      "L2.attn_res": 0,
+      "L2.mlp_norm": 0,
+      "L2.out": 0,
+      "L3.attn_norm": 0,
+      "L3.attn_res": 0,
+      "L3.mlp_norm": 0,
+      "L3.out": 0,
+      "L4.attn_norm": 0,
+      "L4.attn_res": 0,
+      "L4.mlp_norm": 0,
+      "L4.out": 0,
+      "L5.attn_norm": 0,
+      "L5.attn_res": 0,
+      "L5.mlp_norm": 0,
+      "L5.out": 0,
+      "L6.attn_norm": 0,
+      "L6.attn_res": 0,
+      "L6.mlp_norm": 0,
+      "L6.out": 0,
+      "L7.attn_norm": 0,
+      "L7.attn_res": 0,
+      "L7.mlp_norm": 0,
+      "L7.out": 0,
+      "logits": 0
+     },
+     "logits_equal_eager": true,
+     "opguard": {
+      "diverged": false,
+      "fn": null,
+      "counter": null,
+      "diff_fields": null,
+      "status_counts": {
+       "run1": {
+        "ok": 792
+       },
+       "run2": {
+        "ok": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff"
+      ],
+      "regional": [],
+      "seconds": 2.1
+     },
+     "opguard_matches_host": true,
+     "compile_s": 2.7,
+     "inductor_kernels": 60
+    },
+    "compile:max-autotune-no-cudagraphs": {
+     "first_diff": null,
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 0,
+      "L0.attn_res": 0,
+      "L0.mlp_norm": 0,
+      "L0.out": 0,
+      "L1.attn_norm": 0,
+      "L1.attn_res": 0,
+      "L1.mlp_norm": 0,
+      "L1.out": 0,
+      "L2.attn_norm": 0,
+      "L2.attn_res": 0,
+      "L2.mlp_norm": 0,
+      "L2.out": 0,
+      "L3.attn_norm": 0,
+      "L3.attn_res": 0,
+      "L3.mlp_norm": 0,
+      "L3.out": 0,
+      "L4.attn_norm": 0,
+      "L4.attn_res": 0,
+      "L4.mlp_norm": 0,
+      "L4.out": 0,
+      "L5.attn_norm": 0,
+      "L5.attn_res": 0,
+      "L5.mlp_norm": 0,
+      "L5.out": 0,
+      "L6.attn_norm": 0,
+      "L6.attn_res": 0,
+      "L6.mlp_norm": 0,
+      "L6.out": 0,
+      "L7.attn_norm": 0,
+      "L7.attn_res": 0,
+      "L7.mlp_norm": 0,
+      "L7.out": 0,
+      "logits": 0
+     },
+     "logits_equal_eager": true,
+     "opguard": {
+      "diverged": false,
+      "fn": null,
+      "counter": null,
+      "diff_fields": null,
+      "status_counts": {
+       "run1": {
+        "ok": 792
+       },
+       "run2": {
+        "ok": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff"
+      ],
+      "regional": [],
+      "seconds": 2.4
+     },
+     "opguard_matches_host": true,
+     "compile_s": 5.5,
+     "inductor_kernels": 60
+    },
+    "compile:reduce-overhead": {
+     "first_diff": null,
+     "differing_steps_by_probe": {
+      "L0.attn_norm": 0,
+      "L0.attn_res": 0,
+      "L0.mlp_norm": 0,
+      "L0.out": 0,
+      "L1.attn_norm": 0,
+      "L1.attn_res": 0,
+      "L1.mlp_norm": 0,
+      "L1.out": 0,
+      "L2.attn_norm": 0,
+      "L2.attn_res": 0,
+      "L2.mlp_norm": 0,
+      "L2.out": 0,
+      "L3.attn_norm": 0,
+      "L3.attn_res": 0,
+      "L3.mlp_norm": 0,
+      "L3.out": 0,
+      "L4.attn_norm": 0,
+      "L4.attn_res": 0,
+      "L4.mlp_norm": 0,
+      "L4.out": 0,
+      "L5.attn_norm": 0,
+      "L5.attn_res": 0,
+      "L5.mlp_norm": 0,
+      "L5.out": 0,
+      "L6.attn_norm": 0,
+      "L6.attn_res": 0,
+      "L6.mlp_norm": 0,
+      "L6.out": 0,
+      "L7.attn_norm": 0,
+      "L7.attn_res": 0,
+      "L7.mlp_norm": 0,
+      "L7.out": 0,
+      "logits": 0
+     },
+     "logits_equal_eager": true,
+     "opguard": {
+      "diverged": false,
+      "fn": null,
+      "counter": null,
+      "diff_fields": null,
+      "status_counts": {
+       "run1": {
+        "ok": 792
+       },
+       "run2": {
+        "ok": 792
+       }
+      },
+      "tools": [
+       "trace_summary",
+       "first_diff"
+      ],
+      "regional": [],
+      "seconds": 2.1
+     },
+     "opguard_matches_host": true,
+     "compile_s": 3.1,
+     "inductor_kernels": 60
+    }
+   }
+  },
+  "cost": {
+   "stock eager": {
+    "no_probes": {
+     "ms_per_step_median": 6.1732
+    },
+    "probes": {
+     "ms_per_step_median": 32.4997
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 6.1292
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true
+   },
+   "stock graph": {
+    "no_probes": {
+     "ms_per_step_median": 1.3312
+    },
+    "probes": {
+     "ms_per_step_median": 3.157
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 1.3302
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true
+   },
+   "stock compile:default": {
+    "no_probes": {
+     "ms_per_step_median": 3.3638,
+     "compile_s": 7.4,
+     "inductor_kernels": 75
+    },
+    "probes": {
+     "ms_per_step_median": 48.6651,
+     "compile_s": 6.9,
+     "inductor_kernels": 76
+    },
+    "probes_not_isolated": {
+     "ms_per_step_median": 29.4185,
+     "compile_s": 7.7,
+     "inductor_kernels": 75
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 2.0649,
+     "compile_s": 4.9,
+     "inductor_kernels": 75
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true,
+    "not_isolated_logits_equal": false
+   },
+   "stock compile:max-autotune-no-cudagraphs": {
+    "no_probes": {
+     "ms_per_step_median": 2.006,
+     "compile_s": 8.0,
+     "inductor_kernels": 1069
+    },
+    "probes": {
+     "ms_per_step_median": 28.9111,
+     "compile_s": 7.7,
+     "inductor_kernels": 1071
+    },
+    "probes_not_isolated": {
+     "ms_per_step_median": 29.1456,
+     "compile_s": 29.4,
+     "inductor_kernels": 1085
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 2.0311,
+     "compile_s": 6.9,
+     "inductor_kernels": 1069
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true,
+    "not_isolated_logits_equal": false
+   },
+   "stock compile:reduce-overhead": {
+    "no_probes": {
+     "ms_per_step_median": 1.0875,
+     "compile_s": 5.3,
+     "inductor_kernels": 75
+    },
+    "probes": {
+     "ms_per_step_median": 2.924,
+     "compile_s": 6.3,
+     "inductor_kernels": 76
+    },
+    "probes_not_isolated": {
+     "ms_per_step_median": 2.9215,
+     "compile_s": 5.8,
+     "inductor_kernels": 75
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 1.088,
+     "compile_s": 5.2,
+     "inductor_kernels": 75
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true,
+    "not_isolated_logits_equal": false
+   },
+   "bi_opaque_all compile:default": {
+    "no_probes": {
+     "ms_per_step_median": 23.7532,
+     "compile_s": 4.8,
+     "inductor_kernels": 27
+    },
+    "probes": {
+     "ms_per_step_median": 42.2559,
+     "compile_s": 4.9,
+     "inductor_kernels": 60
+    },
+    "probes_not_isolated": {
+     "ms_per_step_median": 41.6558,
+     "compile_s": 2.5,
+     "inductor_kernels": 27
+    },
+    "no_probes_again": {
+     "ms_per_step_median": 13.6243,
+     "compile_s": 1.7,
+     "inductor_kernels": 27
+    },
+    "logits_equal": true,
+    "control_no_probes_twice_equal": true,
+    "not_isolated_logits_equal": true
+   }
+  },
+  "merged_from": [
+   "part-probe.json",
+   "part-modes.json",
+   "part-buckets.json",
+   "part-opaque.json",
+   "part-cost.json"
+  ]
+ }
+}

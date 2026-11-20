@@ -1,0 +1,4304 @@
+{
+ "schema": "bi-results-v1",
+ "example": "sampling",
+ "quick": false,
+ "argv": [
+  [
+   "sampling_bi.py",
+   "--sections",
+   "rng",
+   "--json",
+   "/tmp/tmp.r6w2VzJvMG/rng.json"
+  ],
+  [
+   "sampling_bi.py",
+   "--sections",
+   "ops",
+   "--json",
+   "/tmp/tmp.r6w2VzJvMG/ops.json"
+  ],
+  [
+   "sampling_bi.py",
+   "--sections",
+   "ties",
+   "--json",
+   "/tmp/tmp.r6w2VzJvMG/ties.json"
+  ],
+  [
+   "sampling_bi.py",
+   "--sections",
+   "nucleus",
+   "--json",
+   "/tmp/tmp.r6w2VzJvMG/nucleus.json"
+  ],
+  [
+   "sampling_bi.py",
+   "--sections",
+   "unit",
+   "--json",
+   "/tmp/tmp.r6w2VzJvMG/unit.json"
+  ],
+  [
+   "sampling_bi.py",
+   "--sections",
+   "chisq",
+   "--json",
+   "/tmp/tmp.r6w2VzJvMG/chisq.json"
+  ],
+  [
+   "sampling_bi.py",
+   "--sections",
+   "l2",
+   "--json",
+   "/tmp/tmp.r6w2VzJvMG/l2.json"
+  ],
+  [
+   "sampling_bi.py",
+   "--sections",
+   "engine",
+   "--json",
+   "/tmp/tmp.r6w2VzJvMG/engine.json"
+  ],
+  [
+   "sampling_bi.py",
+   "--sections",
+   "cost",
+   "--json",
+   "/tmp/tmp.r6w2VzJvMG/cost.json"
+  ],
+  [
+   "sampling_bi.py",
+   "--sections",
+   "nucleus",
+   "--json",
+   "nucleus.json"
+  ]
+ ],
+ "env": {
+  "python": "3.10.0",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A40",
+    "sm": "86",
+    "memory_gb": 44.3,
+    "sm_count": 84
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "550.144.03"
+ },
+ "checks": [
+  {
+   "name": "torch.multinomial, one generator for the batch: row vs alone, V=32000",
+   "impl": "stock_shared_stream",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 472,
+    "failures": 312,
+    "failing_sizes": [
+     2,
+     3,
+     4,
+     8,
+     15,
+     16,
+     17,
+     64,
+     65,
+     256,
+     257,
+     512,
+     513
+    ],
+    "failing_positions": [
+     "last",
+     "middle"
+    ],
+    "first": {
+     "row": 0,
+     "size": 2,
+     "position": "middle",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 13691.0,
+     "b": 21224.0,
+     "mismatched_elements": 1,
+     "of": 1
+    }
+   }
+  },
+  {
+   "name": "same, row placed first only, V=32000",
+   "impl": "stock_shared_stream",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 160,
+    "failures": 0
+   }
+  },
+  {
+   "name": "one torch.Generator per request, exponential noise per row: row vs alone, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 236,
+    "failures": 0
+   }
+  },
+  {
+   "name": "one torch.Generator per request, gumbel noise per row: row vs alone, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 236,
+    "failures": 0
+   }
+  },
+  {
+   "name": "torch.multinomial(probs, 1) == argmax(probs / exponential_) with the same generator, V=32000",
+   "impl": "stock_shared_stream",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "torch.multinomial, one generator for the batch: row vs alone, V=151936",
+   "impl": "stock_shared_stream",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 472,
+    "failures": 312,
+    "failing_sizes": [
+     2,
+     3,
+     4,
+     8,
+     15,
+     16,
+     17,
+     64,
+     65,
+     256,
+     257,
+     512,
+     513
+    ],
+    "failing_positions": [
+     "last",
+     "middle"
+    ],
+    "first": {
+     "row": 0,
+     "size": 2,
+     "position": "middle",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 53224.0,
+     "b": 31946.0,
+     "mismatched_elements": 1,
+     "of": 1
+    }
+   }
+  },
+  {
+   "name": "same, row placed first only, V=151936",
+   "impl": "stock_shared_stream",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 160,
+    "failures": 0
+   }
+  },
+  {
+   "name": "one torch.Generator per request, exponential noise per row: row vs alone, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 236,
+    "failures": 0
+   }
+  },
+  {
+   "name": "one torch.Generator per request, gumbel noise per row: row vs alone, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 236,
+    "failures": 0
+   }
+  },
+  {
+   "name": "torch.multinomial(probs, 1) == argmax(probs / exponential_) with the same generator, V=151936",
+   "impl": "stock_shared_stream",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "torch.rand on CUDA, element i == Philox4x32-10(counter=(0,0,i,0), key=seed) (4096 elements)",
+   "impl": "stock_torch_generator",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "a CPU torch.Generator and a CUDA one with the same seed give the same values",
+   "impl": "stock_torch_generator",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "CUDA generator get_state / set_state reproduces the next draw",
+   "impl": "stock_torch_generator",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "state_bytes": 16
+   }
+  },
+  {
+   "name": "the draw after a fill does not depend on the fill's size, up to 516,096 float32 elements",
+   "impl": "stock_torch_generator",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "sm_count": 84,
+    "sm_count*6144": 516096
+   }
+  },
+  {
+   "name": "the draw after a fill of 516,097 elements equals the draw after a fill of 1",
+   "impl": "stock_torch_generator",
+   "level": "other",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "vLLM-style seeded draw: a decoding request's NEXT noise is unchanged when a co-batched prompt asks n=2, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "fill_elements": 64000,
+    "noise_this_step_unchanged": true
+   }
+  },
+  {
+   "name": "vLLM-style seeded draw: a decoding request's NEXT noise is unchanged when a co-batched prompt asks n=16, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "fill_elements": 512000,
+    "noise_this_step_unchanged": true
+   }
+  },
+  {
+   "name": "vLLM-style seeded draw: a decoding request's NEXT noise is unchanged when a co-batched prompt asks n=17, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "fill_elements": 544000,
+    "noise_this_step_unchanged": true
+   }
+  },
+  {
+   "name": "vLLM-style seeded draw, a request with 3 running samples: each sibling's noise is unchanged when a co-batched prompt asks n=2, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "sibling_unchanged": [
+     true,
+     false,
+     false
+    ]
+   }
+  },
+  {
+   "name": "vLLM-style seeded draw: a decoding request's NEXT noise is unchanged when a co-batched prompt asks n=2, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "fill_elements": 303872,
+    "noise_this_step_unchanged": true
+   }
+  },
+  {
+   "name": "vLLM-style seeded draw: a decoding request's NEXT noise is unchanged when a co-batched prompt asks n=3, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "fill_elements": 455808,
+    "noise_this_step_unchanged": true
+   }
+  },
+  {
+   "name": "vLLM-style seeded draw: a decoding request's NEXT noise is unchanged when a co-batched prompt asks n=4, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "fill_elements": 607744,
+    "noise_this_step_unchanged": true
+   }
+  },
+  {
+   "name": "vLLM-style seeded draw, a request with 3 running samples: each sibling's noise is unchanged when a co-batched prompt asks n=2, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "sibling_unchanged": [
+     true,
+     false,
+     false
+    ]
+   }
+  },
+  {
+   "name": "temperature divide: row vs alone, V=32000",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "softmax: row vs alone, V=32000",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "log_softmax: row vs alone, V=32000",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "logsumexp: row vs alone, V=32000",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "exp: row vs alone, V=32000",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "max: row vs alone, V=32000",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "argmax: row vs alone, V=32000",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "penalties and logit bias (vLLM-style gather/scatter): row vs alone, V=32000",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "sum over the vocabulary: row vs alone, V=32000",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "cumsum fp32 of the sorted probabilities: row vs alone, V=32000",
+   "impl": "stock_torch_cumsum",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 732,
+    "failures": 729,
+    "failing_sizes": [
+     2,
+     3,
+     4,
+     5,
+     7,
+     8,
+     9,
+     10,
+     11,
+     14,
+     15,
+     16,
+     17,
+     31,
+     32,
+     63,
+     64,
+     65,
+     127,
+     128,
+     129,
+     255,
+     256,
+     257,
+     511,
+     512,
+     513
+    ],
+    "failing_positions": [
+     "first",
+     "last",
+     "middle"
+    ],
+    "first": {
+     "row": 0,
+     "size": 2,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      9
+     ],
+     "a": 0.3208029568195343,
+     "b": 0.3208029270172119,
+     "mismatched_elements": 26920,
+     "of": 32000
+    }
+   }
+  },
+  {
+   "name": "cumsum fp64 of the sorted probabilities: row vs alone, V=32000",
+   "impl": "stock_torch_cumsum",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 732,
+    "failures": 729,
+    "failing_sizes": [
+     2,
+     3,
+     4,
+     5,
+     7,
+     8,
+     9,
+     10,
+     11,
+     14,
+     15,
+     16,
+     17,
+     31,
+     32,
+     63,
+     64,
+     65,
+     127,
+     128,
+     129,
+     255,
+     256,
+     257,
+     511,
+     512,
+     513
+    ],
+    "failing_positions": [
+     "first",
+     "last",
+     "middle"
+    ],
+    "first": {
+     "row": 0,
+     "size": 2,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      31301
+     ],
+     "a": 0.9999997322837378,
+     "b": 0.999999732283738,
+     "mismatched_elements": 387,
+     "of": 32000
+    }
+   }
+  },
+  {
+   "name": "cumsum fp32 of one row, 30 runs of the same tensor, V=32000",
+   "impl": "stock_torch_cumsum",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "distinct_results": 1,
+    "distinct_results_fp64": 1
+   }
+  },
+  {
+   "name": "cumsum fp32 of 64 rows, 20 runs of the same tensor, V=32000",
+   "impl": "stock_torch_cumsum",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "distinct_results": 1
+   }
+  },
+  {
+   "name": "temperature divide: row vs alone, V=151936",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "softmax: row vs alone, V=151936",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "log_softmax: row vs alone, V=151936",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "logsumexp: row vs alone, V=151936",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "exp: row vs alone, V=151936",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "max: row vs alone, V=151936",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "argmax: row vs alone, V=151936",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "penalties and logit bias (vLLM-style gather/scatter): row vs alone, V=151936",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 732,
+    "failures": 0
+   }
+  },
+  {
+   "name": "sum over the vocabulary: row vs alone, V=151936",
+   "impl": "stock_torch_op",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 732,
+    "failures": 423,
+    "failing_sizes": [
+     14,
+     15,
+     16,
+     17,
+     31,
+     32,
+     63,
+     64,
+     65,
+     127,
+     128,
+     129,
+     255,
+     256,
+     257,
+     511,
+     512,
+     513
+    ],
+    "failing_positions": [
+     "first",
+     "last",
+     "middle"
+    ],
+    "first": {
+     "row": 0,
+     "size": 14,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1949.5791015625,
+     "b": 1949.5792236328125,
+     "mismatched_elements": 1,
+     "of": 1
+    }
+   }
+  },
+  {
+   "name": "cumsum fp32 of the sorted probabilities: row vs alone, V=151936",
+   "impl": "stock_torch_cumsum",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 732,
+    "failures": 732,
+    "failing_sizes": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     7,
+     8,
+     9,
+     10,
+     11,
+     14,
+     15,
+     16,
+     17,
+     31,
+     32,
+     63,
+     64,
+     65,
+     127,
+     128,
+     129,
+     255,
+     256,
+     257,
+     511,
+     512,
+     513
+    ],
+    "failing_positions": [
+     "first",
+     "last",
+     "middle"
+    ],
+    "first": {
+     "row": 0,
+     "size": 1,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      24960
+     ],
+     "a": 0.974810004234314,
+     "b": 0.9748099446296692,
+     "mismatched_elements": 23040,
+     "of": 151936
+    }
+   }
+  },
+  {
+   "name": "cumsum fp64 of the sorted probabilities: row vs alone, V=151936",
+   "impl": "stock_torch_cumsum",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 732,
+    "failures": 729,
+    "failing_sizes": [
+     2,
+     3,
+     4,
+     5,
+     7,
+     8,
+     9,
+     10,
+     11,
+     14,
+     15,
+     16,
+     17,
+     31,
+     32,
+     63,
+     64,
+     65,
+     127,
+     128,
+     129,
+     255,
+     256,
+     257,
+     511,
+     512,
+     513
+    ],
+    "failing_positions": [
+     "first",
+     "last",
+     "middle"
+    ],
+    "first": {
+     "row": 0,
+     "size": 2,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      141924
+     ],
+     "a": 0.9999961495711519,
+     "b": 0.999996149571152,
+     "mismatched_elements": 7667,
+     "of": 151936
+    }
+   }
+  },
+  {
+   "name": "cumsum fp32 of one row, 30 runs of the same tensor, V=151936",
+   "impl": "stock_torch_cumsum",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "distinct_results": 30,
+    "distinct_results_fp64": 30
+   }
+  },
+  {
+   "name": "cumsum fp32 of 64 rows, 20 runs of the same tensor, V=151936",
+   "impl": "stock_torch_cumsum",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "distinct_results": 1
+   }
+  },
+  {
+   "name": "torch.sort(stable=False) keeps tied elements in index order, V = 2..32 (3 distinct values)",
+   "impl": "stock_torch_sort",
+   "level": "other",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "V_with_differences": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     30,
+     31,
+     32
+    ]
+   }
+  },
+  {
+   "name": "torch.topk with ties across the cut selects the lowest indices, V=32000",
+   "impl": "stock_torch_topk",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "torch.topk returns tied values in index order, V=32000",
+   "impl": "stock_torch_topk",
+   "level": "other",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "torch.topk indices of a row: alone vs in batches of 2..512, V=32000",
+   "impl": "stock_torch_topk",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "torch.sort(stable=False) of a row with ties equals the stable order, alone and in batches of 2..512, V=32000",
+   "impl": "stock_torch_sort",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "torch.topk tie order, GPU vs CPU, V=32000",
+   "impl": "stock_torch_topk",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "differing_indices": 57,
+    "of": 80
+   }
+  },
+  {
+   "name": "torch.argmax and max().indices return the lowest index among tied maxima, batches 1..512, V=32000",
+   "impl": "stock_torch_argmax",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "wrong": 0,
+    "of": 1692
+   }
+  },
+  {
+   "name": "torch.topk with ties across the cut selects the lowest indices, V=151936",
+   "impl": "stock_torch_topk",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "torch.topk returns tied values in index order, V=151936",
+   "impl": "stock_torch_topk",
+   "level": "other",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "torch.topk indices of a row: alone vs in batches of 2..512, V=151936",
+   "impl": "stock_torch_topk",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "torch.sort(stable=False) of a row with ties equals the stable order, alone and in batches of 2..512, V=151936",
+   "impl": "stock_torch_sort",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "torch.topk tie order, GPU vs CPU, V=151936",
+   "impl": "stock_torch_topk",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "differing_indices": 68,
+    "of": 80
+   }
+  },
+  {
+   "name": "torch.argmax and max().indices return the lowest index among tied maxima, batches 1..512, V=151936",
+   "impl": "stock_torch_argmax",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "wrong": 0,
+    "of": 1692
+   }
+  },
+  {
+   "name": "Philox4x32-10 known-answer vectors (Random123)",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "uniform53: a row's draw alone equals its draw inside a vector of 4096",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "uniform53: purposes and streams give different draws for the same (seed, position)",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "exp=basic equals a scalar Python implementation: token, weight and total on 160 rows with ties (V=96)",
+   "impl": "bi_sampling",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mismatches": 0
+   }
+  },
+  {
+   "name": "top-k with ties across the cut keeps the lowest indices (k = 3..50), V=32000",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "greedy: the lowest index among tied maxima, batches up to 512, V=32000",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "wrong": 0,
+    "of": 1692
+   }
+  },
+  {
+   "name": "int64 cumsum of the weights: row vs alone, V=32000",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 488,
+    "failures": 0
+   }
+  },
+  {
+   "name": "int64 cumsum and sum on the GPU equal the CPU's, V=32000",
+   "impl": "bi_sampling",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "the row maximum gets weight 2**S and totals stay below 2**52, V=32000",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "S": 37
+   }
+  },
+  {
+   "name": "exp=basic weights: GPU == CPU, V=32000",
+   "impl": "bi_sampling",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "elements": 2048000
+   }
+  },
+  {
+   "name": "exp=torch weights: GPU == CPU, V=32000",
+   "impl": "bi_sampling",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "differing": 166642,
+    "of": 2048000
+   }
+  },
+  {
+   "name": "exp=torch and exp=basic give the same weights, V=32000",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "differing": 175612,
+    "of": 2048000,
+    "max_relative_difference": 0.003663003663003663
+   }
+  },
+  {
+   "name": "exp=basic tokens with mixed parameters: GPU == CPU, V=32000",
+   "impl": "bi_sampling",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "a batch with mixed parameters equals row-by-row calls with each row's own parameters, V=32000",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "top-k with ties across the cut keeps the lowest indices (k = 3..50), V=151936",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "greedy: the lowest index among tied maxima, batches up to 512, V=151936",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "wrong": 0,
+    "of": 1692
+   }
+  },
+  {
+   "name": "int64 cumsum of the weights: row vs alone, V=151936",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 488,
+    "failures": 0
+   }
+  },
+  {
+   "name": "int64 cumsum and sum on the GPU equal the CPU's, V=151936",
+   "impl": "bi_sampling",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "the row maximum gets weight 2**S and totals stay below 2**52, V=151936",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "S": 34
+   }
+  },
+  {
+   "name": "exp=basic weights: GPU == CPU, V=151936",
+   "impl": "bi_sampling",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "elements": 9723904
+   }
+  },
+  {
+   "name": "exp=torch weights: GPU == CPU, V=151936",
+   "impl": "bi_sampling",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "differing": 159649,
+    "of": 9723904
+   }
+  },
+  {
+   "name": "exp=torch and exp=basic give the same weights, V=151936",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "differing": 168241,
+    "of": 9723904,
+    "max_relative_difference": 0.004901960784313725
+   }
+  },
+  {
+   "name": "exp=basic tokens with mixed parameters: GPU == CPU, V=151936",
+   "impl": "bi_sampling",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "a batch with mixed parameters equals row-by-row calls with each row's own parameters, V=151936",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "chi-square, V=50, T=1.0, top_k=0, top_p=1.0, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 57.87,
+    "dof": 49,
+    "p_value": 0.18040469158244934,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 50
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=1.0, top_k=0, top_p=1.0, 1048576 draws over positions, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 44.35,
+    "dof": 49,
+    "p_value": 0.6619929792638725,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 50
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=1.0, top_k=0, top_p=1.0, 1048576 draws over seeds, exp=basic",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 57.87,
+    "dof": 49,
+    "p_value": 0.18040469158244934,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 50
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=0.7, top_k=0, top_p=1.0, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 43.03,
+    "dof": 49,
+    "p_value": 0.7127513991362748,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 50
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=1.5, top_k=0, top_p=1.0, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 59.85,
+    "dof": 49,
+    "p_value": 0.1377714665698498,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 50
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=1.0, top_k=5, top_p=1.0, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 4.76,
+    "dof": 4,
+    "p_value": 0.31288182431451306,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 5
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=0.8, top_k=10, top_p=1.0, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 7.28,
+    "dof": 9,
+    "p_value": 0.6075847651648866,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 10
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=1.0, top_k=0, top_p=0.9, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 23.87,
+    "dof": 19,
+    "p_value": 0.20121833091037888,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 20
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=1.3, top_k=0, top_p=0.5, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 5.36,
+    "dof": 6,
+    "p_value": 0.49882710972207056,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 7
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=1.0, top_k=20, top_p=0.8, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 3.04,
+    "dof": 10,
+    "p_value": 0.9803637224198799,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 11
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=1.0, top_k=20, top_p=0.8, 1048576 draws over positions, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 15.63,
+    "dof": 10,
+    "p_value": 0.11067866217659726,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 11
+   }
+  },
+  {
+   "name": "chi-square, V=50, T=1.0, top_k=20, top_p=0.8, 1048576 draws over seeds, exp=basic",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 3.04,
+    "dof": 10,
+    "p_value": 0.9803637224198799,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 11
+   }
+  },
+  {
+   "name": "chi-square, V=1000, T=1.0, top_k=0, top_p=1.0, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 748.05,
+    "dof": 782,
+    "p_value": 0.8035283024506537,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 1000
+   }
+  },
+  {
+   "name": "chi-square, V=1000, T=0.9, top_k=50, top_p=1.0, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 72.41,
+    "dof": 49,
+    "p_value": 0.016482045832147345,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 50
+   }
+  },
+  {
+   "name": "chi-square, V=1000, T=1.1, top_k=0, top_p=0.9, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 192.81,
+    "dof": 195,
+    "p_value": 0.5308099863931579,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 196
+   }
+  },
+  {
+   "name": "chi-square, V=1000, T=0.8, top_k=200, top_p=0.95, 1048576 draws over seeds, exp=torch",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 81.09,
+    "dof": 79,
+    "p_value": 0.4137627055691735,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 80
+   }
+  },
+  {
+   "name": "chi-square, spec_verify_rejection output against the target, V=50, T=1.0, top_k=0, top_p=1.0, 1048576 draws",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 49.09,
+    "dof": 49,
+    "p_value": 0.46954553881771727,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 50
+   }
+  },
+  {
+   "name": "chi-square, spec_verify_exact output against the target, V=50, T=1.0, top_k=0, top_p=1.0, 1048576 draws",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 57.87,
+    "dof": 49,
+    "p_value": 0.18040469158244934,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 50
+   }
+  },
+  {
+   "name": "chi-square, spec_verify_rejection output against the target, V=50, T=0.8, top_k=10, top_p=0.9, 1048576 draws",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 3.25,
+    "dof": 7,
+    "p_value": 0.8613835175016982,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 8
+   }
+  },
+  {
+   "name": "chi-square, spec_verify_exact output against the target, V=50, T=0.8, top_k=10, top_p=0.9, 1048576 draws",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "chi2": 2.85,
+    "dof": 7,
+    "p_value": 0.8986047056302863,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 8
+   }
+  },
+  {
+   "name": "control: chi-square of T=0.7 draws against the T=0.72 target accepts (1048576 draws)",
+   "impl": "bi_sampling",
+   "level": "other",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "chi2": 1263.77,
+    "dof": 49,
+    "p_value": 2.03053481622704e-232,
+    "draws": 1048576,
+    "draws_outside_support": 0,
+    "support": 50
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, T=1, V=32000, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, T=0.7, V=32000, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, top_k=50, V=32000, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, top_p=0.9, V=32000, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, T=0.8,top_k=40,top_p=0.95, V=32000, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, greedy, V=32000, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, mixed parameters per row, V=32000, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, mixed parameters, exp=basic, V=32000",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 354,
+    "failures": 0
+   }
+  },
+  {
+   "name": "same batch, 5 runs, mixed parameters per row, V=32000",
+   "impl": "bi_sampling",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 4,
+    "failures": 0
+   }
+  },
+  {
+   "name": "same batch, 5 runs, top_p=0.9, V=32000",
+   "impl": "bi_sampling",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 4,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, T=1, V=151936, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, T=0.7, V=151936, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, top_k=50, V=151936, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, top_p=0.9, V=151936, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, T=0.8,top_k=40,top_p=0.95, V=151936, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, greedy, V=151936, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, mixed parameters per row, V=151936, sizes 1..513",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 1220,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone, mixed parameters, exp=basic, V=151936",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 354,
+    "failures": 0
+   }
+  },
+  {
+   "name": "same batch, 5 runs, mixed parameters per row, V=151936",
+   "impl": "bi_sampling",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 4,
+    "failures": 0
+   }
+  },
+  {
+   "name": "same batch, 5 runs, top_p=0.9, V=151936",
+   "impl": "bi_sampling",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 4,
+    "failures": 0
+   }
+  },
+  {
+   "name": "token, weight, total: row vs alone at batch 1024 and 1025, mixed parameters, V=32000",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "decode alone vs 3 random batched schedules with fillers, 8 requests x 64 tokens, V=32000",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 3,
+    "failures": 0
+   }
+  },
+  {
+   "name": "replay after preemption (state recomputed from the tokens; with and without a 3-token rollback) vs uninterrupted, V=32000",
+   "impl": "bi_sampling",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 2,
+    "failures": 0
+   }
+  },
+  {
+   "name": "speculative verification (spec_verify_exact) in chunks of k=1..8 vs sequential decoding without a draft, V=32000",
+   "impl": "bi_sampling",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 8,
+    "failures": 0
+   }
+  },
+  {
+   "name": "speculative verification (spec_verify_rejection) in chunks of k=1..8 vs k=1, V=32000",
+   "impl": "bi_sampling",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 7,
+    "failures": 0
+   }
+  },
+  {
+   "name": "spec_verify_rejection tokens equal decoding without a draft, V=32000",
+   "impl": "bi_sampling_rejection",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "differing_tokens": 445,
+    "of": 512
+   }
+  },
+  {
+   "name": "resume of a checkpointed request (prompt, seed, 21 tokens) in a new process vs uninterrupted, V=32000",
+   "impl": "bi_sampling",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "resume in a new process, generator re-created from the seed, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "resume in a new process, generator state saved with get_state and restored, V=32000",
+   "impl": "stock_per_request_generator_kept",
+   "level": "L3",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "decode alone vs 3 random batched schedules, 8 requests x 64 tokens, V=32000",
+   "impl": "stock_shared_stream",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 3,
+    "failures": 3,
+    "first": {
+     "mode": "schedule 1 vs alone",
+     "index": [
+      0,
+      0
+     ],
+     "a": 14837.0,
+     "b": 13277.0,
+     "mismatched_elements": 511,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs preemption, recompute, 8 requests x 64 tokens, V=32000",
+   "impl": "stock_shared_stream",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      0
+     ],
+     "a": 14837.0,
+     "b": 716.0,
+     "mismatched_elements": 511,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs preemption with a 3-token rollback, 8 requests x 64 tokens, V=32000",
+   "impl": "stock_shared_stream",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      0
+     ],
+     "a": 14837.0,
+     "b": 716.0,
+     "mismatched_elements": 511,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs 3 random batched schedules, 8 requests x 64 tokens, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 3,
+    "failures": 0
+   }
+  },
+  {
+   "name": "decode alone vs preemption, recompute, 8 requests x 64 tokens, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      5
+     ],
+     "a": 26887.0,
+     "b": 1376.0,
+     "mismatched_elements": 388,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs preemption with a 3-token rollback, 8 requests x 64 tokens, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      2
+     ],
+     "a": 31437.0,
+     "b": 615.0,
+     "mismatched_elements": 412,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs 3 random batched schedules, 8 requests x 64 tokens, V=32000",
+   "impl": "stock_per_request_generator_kept",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 3,
+    "failures": 0
+   }
+  },
+  {
+   "name": "decode alone vs preemption, recompute, 8 requests x 64 tokens, V=32000",
+   "impl": "stock_per_request_generator_kept",
+   "level": "L3",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 1,
+    "failures": 0
+   }
+  },
+  {
+   "name": "decode alone vs preemption with a 3-token rollback, 8 requests x 64 tokens, V=32000",
+   "impl": "stock_per_request_generator_kept",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      2
+     ],
+     "a": 31437.0,
+     "b": 12545.0,
+     "mismatched_elements": 412,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "per-request generator consumed in vLLM's order, speculative chunks k=1..8 vs sequential decoding, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 8,
+    "failures": 8,
+    "first": {
+     "mode": "k=1 vs sequential",
+     "index": [
+      0,
+      0
+     ],
+     "a": 26528.0,
+     "b": 29612.0,
+     "mismatched_elements": 504,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "per-request generator consumed in vLLM's order: k=2, 4 and 8 give the same tokens, V=32000",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "decode alone vs 3 random batched schedules with fillers, 8 requests x 64 tokens, V=151936",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 3,
+    "failures": 0
+   }
+  },
+  {
+   "name": "replay after preemption (state recomputed from the tokens; with and without a 3-token rollback) vs uninterrupted, V=151936",
+   "impl": "bi_sampling",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 2,
+    "failures": 0
+   }
+  },
+  {
+   "name": "speculative verification (spec_verify_exact) in chunks of k=1..8 vs sequential decoding without a draft, V=151936",
+   "impl": "bi_sampling",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 8,
+    "failures": 0
+   }
+  },
+  {
+   "name": "speculative verification (spec_verify_rejection) in chunks of k=1..8 vs k=1, V=151936",
+   "impl": "bi_sampling",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "checked": 7,
+    "failures": 0
+   }
+  },
+  {
+   "name": "spec_verify_rejection tokens equal decoding without a draft, V=151936",
+   "impl": "bi_sampling_rejection",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "differing_tokens": 446,
+    "of": 512
+   }
+  },
+  {
+   "name": "resume of a checkpointed request (prompt, seed, 21 tokens) in a new process vs uninterrupted, V=151936",
+   "impl": "bi_sampling",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "resume in a new process, generator re-created from the seed, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "resume in a new process, generator state saved with get_state and restored, V=151936",
+   "impl": "stock_per_request_generator_kept",
+   "level": "L3",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "decode alone vs 3 random batched schedules, 8 requests x 64 tokens, V=151936",
+   "impl": "stock_shared_stream",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 3,
+    "failures": 3,
+    "first": {
+     "mode": "schedule 1 vs alone",
+     "index": [
+      0,
+      0
+     ],
+     "a": 75912.0,
+     "b": 26830.0,
+     "mismatched_elements": 511,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs preemption, recompute, 8 requests x 64 tokens, V=151936",
+   "impl": "stock_shared_stream",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      0
+     ],
+     "a": 75912.0,
+     "b": 97874.0,
+     "mismatched_elements": 511,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs preemption with a 3-token rollback, 8 requests x 64 tokens, V=151936",
+   "impl": "stock_shared_stream",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      0
+     ],
+     "a": 75912.0,
+     "b": 97874.0,
+     "mismatched_elements": 511,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs 3 random batched schedules, 8 requests x 64 tokens, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 3,
+    "failures": 0
+   }
+  },
+  {
+   "name": "decode alone vs preemption, recompute, 8 requests x 64 tokens, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      5
+     ],
+     "a": 121787.0,
+     "b": 40028.0,
+     "mismatched_elements": 388,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs preemption with a 3-token rollback, 8 requests x 64 tokens, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      2
+     ],
+     "a": 144059.0,
+     "b": 127406.0,
+     "mismatched_elements": 412,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "decode alone vs 3 random batched schedules, 8 requests x 64 tokens, V=151936",
+   "impl": "stock_per_request_generator_kept",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 3,
+    "failures": 0
+   }
+  },
+  {
+   "name": "decode alone vs preemption, recompute, 8 requests x 64 tokens, V=151936",
+   "impl": "stock_per_request_generator_kept",
+   "level": "L3",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "checked": 1,
+    "failures": 0
+   }
+  },
+  {
+   "name": "decode alone vs preemption with a 3-token rollback, 8 requests x 64 tokens, V=151936",
+   "impl": "stock_per_request_generator_kept",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 1,
+    "failures": 1,
+    "first": {
+     "mode": "schedule 4 vs alone",
+     "index": [
+      0,
+      2
+     ],
+     "a": 144059.0,
+     "b": 128658.0,
+     "mismatched_elements": 412,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "per-request generator consumed in vLLM's order, speculative chunks k=1..8 vs sequential decoding, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "checked": 8,
+    "failures": 8,
+    "first": {
+     "mode": "k=1 vs sequential",
+     "index": [
+      0,
+      0
+     ],
+     "a": 43907.0,
+     "b": 138864.0,
+     "mismatched_elements": 504,
+     "of": 512
+    }
+   }
+  },
+  {
+   "name": "per-request generator consumed in vLLM's order: k=2, 4 and 8 give the same tokens, V=151936",
+   "impl": "stock_per_request_generator",
+   "level": "L3",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: descending cumsum (SGLang-style), V=32000, logits N(0,1.5^2), top_p=0.9",
+   "impl": "stock_top_p_sglang_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 13238,
+    "single_row_call_twice": 0,
+    "B=2": 30,
+    "B=64": 30,
+    "B=256": 40,
+    "B=512": 48
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: ascending cumsum (vLLM-style), V=32000, logits N(0,1.5^2), top_p=0.9",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 13238,
+    "single_row_call_twice": 0,
+    "B=2": 2,
+    "B=64": 2,
+    "B=256": 3,
+    "B=512": 4
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: integer mass (reference), V=32000, logits N(0,1.5^2), top_p=0.9",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 13238,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 0,
+    "B=512": 0
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: descending cumsum (SGLang-style), V=32000, logits N(0,1.5^2), top_p=0.95",
+   "impl": "stock_top_p_sglang_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 17847,
+    "single_row_call_twice": 0,
+    "B=2": 61,
+    "B=64": 61,
+    "B=256": 78,
+    "B=512": 96
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: ascending cumsum (vLLM-style), V=32000, logits N(0,1.5^2), top_p=0.95",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 17847,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 1,
+    "B=512": 1
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: integer mass (reference), V=32000, logits N(0,1.5^2), top_p=0.95",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 17847,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 0,
+    "B=512": 0
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: descending cumsum (SGLang-style), V=32000, logits N(0,3.0^2), top_p=0.9",
+   "impl": "stock_top_p_sglang_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 1477,
+    "single_row_call_twice": 0,
+    "B=2": 3,
+    "B=64": 3,
+    "B=256": 5,
+    "B=512": 3
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: ascending cumsum (vLLM-style), V=32000, logits N(0,3.0^2), top_p=0.9",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 1477,
+    "single_row_call_twice": 0,
+    "B=2": 1,
+    "B=64": 1,
+    "B=256": 2,
+    "B=512": 2
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: integer mass (reference), V=32000, logits N(0,3.0^2), top_p=0.9",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 1477,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 0,
+    "B=512": 0
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: descending cumsum (SGLang-style), V=32000, logits N(0,3.0^2), top_p=0.95",
+   "impl": "stock_top_p_sglang_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 2961,
+    "single_row_call_twice": 0,
+    "B=2": 4,
+    "B=64": 4,
+    "B=256": 13,
+    "B=512": 15
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: ascending cumsum (vLLM-style), V=32000, logits N(0,3.0^2), top_p=0.95",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 2961,
+    "single_row_call_twice": 0,
+    "B=2": 1,
+    "B=64": 1,
+    "B=256": 0,
+    "B=512": 1
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: integer mass (reference), V=32000, logits N(0,3.0^2), top_p=0.95",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "median_nucleus": 2961,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 0,
+    "B=512": 0
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: descending cumsum (SGLang-style), V=151936, logits N(0,1.5^2), top_p=0.9",
+   "impl": "stock_top_p_sglang_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 62849,
+    "single_row_call_twice": 0,
+    "B=2": 61,
+    "B=64": 61,
+    "B=256": 61,
+    "B=512": 61
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: ascending cumsum (vLLM-style), V=151936, logits N(0,1.5^2), top_p=0.9",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 62849,
+    "single_row_call_twice": 0,
+    "B=2": 3,
+    "B=64": 3,
+    "B=256": 3,
+    "B=512": 3
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: integer mass (reference), V=151936, logits N(0,1.5^2), top_p=0.9",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 62849,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 0,
+    "B=512": 0
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: descending cumsum (SGLang-style), V=151936, logits N(0,1.5^2), top_p=0.95",
+   "impl": "stock_top_p_sglang_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 84733,
+    "single_row_call_twice": 4,
+    "B=2": 126,
+    "B=64": 126,
+    "B=256": 126,
+    "B=512": 126
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: ascending cumsum (vLLM-style), V=151936, logits N(0,1.5^2), top_p=0.95",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 84733,
+    "single_row_call_twice": 0,
+    "B=2": 2,
+    "B=64": 2,
+    "B=256": 2,
+    "B=512": 2
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: integer mass (reference), V=151936, logits N(0,1.5^2), top_p=0.95",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 84733,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 0,
+    "B=512": 0
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: descending cumsum (SGLang-style), V=151936, logits N(0,3.0^2), top_p=0.9",
+   "impl": "stock_top_p_sglang_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 6836,
+    "single_row_call_twice": 0,
+    "B=2": 6,
+    "B=64": 6,
+    "B=256": 6,
+    "B=512": 6
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: ascending cumsum (vLLM-style), V=151936, logits N(0,3.0^2), top_p=0.9",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 6836,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 0,
+    "B=512": 0
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: integer mass (reference), V=151936, logits N(0,3.0^2), top_p=0.9",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 6836,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 0,
+    "B=512": 0
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: descending cumsum (SGLang-style), V=151936, logits N(0,3.0^2), top_p=0.95",
+   "impl": "stock_top_p_sglang_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 13792,
+    "single_row_call_twice": 0,
+    "B=2": 26,
+    "B=64": 26,
+    "B=256": 26,
+    "B=512": 26
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: ascending cumsum (vLLM-style), V=151936, logits N(0,3.0^2), top_p=0.95",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 13792,
+    "single_row_call_twice": 0,
+    "B=2": 2,
+    "B=64": 2,
+    "B=256": 2,
+    "B=512": 2
+   }
+  },
+  {
+   "name": "top-p set of a row, single-row call vs batches of 2..512: integer mass (reference), V=151936, logits N(0,3.0^2), top_p=0.95",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 512,
+    "median_nucleus": 13792,
+    "single_row_call_twice": 0,
+    "B=2": 0,
+    "B=64": 0,
+    "B=256": 0,
+    "B=512": 0
+   }
+  },
+  {
+   "name": "top-p set of a row is the same in a single-row call and in batches of 2..512, over all 8 settings above",
+   "impl": "stock_top_p_sglang_style",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "sum_of_max_rows_changed": 383
+   }
+  },
+  {
+   "name": "top-p set of a row is the same in a single-row call and in batches of 2..512, over all 8 settings above",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "sum_of_max_rows_changed": 15
+   }
+  },
+  {
+   "name": "top-p set of a row is the same in a single-row call and in batches of 2..512, over all 8 settings above",
+   "impl": "bi_sampling",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sum_of_max_rows_changed": 0
+   }
+  },
+  {
+   "name": "vLLM-style top-p pipeline with per-request generators, single-row call vs batch of 64: token and its log-probability (V=32000, top_p=0.95)",
+   "impl": "stock_top_p_vllm_style",
+   "level": "L2",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "rows": 2048,
+    "set_size_differs": 0,
+    "token_differs": 0,
+    "logprob_of_token_bits_differ": 0
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "sampling step, temperature, B=1, V=32000",
+   "value": 0.177,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 1,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 2.15
+  },
+  {
+   "name": "sampling step, temperature, B=1, V=32000",
+   "value": 0.082,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 1,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 0.46,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, temperature, B=1, V=32000",
+   "value": 2.564,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 1,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 14.53,
+   "x_stock_per_request": 31.27
+  },
+  {
+   "name": "sampling step, temperature, B=1, V=32000",
+   "value": 2.369,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 1,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 13.42,
+   "x_stock_per_request": 28.89
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=1, V=32000",
+   "value": 0.492,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 1,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.3
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=1, V=32000",
+   "value": 0.379,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 1,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 0.77,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=1, V=32000",
+   "value": 2.526,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 1,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 5.14,
+   "x_stock_per_request": 6.66
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=1, V=32000",
+   "value": 2.862,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 1,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 5.82,
+   "x_stock_per_request": 7.55
+  },
+  {
+   "name": "sampling step, greedy, B=1, V=32000",
+   "value": 0.026,
+   "unit": "ms",
+   "impl": "torch.argmax",
+   "B": 1,
+   "V": 32000,
+   "case": "greedy",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "sampling step, greedy, B=1, V=32000",
+   "value": 0.185,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 1,
+   "V": 32000,
+   "case": "greedy",
+   "x_stock_multinomial": 7.16,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "noise only (uniform53 on the CPU), B=1",
+   "value": 1.47,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 1,
+   "V": 32000,
+   "case": "noise"
+  },
+  {
+   "name": "sampling step, temperature, B=8, V=32000",
+   "value": 0.189,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 8,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.08
+  },
+  {
+   "name": "sampling step, temperature, B=8, V=32000",
+   "value": 0.176,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 8,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 0.93,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, temperature, B=8, V=32000",
+   "value": 2.098,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 8,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 11.07,
+   "x_stock_per_request": 11.94
+  },
+  {
+   "name": "sampling step, temperature, B=8, V=32000",
+   "value": 2.375,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 8,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 12.54,
+   "x_stock_per_request": 13.52
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=8, V=32000",
+   "value": 0.538,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 8,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.07
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=8, V=32000",
+   "value": 0.504,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 8,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 0.94,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=8, V=32000",
+   "value": 2.636,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 8,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 4.9,
+   "x_stock_per_request": 5.23
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=8, V=32000",
+   "value": 2.848,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 8,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 5.3,
+   "x_stock_per_request": 5.65
+  },
+  {
+   "name": "sampling step, greedy, B=8, V=32000",
+   "value": 0.026,
+   "unit": "ms",
+   "impl": "torch.argmax",
+   "B": 8,
+   "V": 32000,
+   "case": "greedy",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "sampling step, greedy, B=8, V=32000",
+   "value": 0.195,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 8,
+   "V": 32000,
+   "case": "greedy",
+   "x_stock_multinomial": 7.39,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "noise only (uniform53 on the CPU), B=8",
+   "value": 1.523,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 8,
+   "V": 32000,
+   "case": "noise"
+  },
+  {
+   "name": "sampling step, temperature, B=64, V=32000",
+   "value": 0.233,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 64,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 0.24
+  },
+  {
+   "name": "sampling step, temperature, B=64, V=32000",
+   "value": 0.965,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 64,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 4.14,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, temperature, B=64, V=32000",
+   "value": 2.146,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 64,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 9.22,
+   "x_stock_per_request": 2.22
+  },
+  {
+   "name": "sampling step, temperature, B=64, V=32000",
+   "value": 2.511,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 64,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 10.79,
+   "x_stock_per_request": 2.6
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=64, V=32000",
+   "value": 1.244,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 64,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 0.94
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=64, V=32000",
+   "value": 1.329,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 64,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.07,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=64, V=32000",
+   "value": 2.748,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 64,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 2.21,
+   "x_stock_per_request": 2.07
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=64, V=32000",
+   "value": 3.804,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 64,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 3.06,
+   "x_stock_per_request": 2.86
+  },
+  {
+   "name": "sampling step, greedy, B=64, V=32000",
+   "value": 0.034,
+   "unit": "ms",
+   "impl": "torch.argmax",
+   "B": 64,
+   "V": 32000,
+   "case": "greedy",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "sampling step, greedy, B=64, V=32000",
+   "value": 0.216,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 64,
+   "V": 32000,
+   "case": "greedy",
+   "x_stock_multinomial": 6.26,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "noise only (uniform53 on the CPU), B=64",
+   "value": 1.551,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 64,
+   "V": 32000,
+   "case": "noise"
+  },
+  {
+   "name": "sampling step, temperature, B=256, V=32000",
+   "value": 0.868,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 256,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 0.24
+  },
+  {
+   "name": "sampling step, temperature, B=256, V=32000",
+   "value": 3.593,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 256,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 4.14,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, temperature, B=256, V=32000",
+   "value": 2.409,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 256,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 2.78,
+   "x_stock_per_request": 0.67
+  },
+  {
+   "name": "sampling step, temperature, B=256, V=32000",
+   "value": 5.064,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 256,
+   "V": 32000,
+   "case": "temperature",
+   "x_stock_multinomial": 5.84,
+   "x_stock_per_request": 1.41
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=256, V=32000",
+   "value": 5.239,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 256,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 0.93
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=256, V=32000",
+   "value": 5.652,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 256,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.08,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=256, V=32000",
+   "value": 7.106,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 256,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.36,
+   "x_stock_per_request": 1.26
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=256, V=32000",
+   "value": 10.642,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 256,
+   "V": 32000,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 2.03,
+   "x_stock_per_request": 1.88
+  },
+  {
+   "name": "sampling step, greedy, B=256, V=32000",
+   "value": 0.083,
+   "unit": "ms",
+   "impl": "torch.argmax",
+   "B": 256,
+   "V": 32000,
+   "case": "greedy",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "sampling step, greedy, B=256, V=32000",
+   "value": 0.503,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 256,
+   "V": 32000,
+   "case": "greedy",
+   "x_stock_multinomial": 6.06,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "noise only (uniform53 on the CPU), B=256",
+   "value": 1.695,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 256,
+   "V": 32000,
+   "case": "noise"
+  },
+  {
+   "name": "sampling step, temperature, B=1, V=151936",
+   "value": 0.208,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 1,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.93
+  },
+  {
+   "name": "sampling step, temperature, B=1, V=151936",
+   "value": 0.108,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 1,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 0.52,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, temperature, B=1, V=151936",
+   "value": 2.165,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 1,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 10.39,
+   "x_stock_per_request": 20.1
+  },
+  {
+   "name": "sampling step, temperature, B=1, V=151936",
+   "value": 2.405,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 1,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 11.55,
+   "x_stock_per_request": 22.34
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=1, V=151936",
+   "value": 0.52,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 1,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.3
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=1, V=151936",
+   "value": 0.399,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 1,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 0.77,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=1, V=151936",
+   "value": 2.666,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 1,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 5.13,
+   "x_stock_per_request": 6.68
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=1, V=151936",
+   "value": 3.012,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 1,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 5.79,
+   "x_stock_per_request": 7.55
+  },
+  {
+   "name": "sampling step, greedy, B=1, V=151936",
+   "value": 0.03,
+   "unit": "ms",
+   "impl": "torch.argmax",
+   "B": 1,
+   "V": 151936,
+   "case": "greedy",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "sampling step, greedy, B=1, V=151936",
+   "value": 0.225,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 1,
+   "V": 151936,
+   "case": "greedy",
+   "x_stock_multinomial": 7.41,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "noise only (uniform53 on the CPU), B=1",
+   "value": 1.511,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 1,
+   "V": 151936,
+   "case": "noise"
+  },
+  {
+   "name": "sampling step, temperature, B=8, V=151936",
+   "value": 0.201,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 8,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.12
+  },
+  {
+   "name": "sampling step, temperature, B=8, V=151936",
+   "value": 0.179,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 8,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 0.89,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, temperature, B=8, V=151936",
+   "value": 2.38,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 8,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 11.85,
+   "x_stock_per_request": 13.3
+  },
+  {
+   "name": "sampling step, temperature, B=8, V=151936",
+   "value": 2.963,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 8,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 14.75,
+   "x_stock_per_request": 16.55
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=8, V=151936",
+   "value": 1.151,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 8,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.01
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=8, V=151936",
+   "value": 1.145,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 8,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 0.99,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=8, V=151936",
+   "value": 3.014,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 8,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 2.62,
+   "x_stock_per_request": 2.63
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=8, V=151936",
+   "value": 3.298,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 8,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 2.86,
+   "x_stock_per_request": 2.88
+  },
+  {
+   "name": "sampling step, greedy, B=8, V=151936",
+   "value": 0.031,
+   "unit": "ms",
+   "impl": "torch.argmax",
+   "B": 8,
+   "V": 151936,
+   "case": "greedy",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "sampling step, greedy, B=8, V=151936",
+   "value": 0.196,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 8,
+   "V": 151936,
+   "case": "greedy",
+   "x_stock_multinomial": 6.37,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "noise only (uniform53 on the CPU), B=8",
+   "value": 1.528,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 8,
+   "V": 151936,
+   "case": "noise"
+  },
+  {
+   "name": "sampling step, temperature, B=64, V=151936",
+   "value": 1.042,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 64,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 0.87
+  },
+  {
+   "name": "sampling step, temperature, B=64, V=151936",
+   "value": 1.199,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 64,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 1.15,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, temperature, B=64, V=151936",
+   "value": 2.455,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 64,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 2.36,
+   "x_stock_per_request": 2.05
+  },
+  {
+   "name": "sampling step, temperature, B=64, V=151936",
+   "value": 6.053,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 64,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 5.81,
+   "x_stock_per_request": 5.05
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=64, V=151936",
+   "value": 5.557,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 64,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.01
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=64, V=151936",
+   "value": 5.507,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 64,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 0.99,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=64, V=151936",
+   "value": 7.72,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 64,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.39,
+   "x_stock_per_request": 1.4
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=64, V=151936",
+   "value": 11.807,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 64,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 2.12,
+   "x_stock_per_request": 2.14
+  },
+  {
+   "name": "sampling step, greedy, B=64, V=151936",
+   "value": 0.101,
+   "unit": "ms",
+   "impl": "torch.argmax",
+   "B": 64,
+   "V": 151936,
+   "case": "greedy",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "sampling step, greedy, B=64, V=151936",
+   "value": 0.592,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 64,
+   "V": 151936,
+   "case": "greedy",
+   "x_stock_multinomial": 5.85,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "noise only (uniform53 on the CPU), B=64",
+   "value": 1.533,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 64,
+   "V": 151936,
+   "case": "noise"
+  },
+  {
+   "name": "sampling step, temperature, B=256, V=151936",
+   "value": 3.951,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 256,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 0.8
+  },
+  {
+   "name": "sampling step, temperature, B=256, V=151936",
+   "value": 4.943,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 256,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 1.25,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, temperature, B=256, V=151936",
+   "value": 6.333,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 256,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 1.6,
+   "x_stock_per_request": 1.28
+  },
+  {
+   "name": "sampling step, temperature, B=256, V=151936",
+   "value": 22.706,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 256,
+   "V": 151936,
+   "case": "temperature",
+   "x_stock_multinomial": 5.75,
+   "x_stock_per_request": 4.59
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=256, V=151936",
+   "value": 24.826,
+   "unit": "ms",
+   "impl": "stock_multinomial",
+   "B": 256,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=256, V=151936",
+   "value": 24.809,
+   "unit": "ms",
+   "impl": "stock_per_request_generator",
+   "B": 256,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": 1.0
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=256, V=151936",
+   "value": 32.242,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 256,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.3,
+   "x_stock_per_request": 1.3
+  },
+  {
+   "name": "sampling step, top_k=50,top_p=0.9, B=256, V=151936",
+   "value": 48.841,
+   "unit": "ms",
+   "impl": "bi_sampling_basic",
+   "B": 256,
+   "V": 151936,
+   "case": "top_k=50,top_p=0.9",
+   "x_stock_multinomial": 1.97,
+   "x_stock_per_request": 1.97
+  },
+  {
+   "name": "sampling step, greedy, B=256, V=151936",
+   "value": 0.313,
+   "unit": "ms",
+   "impl": "torch.argmax",
+   "B": 256,
+   "V": 151936,
+   "case": "greedy",
+   "x_stock_multinomial": 1.0,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "sampling step, greedy, B=256, V=151936",
+   "value": 2.002,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 256,
+   "V": 151936,
+   "case": "greedy",
+   "x_stock_multinomial": 6.39,
+   "x_stock_per_request": null
+  },
+  {
+   "name": "noise only (uniform53 on the CPU), B=256",
+   "value": 1.696,
+   "unit": "ms",
+   "impl": "bi_sampling",
+   "B": 256,
+   "V": 151936,
+   "case": "noise"
+  },
+  {
+   "name": "peak extra memory, top_k=50,top_p=0.9, B=256, V=151936",
+   "value": 1.71,
+   "unit": "GiB",
+   "impl": "bi_sampling"
+  }
+ ],
+ "extra": {
+  "sections_seconds": {
+   "cost": 4.4
+  },
+  "rng_next_draw_unchanged_after_fill_of_n": {
+   "2": true,
+   "32000": true,
+   "151936": true,
+   "512000": true,
+   "516095": true,
+   "516096": true,
+   "516097": false,
+   "544000": false,
+   "607744": false,
+   "1032192": false,
+   "1032193": false
+  },
+  "sm_count": 84,
+  "cumsum_fp32_batch_size_groups_V32000": [
+   [
+    2,
+    64
+   ],
+   [
+    65,
+    256
+   ],
+   [
+    257,
+    1024
+   ],
+   [
+    1025,
+    1100
+   ]
+  ],
+  "sum_fp32_batch_size_groups_V32000": [
+   [
+    1,
+    300
+   ]
+  ],
+  "cumsum_fp32_batch_size_groups_V151936": [
+   [
+    2,
+    512
+   ],
+   [
+    513,
+    600
+   ]
+  ],
+  "sum_fp32_batch_size_groups_V151936": [
+   [
+    1,
+    13
+   ],
+   [
+    14,
+    14
+   ],
+   [
+    15,
+    15
+   ],
+   [
+    16,
+    19
+   ],
+   [
+    20,
+    20
+   ],
+   [
+    21,
+    22
+   ],
+   [
+    23,
+    25
+   ],
+   [
+    26,
+    31
+   ],
+   [
+    32,
+    41
+   ],
+   [
+    42,
+    50
+   ],
+   [
+    51,
+    62
+   ],
+   [
+    63,
+    125
+   ],
+   [
+    126,
+    252
+   ],
+   [
+    253,
+    300
+   ]
+  ],
+  "sum_fp32_batch_size_groups_V65536": [
+   [
+    1,
+    64
+   ]
+  ],
+  "cumsum_fp32_one_row_distinct_in_30_runs_V65536": 1,
+  "sum_fp32_batch_size_groups_V100000": [
+   [
+    1,
+    64
+   ]
+  ],
+  "cumsum_fp32_one_row_distinct_in_30_runs_V100000": 27,
+  "sum_fp32_batch_size_groups_V131072": [
+   [
+    1,
+    16
+   ],
+   [
+    17,
+    17
+   ],
+   [
+    18,
+    19
+   ],
+   [
+    20,
+    20
+   ],
+   [
+    21,
+    22
+   ],
+   [
+    23,
+    25
+   ],
+   [
+    26,
+    27
+   ],
+   [
+    28,
+    31
+   ],
+   [
+    32,
+    35
+   ],
+   [
+    36,
+    41
+   ],
+   [
+    42,
+    50
+   ],
+   [
+    51,
+    62
+   ],
+   [
+    63,
+    64
+   ]
+  ],
+  "cumsum_fp32_one_row_distinct_in_30_runs_V131072": 30,
+  "sum_fp32_batch_size_groups_V262144": [
+   [
+    1,
+    8
+   ],
+   [
+    9,
+    9
+   ],
+   [
+    10,
+    10
+   ],
+   [
+    11,
+    11
+   ],
+   [
+    12,
+    12
+   ],
+   [
+    13,
+    13
+   ],
+   [
+    14,
+    14
+   ],
+   [
+    15,
+    16
+   ],
+   [
+    17,
+    19
+   ],
+   [
+    20,
+    20
+   ],
+   [
+    21,
+    22
+   ],
+   [
+    23,
+    25
+   ],
+   [
+    26,
+    27
+   ],
+   [
+    28,
+    31
+   ],
+   [
+    32,
+    35
+   ],
+   [
+    36,
+    41
+   ],
+   [
+    42,
+    50
+   ],
+   [
+    51,
+    62
+   ],
+   [
+    63,
+    64
+   ]
+  ],
+  "cumsum_fp32_one_row_distinct_in_30_runs_V262144": 30,
+  "cumsum_deterministic_mode": {
+   "warn_only=True": "runs; cumsum_cuda_kernel does not have a deterministic implementation, but you set 'to",
+   "warn_only=False": "RuntimeError: cumsum_cuda_kernel does not have a deterministic implementation, but you set 'to"
+  },
+  "unstable_sort_differs_from_stable_at_V": [
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32
+  ],
+  "draft_acceptance_rate_V32000": {
+   "exact k=1": 0.2361,
+   "exact k=2": 0.1454,
+   "exact k=3": 0.1087,
+   "exact k=4": 0.0849,
+   "exact k=5": 0.0692,
+   "exact k=6": 0.0588,
+   "exact k=7": 0.0509,
+   "exact k=8": 0.0449,
+   "rejection k=1": 0.5833,
+   "rejection k=2": 0.4702,
+   "rejection k=3": 0.3776,
+   "rejection k=4": 0.3116,
+   "rejection k=5": 0.2617,
+   "rejection k=6": 0.2307,
+   "rejection k=7": 0.2003,
+   "rejection k=8": 0.1784
+  },
+  "draft_acceptance_rate_V151936": {
+   "exact k=1": 0.1554,
+   "exact k=2": 0.1001,
+   "exact k=3": 0.0721,
+   "exact k=4": 0.0553,
+   "exact k=5": 0.0445,
+   "exact k=6": 0.0374,
+   "exact k=7": 0.0323,
+   "exact k=8": 0.0285,
+   "rejection k=1": 0.5645,
+   "rejection k=2": 0.4268,
+   "rejection k=3": 0.348,
+   "rejection k=4": 0.2816,
+   "rejection k=5": 0.2332,
+   "rejection k=6": 0.2033,
+   "rejection k=7": 0.1816,
+   "rejection k=8": 0.1609
+  },
+  "gpu_processes_before_timing": [],
+  "note": "nucleus section rerun after relabeling sample-dependent checks to info; its checks replace the first run's"
+ },
+ "counts": {
+  "ok": 114,
+  "regression": 0,
+  "changed": 0,
+  "info": 80
+ }
+}

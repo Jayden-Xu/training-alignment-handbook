@@ -1,0 +1,181 @@
+# Book site for the handbook: .venv-docs/bin/mkdocs build --strict  (see handbook/4-operations/README.md)
+site_name: Training Alignment Handbook
+site_description: How to make two training or inference runs agree bit for bit, and find the first place they stop agreeing.
+docs_dir: handbook
+site_dir: site
+use_directory_urls: true
+# repo_url: https://github.com/ORG/training-alignment-handbook   # set once there is a remote
+extra:
+  # Base URL for links to repository files (tools/, examples/, suite/, AUDIT.md).
+  # Empty: the files are copied into the site under source/. Example value:
+  #   https://github.com/ORG/training-alignment-handbook/blob/main
+  source_url: !ENV [HANDBOOK_SOURCE_URL, ""]
+
+hooks:
+  - scripts/mkdocs_hooks.py
+
+# Figures: animated workflow lanes on the home page, static diagrams elsewhere
+extra_css:
+  - assets/flows.css
+extra_javascript:
+  - assets/flows.js
+
+watch:
+  - skills
+  - scripts
+
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+  links:
+    not_found: warn
+    anchors: warn
+    unrecognized_links: warn
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
+    - toc.follow
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    logo: material/book-open-page-variant
+
+plugins:
+  - search:
+      lang: [en, zh]
+      separator: '[\s​\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: zh
+          name: 中文
+          build: true
+          site_name: 训练对齐手册
+          site_description: 如何让两次训练或推理运行逐位一致，并找到它们第一次不一致的地方。
+          nav_translations:
+            Home: 首页
+            0 Foundations: 0 基础
+            1 Pre-training: 1 预训练
+            2 RL train–inference: 2 强化学习训推
+            3 Batch-invariant kernels: 3 batch-invariant kernel
+            4 Operations: 4 运维
+            5 Other scenarios: 5 其他对齐场景
+            Data alignment: 数据对齐
+            Alignment pipeline: Alignment pipeline
+            Pre-training alignment: 预训练对齐
+            Engine parity: 引擎一致性
+            Batch-invariant kernel: Batch-invariant kernel
+            Handbook writing: 手册写作
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - def_list
+  - toc:
+      permalink: true
+      # GitHub-style anchors, so #links written for GitHub work on the site too
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.betterem
+
+nav:
+  - Home: index.md
+  - 0 Foundations:
+      - 0-foundations/README.md
+  - 1 Pre-training:
+      - 1-pretraining/README.md
+      - 1-pretraining/determinism-and-preflight.md
+      - Data alignment: 1-pretraining/data-alignment.md
+      - 1-pretraining/training-step.md
+      - 1-pretraining/data-parallel.md
+      - 1-pretraining/capture-compiled-code.md
+      - 1-pretraining/localize-with-opguard.md
+      - 1-pretraining/sdc.md
+  - 2 RL train–inference:
+      - 2-rl/README.md
+      - 2-rl/whole-model.md
+      - 2-rl/parallelism.md
+      - 2-rl/sampling.md
+      - 2-rl/lora.md
+      - 2-rl/engine-parity-vllm.md
+      - 2-rl/rl-loop.md
+  - 3 Batch-invariant kernels:
+      - 3-kernels/README.md
+      - 3-kernels/gemm-and-quantized.md
+      - 3-kernels/attention.md
+      - 3-kernels/mla-and-sparse.md
+      - 3-kernels/linear-attention.md
+      - 3-kernels/moe.md
+      - 3-kernels/collectives.md
+  - 4 Operations:
+      - 4-operations/README.md
+      - 4-operations/regression.md
+      - 4-operations/hardware.md
+  - 5 Other scenarios:
+      - 5-scenarios/README.md
+      - 5-scenarios/framework-migration.md
+      - 5-scenarios/checkpoint-conversion.md
+      - 5-scenarios/offline-post-training.md
+  - Skills:
+      - Alignment pipeline:
+          - skills/alignment-pipeline/SKILL.md
+      - Pre-training alignment:
+          - skills/pretraining-alignment/SKILL.md
+          - skills/pretraining-alignment/references/leads.md
+      - Engine parity:
+          - skills/engine-parity/SKILL.md
+          - skills/engine-parity/references/rounding-points.md
+      - Handbook writing:
+          - skills/handbook-writing/SKILL.md
+      - Batch-invariant kernel:
+          - skills/batch-invariant-kernel/SKILL.md
+          - skills/batch-invariant-kernel/references/operator-recipes.md
+          - skills/batch-invariant-kernel/references/verification.md
+  - open-items.md
+  - references.md
+  - glossary.md

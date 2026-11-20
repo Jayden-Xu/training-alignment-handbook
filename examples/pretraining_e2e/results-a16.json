@@ -1,0 +1,4679 @@
+{
+ "schema": "bi-results-v1",
+ "example": "pretraining_e2e",
+ "quick": false,
+ "argv": [
+  "pretraining_e2e.py",
+  "--opguard-root",
+  "~/OpGuard",
+  "--python",
+  "~/miniforge3/envs/torchdbg/bin/python",
+  "--work",
+  "~/bi-check-opg-e2e/runs/full2",
+  "--json",
+  "~/bi-check-opg-e2e/runs/full2.json"
+ ],
+ "env": {
+  "python": "3.10.22",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "535.309.01"
+ },
+ "counts": {
+  "ok": 34,
+  "regression": 0,
+  "changed": 0,
+  "info": 9
+ },
+ "checks": [
+  {
+   "name": "plain torch equals the documented format (pure-Python reference)",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "cases": 208,
+    "failed": [],
+    "also_against_opguard": true
+   }
+  },
+  {
+   "name": "xor_signature and xor_vectors: plain torch equals OpGuard bit for bit (cpu)",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "comparisons": 160,
+    "failed": [],
+    "opguard_native_extension": true,
+    "covered": "bf16, fp16, fp32, fp64, int64, bool, uint8; byte counts 462, 1001, 91, 6; empty; 0-dim; transposed, strided and offset views; regions 1, 4, 7, 64"
+   }
+  },
+  {
+   "name": "xor_signature and xor_vectors: plain torch equals OpGuard bit for bit (cuda)",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "comparisons": 160,
+    "failed": [],
+    "opguard_native_extension": true,
+    "covered": "bf16, fp16, fp32, fp64, int64, bool, uint8; byte counts 462, 1001, 91, 6; empty; 0-dim; transposed, strided and offset views; regions 1, 4, 7, 64"
+   }
+  },
+  {
+   "name": "1 GiB tensor: plain torch equals OpGuard bit for bit (cuda)",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tensor": "fp32 [65536, 4096] (1 GiB)",
+    "signature_torch_s": 0.0193,
+    "signature_opguard_s": 0.0063,
+    "vectors_torch_s": 0.0193,
+    "vectors_opguard_s": 0.0071
+   }
+  },
+  {
+   "name": "1 GiB tensor: plain torch equals OpGuard bit for bit (cpu)",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tensor": "fp32 [65536, 4096] (1 GiB)",
+    "signature_torch_s": 0.1613,
+    "signature_opguard_s": 0.5165,
+    "vectors_torch_s": 0.1352,
+    "vectors_opguard_s": 0.239
+   }
+  },
+  {
+   "name": "1 GiB tensor: plain torch equals OpGuard bit for bit (cuda)",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tensor": "bf16 [2^29 + 1] (1 GiB + 2 bytes)",
+    "signature_torch_s": 0.0195,
+    "signature_opguard_s": 0.0073,
+    "vectors_torch_s": 0.0,
+    "vectors_opguard_s": 0.0,
+    "vectors": "not defined (vector bytes not a multiple of 4)"
+   }
+  },
+  {
+   "name": "1 GiB tensor: plain torch equals OpGuard bit for bit (cpu)",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tensor": "bf16 [2^29 + 1] (1 GiB + 2 bytes)",
+    "signature_torch_s": 0.1433,
+    "signature_opguard_s": 0.3717,
+    "vectors_torch_s": 0.0,
+    "vectors_opguard_s": 0.0,
+    "vectors": "not defined (vector bytes not a multiple of 4)"
+   }
+  },
+  {
+   "name": "fingerprints computed inside torch.compile equal eager",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "first_call_seconds": 3.2
+   }
+  },
+  {
+   "name": "fingerprints computed in a replayed CUDA graph equal eager",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "merge rule: head vectors -> token rows -> regions -> whole tensor; v1 and legacy decode",
+   "impl": "opguard_bridge plain torch",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "report holds every control surface of chapter 1 that a job can read back",
+   "impl": "determinism_preflight",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "missing": [],
+    "paths": 125
+   }
+  },
+  {
+   "name": "diff lists each planted difference and marks it blocking; a declared one does not block",
+   "impl": "determinism_preflight",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "torch.cuda_matmul_allow_tf32": [
+     "torch.cuda_matmul_allow_tf32",
+     "torch.float32_matmul_precision"
+    ],
+    "torch.deterministic_algorithms.warn_only": [
+     "torch.deterministic_algorithms.warn_only"
+    ],
+    "seeds.torch_rng_state_sha256": [
+     "seeds.torch_rng_state_sha256"
+    ],
+    "optimizer.path": [
+     "optimizer.param_groups[0].fused",
+     "optimizer.param_groups[0].initial_lr",
+     "optimizer.path",
+     "seeds.torch_rng_state_sha256"
+    ]
+   }
+  },
+  {
+   "name": "findings flag warn_only=True as residual nondeterminism",
+   "impl": "determinism_preflight",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "risks_under_warn_only": [
+     "torch.deterministic_algorithms.warn_only",
+     "torch.cudnn.deterministic"
+    ]
+   }
+  },
+  {
+   "name": "reference configuration, two runs: identical parameters",
+   "impl": "strict deterministic, norm rounds before the weight",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 0,
+    "first": {}
+   }
+  },
+  {
+   "name": "norm: reference vs suspect, identical parameters",
+   "impl": "norm multiplies in fp32, rounds after the weight (planted)",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1566534,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 393073,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 372,
+      "of": 384
+     }
+    }
+   }
+  },
+  {
+   "name": "backward: two runs of the same job, identical parameters",
+   "impl": "SDPA flash backward, deterministic algorithms warn_only=True",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1555222,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 392989,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 367,
+      "of": 384
+     }
+    }
+   }
+  },
+  {
+   "name": "backward: a warn_only run equals a strict run",
+   "impl": "SDPA flash backward, deterministic algorithms warn_only=True",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1556134,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 392988,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 365,
+      "of": 384
+     }
+    }
+   }
+  },
+  {
+   "name": "backward: preflight findings name warn_only before any capture",
+   "impl": "determinism_preflight",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "risks": [
+     "torch.deterministic_algorithms.warn_only"
+    ],
+    "diff_of_the_two_runs": "0 differences, 0 blocking; 1 uncontrolled surfaces"
+   }
+  },
+  {
+   "name": "resume: 2 steps, save, full restore, 2 steps equals 4 uninterrupted steps",
+   "impl": "full restore",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 0,
+    "first": {}
+   }
+  },
+  {
+   "name": "resume: restore without the optimizer step counter, identical parameters",
+   "impl": "restore without optimizer step counter (planted)",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1572473,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 393214,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 384,
+      "of": 384
+     }
+    }
+   }
+  },
+  {
+   "name": "resume: preflight diff after the restore names the optimizer step counter",
+   "impl": "determinism_preflight",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "blocking": [
+     "optimizer.state.step.max",
+     "optimizer.state.step.min"
+    ]
+   }
+  },
+  {
+   "name": "resume: restore without sched, identical parameters",
+   "impl": "restore without sched",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1572846,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 393212,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 384,
+      "of": 384
+     }
+    },
+    "preflight_blocking": [
+     "scheduler.last_epoch",
+     "scheduler.last_lr",
+     "scheduler.step_count"
+    ]
+   }
+  },
+  {
+   "name": "resume: restore without cuda-rng, identical parameters",
+   "impl": "restore without cuda-rng",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1557593,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 393209,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 384,
+      "of": 384
+     }
+    },
+    "preflight_blocking": [
+     "seeds.cuda_rng_state_sha256.0"
+    ]
+   }
+  },
+  {
+   "name": "resume: restore without cpu-rng, identical parameters",
+   "impl": "restore without cpu-rng",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "parameters": 36,
+    "differing": 0,
+    "first": {},
+    "preflight_blocking": []
+   }
+  },
+  {
+   "name": "resume: restore without data-pos, identical parameters",
+   "impl": "restore without data-pos",
+   "level": "L1",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1572455,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 393214,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 384,
+      "of": 384
+     }
+    },
+    "preflight_blocking": [
+     "dataloader.generator.state_sha256",
+     "dataloader.sampler_generator.state_sha256"
+    ]
+   }
+  },
+  {
+   "name": "norm: OpGuard reports no difference between reference and suspect",
+   "impl": "norm multiplies in fp32, rounds after the weight (planted)",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "status_counts": {
+     "run1": {
+      "ok": 25,
+      "diff": 488
+     },
+     "run2": {
+      "ok": 25,
+      "diff": 488,
+      "unaligned": 36
+     }
+    }
+   }
+  },
+  {
+   "name": "norm: final parameters of reference and suspect are identical",
+   "impl": "norm multiplies in fp32, rounds after the weight (planted)",
+   "level": "L4",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1566534,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 393073,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 372,
+      "of": 384
+     }
+    }
+   }
+  },
+  {
+   "name": "norm: the captured reference run ends with the parameters of an uninstrumented run",
+   "impl": "OpGuard capture",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 0,
+    "first": {}
+   }
+  },
+  {
+   "name": "backward: OpGuard reports no difference between reference and suspect",
+   "impl": "SDPA flash backward, deterministic algorithms warn_only=True",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "status_counts": {
+     "run1": {
+      "ok": 144,
+      "diff": 369
+     },
+     "run2": {
+      "ok": 144,
+      "diff": 369
+     }
+    }
+   }
+  },
+  {
+   "name": "backward: final parameters of reference and suspect are identical",
+   "impl": "SDPA flash backward, deterministic algorithms warn_only=True",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1555409,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 392986,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 366,
+      "of": 384
+     }
+    }
+   }
+  },
+  {
+   "name": "norm-backward-fixed: OpGuard reports no difference and no unaligned event",
+   "impl": "strict deterministic, norm rounds before the weight (fix)",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "status_counts": {
+     "run1": {
+      "ok": 513
+     },
+     "run2": {
+      "ok": 513
+     }
+    },
+    "launches": 4
+   }
+  },
+  {
+   "name": "norm-backward-fixed: final parameters of reference and suspect are identical",
+   "impl": "strict deterministic, norm rounds before the weight (fix)",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 0,
+    "first": {}
+   }
+  },
+  {
+   "name": "resume: OpGuard reports no difference between reference and suspect",
+   "impl": "restore without optimizer step counter (planted)",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "status_counts": {
+     "run1": {
+      "ok": 135,
+      "diff": 122
+     },
+     "run2": {
+      "ok": 135,
+      "diff": 122
+     }
+    }
+   }
+  },
+  {
+   "name": "resume: final parameters of reference and suspect are identical",
+   "impl": "restore without optimizer step counter (planted)",
+   "level": "L1",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 36,
+    "first": {
+     "tok_emb.weight": {
+      "mismatched_elements": 1572473,
+      "of": 1572864
+     },
+     "pos_emb.weight": {
+      "mismatched_elements": 393214,
+      "of": 393216
+     },
+     "blocks.0.norm1.weight": {
+      "mismatched_elements": 384,
+      "of": 384
+     }
+    }
+   }
+  },
+  {
+   "name": "resume: the captured reference run ends with the parameters of an uninstrumented run",
+   "impl": "OpGuard capture",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 0,
+    "first": {}
+   }
+  },
+  {
+   "name": "resume-fixed: OpGuard reports no difference and no unaligned event",
+   "impl": "full restore (fix)",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "status_counts": {
+     "run1": {
+      "ok": 257
+     },
+     "run2": {
+      "ok": 257
+     }
+    },
+    "launches": 4
+   }
+  },
+  {
+   "name": "resume-fixed: final parameters of reference and suspect are identical",
+   "impl": "full restore (fix)",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 0,
+    "first": {}
+   }
+  },
+  {
+   "name": "nn-linear: OpGuard reports no difference and no unaligned event",
+   "impl": "strict deterministic, torch.nn.Linear",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "status_counts": {
+     "run1": {
+      "ok": 413
+     },
+     "run2": {
+      "ok": 413
+     }
+    },
+    "launches": 4
+   }
+  },
+  {
+   "name": "nn-linear: final parameters of reference and suspect are identical",
+   "impl": "strict deterministic, torch.nn.Linear",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "parameters": 36,
+    "differing": 0,
+    "first": {}
+   }
+  },
+  {
+   "name": "coverage with own Linear: every discovered call site of the checkout is planned",
+   "impl": "OpGuard harness",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "checkout": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/",
+    "discovered_lines": 30,
+    "planned_lines": 24,
+    "wrapped_calls": 23,
+    "discovered_not_planned": [
+     {
+      "file": "model.py",
+      "line": 138,
+      "ops": [
+       "aten.embedding.default"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 110,
+      "ops": [
+       "profiler._record_function_enter_new"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 188,
+      "ops": [
+       "aten._to_copy.default"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 209,
+      "ops": [
+       "profiler._record_function_enter_new"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 212,
+      "ops": [
+       "aten._foreach_mul_.Tensor",
+       "aten._foreach_norm.Scalar",
+       "aten.add.Tensor",
+       "aten.clamp.default",
+       "aten.linalg_vector_norm.default",
+       "aten.mul.Tensor"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 213,
+      "ops": [
+       "aten._foreach_add_.Scalar",
+       "aten._foreach_addcdiv_.ScalarList",
+       "aten._foreach_addcmul_.Scalar",
+       "aten._foreach_div_.ScalarList",
+       "aten._foreach_lerp_.Scalar",
+       "aten._foreach_mul_.Scalar"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "coverage with torch.nn.Linear: every discovered call site of the checkout is planned",
+   "impl": "OpGuard harness",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "checkout": "~/bi-check-opg-e2e/runs/full2/nn-linear/checkouts/reference/",
+    "discovered_lines": 36,
+    "planned_lines": 23,
+    "wrapped_calls": 22,
+    "discovered_not_planned": [
+     {
+      "file": "model.py",
+      "line": 79,
+      "ops": [
+       "aten._to_copy.default",
+       "aten._unsafe_view.default",
+       "aten.mm.default",
+       "aten.t.default",
+       "aten.view.default"
+      ]
+     },
+     {
+      "file": "model.py",
+      "line": 80,
+      "ops": [
+       "aten._to_copy.default",
+       "aten._unsafe_view.default",
+       "aten.mm.default",
+       "aten.t.default",
+       "aten.view.default"
+      ]
+     },
+     {
+      "file": "model.py",
+      "line": 81,
+      "ops": [
+       "aten._to_copy.default",
+       "aten._unsafe_view.default",
+       "aten.mm.default",
+       "aten.t.default",
+       "aten.view.default"
+      ]
+     },
+     {
+      "file": "model.py",
+      "line": 84,
+      "ops": [
+       "aten._to_copy.default",
+       "aten._unsafe_view.default",
+       "aten.mm.default",
+       "aten.t.default",
+       "aten.view.default"
+      ]
+     },
+     {
+      "file": "model.py",
+      "line": 94,
+      "ops": [
+       "aten._to_copy.default",
+       "aten._unsafe_view.default",
+       "aten.mm.default",
+       "aten.t.default",
+       "aten.view.default"
+      ]
+     },
+     {
+      "file": "model.py",
+      "line": 96,
+      "ops": [
+       "aten._to_copy.default",
+       "aten._unsafe_view.default",
+       "aten.mm.default",
+       "aten.t.default",
+       "aten.view.default"
+      ]
+     },
+     {
+      "file": "model.py",
+      "line": 138,
+      "ops": [
+       "aten.embedding.default"
+      ]
+     },
+     {
+      "file": "model.py",
+      "line": 144,
+      "ops": [
+       "aten._to_copy.default",
+       "aten._unsafe_view.default",
+       "aten.mm.default",
+       "aten.t.default",
+       "aten.view.default"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 110,
+      "ops": [
+       "profiler._record_function_enter_new"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 188,
+      "ops": [
+       "aten._to_copy.default"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 209,
+      "ops": [
+       "profiler._record_function_enter_new"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 212,
+      "ops": [
+       "aten._foreach_mul_.Tensor",
+       "aten._foreach_norm.Scalar",
+       "aten.add.Tensor",
+       "aten.clamp.default",
+       "aten.linalg_vector_norm.default",
+       "aten.mul.Tensor"
+      ]
+     },
+     {
+      "file": "train_lm.py",
+      "line": 213,
+      "ops": [
+       "aten._foreach_add_.Scalar",
+       "aten._foreach_addcdiv_.ScalarList",
+       "aten._foreach_addcmul_.Scalar",
+       "aten._foreach_div_.ScalarList",
+       "aten._foreach_lerp_.Scalar",
+       "aten._foreach_mul_.Scalar"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "writer: per-vector fingerprints differ at the planted vector only; v1 and legacy forms agree",
+   "impl": "opguard_bridge.TraceWriter",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "files": [
+     "exec_trace/gpu_000/ops/layer0.op/layer0.op_line10.jsonl",
+     "exec_trace/gpu_000/ops/layer1.op/layer1.op_line11.jsonl"
+    ],
+    "differing_vectors": [
+     23
+    ]
+   }
+  },
+  {
+   "name": "writer: OpGuard exports the pair and its harness reports the planted record",
+   "impl": "opguard_bridge.TraceWriter",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tools": [
+     "trace_summary",
+     "first_diff",
+     "inspect_event",
+     "compare_events",
+     "trace_neighbors"
+    ],
+    "pivot": {
+     "fn": "<layer1.op>",
+     "counter": 4,
+     "line": 11,
+     "diff_fields": [
+      "outputs"
+     ]
+    },
+    "differing_regions_of_output": [
+     [
+      2
+     ]
+    ],
+    "status_counts": {
+     "run1": {
+      "ok": 4,
+      "diff": 1
+     },
+     "run2": {
+      "ok": 4,
+      "diff": 1
+     }
+    },
+    "verdict": "not_evaluated"
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "signature_torch of fp32 [65536, 4096] (1 GiB) on cuda",
+   "value": 19.28,
+   "unit": "ms"
+  },
+  {
+   "name": "signature_opguard of fp32 [65536, 4096] (1 GiB) on cuda",
+   "value": 6.26,
+   "unit": "ms"
+  },
+  {
+   "name": "vectors_torch of fp32 [65536, 4096] (1 GiB) on cuda",
+   "value": 19.31,
+   "unit": "ms"
+  },
+  {
+   "name": "vectors_opguard of fp32 [65536, 4096] (1 GiB) on cuda",
+   "value": 7.14,
+   "unit": "ms"
+  },
+  {
+   "name": "signature_torch of fp32 [65536, 4096] (1 GiB) on cpu",
+   "value": 161.33,
+   "unit": "ms"
+  },
+  {
+   "name": "signature_opguard of fp32 [65536, 4096] (1 GiB) on cpu",
+   "value": 516.55,
+   "unit": "ms"
+  },
+  {
+   "name": "vectors_torch of fp32 [65536, 4096] (1 GiB) on cpu",
+   "value": 135.16,
+   "unit": "ms"
+  },
+  {
+   "name": "vectors_opguard of fp32 [65536, 4096] (1 GiB) on cpu",
+   "value": 238.96,
+   "unit": "ms"
+  },
+  {
+   "name": "signature_torch of bf16 [2^29 + 1] (1 GiB + 2 bytes) on cuda",
+   "value": 19.47,
+   "unit": "ms"
+  },
+  {
+   "name": "signature_opguard of bf16 [2^29 + 1] (1 GiB + 2 bytes) on cuda",
+   "value": 7.28,
+   "unit": "ms"
+  },
+  {
+   "name": "vectors_torch of bf16 [2^29 + 1] (1 GiB + 2 bytes) on cuda",
+   "value": 0.01,
+   "unit": "ms"
+  },
+  {
+   "name": "vectors_opguard of bf16 [2^29 + 1] (1 GiB + 2 bytes) on cuda",
+   "value": 0.01,
+   "unit": "ms"
+  },
+  {
+   "name": "signature_torch of bf16 [2^29 + 1] (1 GiB + 2 bytes) on cpu",
+   "value": 143.31,
+   "unit": "ms"
+  },
+  {
+   "name": "signature_opguard of bf16 [2^29 + 1] (1 GiB + 2 bytes) on cpu",
+   "value": 371.7,
+   "unit": "ms"
+  },
+  {
+   "name": "vectors_torch of bf16 [2^29 + 1] (1 GiB + 2 bytes) on cpu",
+   "value": 0.0,
+   "unit": "ms"
+  },
+  {
+   "name": "vectors_opguard of bf16 [2^29 + 1] (1 GiB + 2 bytes) on cpu",
+   "value": 0.0,
+   "unit": "ms"
+  },
+  {
+   "name": "train step, reference configuration",
+   "value": 242.0,
+   "unit": "ms",
+   "size": {
+    "layers": 4,
+    "dim": 384,
+    "heads": 6,
+    "seq_len": 1024,
+    "batch": 8,
+    "vocab": 4096,
+    "corpus_seqs": 256
+   }
+  },
+  {
+   "name": "train step, warn_only (default SDPA backward)",
+   "value": 98.0,
+   "unit": "ms"
+  },
+  {
+   "name": "norm: wall time of the OpGuard workflow",
+   "value": 47.22,
+   "unit": "s",
+   "launches": 4
+  },
+  {
+   "name": "backward: wall time of the OpGuard workflow",
+   "value": 45.69,
+   "unit": "s",
+   "launches": 4
+  },
+  {
+   "name": "norm-backward-fixed: wall time of the OpGuard workflow",
+   "value": 45.54,
+   "unit": "s",
+   "launches": 4
+  },
+  {
+   "name": "resume: wall time of the OpGuard workflow",
+   "value": 48.42,
+   "unit": "s",
+   "launches": 4
+  },
+  {
+   "name": "resume-fixed: wall time of the OpGuard workflow",
+   "value": 48.88,
+   "unit": "s",
+   "launches": 4
+  },
+  {
+   "name": "nn-linear: wall time of the OpGuard workflow",
+   "value": 45.7,
+   "unit": "s",
+   "launches": 4
+  }
+ ],
+ "extra": {
+  "mode": "full",
+  "sizes": {
+   "layers": 4,
+   "dim": 384,
+   "heads": 6,
+   "seq_len": 1024,
+   "batch": 8,
+   "vocab": 4096,
+   "corpus_seqs": 256
+  },
+  "steps": 4,
+  "save_at": 2,
+  "opguard": {
+   "root": "~/OpGuard",
+   "capabilities": {
+    "actions": [
+     "discover",
+     "prepare",
+     "trace",
+     "compare",
+     "align"
+    ],
+    "capture_entrypoint": "python_script",
+    "comparison": "perfetto_report",
+    "numeric_verdict": false
+   },
+   "importable_here": true
+  },
+  "opguard_doctor": {
+   "error": "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
+  },
+  "losses": {
+   "reference": [
+    8.390274047851562,
+    8.38215446472168,
+    8.380587577819824,
+    8.367652893066406
+   ],
+   "norm suspect": [
+    8.390351295471191,
+    8.382250785827637,
+    8.380582809448242,
+    8.367744445800781
+   ],
+   "resume suspect": [
+    8.380587577819824,
+    8.36069107055664
+   ]
+  },
+  "scenarios": {
+   "norm": {
+    "reference_args": {},
+    "suspect_args": {
+     "norm_mul": "fp32"
+    },
+    "status": "succeeded",
+    "launches": 4,
+    "wall_seconds": 47.22,
+    "verdict": "not_evaluated",
+    "errors": [],
+    "stages": [
+     {
+      "side": "baseline",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 7.89
+     },
+     {
+      "side": "baseline",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 3.56
+     },
+     {
+      "side": "baseline",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 10.71
+     },
+     {
+      "side": "candidate",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 7.9
+     },
+     {
+      "side": "candidate",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 3.7
+     },
+     {
+      "side": "candidate",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 9.92
+     },
+     {
+      "side": "comparison",
+      "action": "compare",
+      "status": "succeeded",
+      "seconds": 3.49
+     }
+    ],
+    "coverage": {
+     "baseline": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/",
+      "discovered_lines": 30,
+      "planned_lines": 24,
+      "wrapped_calls": 23,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     },
+     "candidate": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/suspect/",
+      "discovered_lines": 31,
+      "planned_lines": 25,
+      "wrapped_calls": 24,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     }
+    },
+    "preflight": {
+     "summary": "1 differences, 0 blocking; 0 uncontrolled surfaces",
+     "bitwise_comparison": "meaningful",
+     "blocking": [],
+     "declared": [
+      {
+       "path": "launch.argv",
+       "a": [
+        "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/train_lm.py",
+        "--steps",
+        "4",
+        "--layers",
+        "4",
+        "--dim",
+        "384",
+        "--heads",
+        "6",
+        "--seq-len",
+        "1024",
+        "--batch",
+        "8",
+        "--vocab",
+        "4096",
+        "--corpus-seqs",
+        "256",
+        "--out",
+        "~/bi-check-opg-e2e/runs/full2/norm/reference.json",
+        "--state-out",
+        "~/bi-check-opg-e2e/runs/full2/norm/reference.pt"
+       ],
+       "b": [
+        "~/bi-check-opg-e2e/runs/full2/norm/checkouts/suspect/train_lm.py",
+        "--steps",
+        "4",
+        "--layers",
+        "4",
+        "--dim",
+        "384",
+        "--heads",
+        "6",
+        "--seq-len",
+        "1024",
+        "--batch",
+        "8",
+        "--vocab",
+        "4096",
+        "--corpus-seqs",
+        "256",
+        "--norm-mul",
+        "fp32",
+        "--out",
+        "~/bi-check-opg-e2e/runs/full2/norm/suspect.json",
+        "--state-out",
+        "~/bi-check-opg-e2e/runs/full2/norm/suspect.pt"
+       ]
+      }
+     ],
+     "at_risk": []
+    },
+    "query_seconds": 10.5,
+    "facts": {
+     "schema": "opguard-first-divergence-v1",
+     "artifact": {
+      "path": "~/bi-check-opg-e2e/runs/full2/norm/experiments/8e8e3e0ec4e748a1afcde873870261d1/comparison-compare-1/output/perfetto_gpu_000.json.gz",
+      "sha256": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11"
+     },
+     "verdict": "not_evaluated",
+     "operation_count": 1062,
+     "status_counts": {
+      "run1": {
+       "ok": 25,
+       "diff": 488
+      },
+      "run2": {
+       "ok": 25,
+       "diff": 488,
+       "unaligned": 36
+      }
+     },
+     "alignment_policy": "callsite_sequence_v1",
+     "diverged": true,
+     "pivot": {
+      "event_ref": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11:80",
+      "name": "None.to#9",
+      "fn": "<None.to>",
+      "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+      "line": 59,
+      "counter": 9,
+      "status": "diff",
+      "run": "run1",
+      "rank": 0,
+      "pairing": "callsite_sequence_order",
+      "paired": true,
+      "diff_fields": [
+       "outputs"
+      ],
+      "diff_summary": "outputs::dtype: torch.bfloat16 vs torch.float32; outputs::xor_sig_layout: {'byte_ranges': ((0, 1572864), (1572864, 3145728), (3145728, 4718592), (4718592, 6291456)), 'logical_nbytes': 6291456, 'regions': 4, 'scheme': 'flat-u32-le-v1'} vs {'byte_ranges': ((0, 3145728), (3145728, 6291456), (6291456, 9437184), (9437184, 12582912)), 'logical_nbytes': 12582912, 'regions': 4, 'scheme': 'flat-u32-le-v1'}; outputs::xor_signature: (4043534432, 2064384783, 4197839179, 4071095466) vs (2216892946, 2142087952, 1977851391, 181394307)",
+      "reference": {
+       "inputs": [],
+       "outputs": [
+        {
+         "shape": [
+          8,
+          1024,
+          384
+         ],
+         "dtype": "torch.bfloat16",
+         "xor_signature": [
+          4043534432,
+          2064384783,
+          4197839179,
+          4071095466
+         ]
+        }
+       ]
+      },
+      "suspect": {
+       "inputs": [],
+       "outputs": [
+        {
+         "shape": [
+          8,
+          1024,
+          384
+         ],
+         "dtype": "torch.float32",
+         "xor_signature": [
+          2216892946,
+          2142087952,
+          1977851391,
+          181394307
+         ]
+        }
+       ]
+      },
+      "peer": {
+       "event_ref": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11:92",
+       "name": "None.to#9",
+       "fn": "<None.to>",
+       "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/suspect/model.py",
+       "line": 59,
+       "counter": 9,
+       "status": "diff",
+       "run": "run2",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      "regional": [
+       {
+        "slot": [
+         "outputs",
+         0
+        ],
+        "status": "incompatible",
+        "differing_regions": null,
+        "byte_ranges": []
+       }
+      ],
+      "callers": [
+       {
+        "function": "_run_code",
+        "file": "~/miniforge3/envs/torchdbg/lib/python3.10/runpy.py",
+        "line": 86
+       },
+       {
+        "function": "main",
+        "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/train_lm.py",
+        "line": 245
+       },
+       {
+        "function": "run",
+        "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/train_lm.py",
+        "line": 218
+       },
+       {
+        "function": "forward",
+        "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+        "line": 161
+       },
+       {
+        "function": "forward",
+        "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+        "line": 127
+       },
+       {
+        "function": "forward",
+        "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+        "line": 74
+       }
+      ],
+      "source": {
+       "sha256": "1cdd9f152932b3205e48a51fd78c1aeeeaf91f0215638fa193c0a532dbc91f4a",
+       "text": "normed = (hidden32 * inv_rms).to(mul_dtype)",
+       "enclosing": "RMSNorm.forward"
+      },
+      "inputs_recorded": 0,
+      "inputs_differ": false,
+      "outputs_differ": true,
+      "dtype_differs": true,
+      "shape_differs": false
+     },
+     "unaligned_first": {},
+     "rank": 0,
+     "unaligned_before": 0,
+     "previous_ok": {
+      "event_ref": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11:70",
+      "name": "torch.rsqrt#8",
+      "fn": "<torch.rsqrt>",
+      "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+      "line": 58,
+      "counter": 8,
+      "status": "ok",
+      "run": "run1",
+      "rank": 0,
+      "pairing": "callsite_sequence_order",
+      "paired": true
+     },
+     "site_statuses": {
+      "calls": 36,
+      "statuses": "dddddddddddddddddddddddddddddddddddd",
+      "pivot_call": 0
+     },
+     "preceding": [
+      {
+       "event_ref": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11:26",
+       "name": "None.contiguous#3",
+       "fn": "<None.contiguous>",
+       "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/train_lm.py",
+       "line": 205,
+       "counter": 3,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11:34",
+       "name": "torch.arange#4",
+       "fn": "<torch.arange>",
+       "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+       "line": 137,
+       "counter": 4,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11:43",
+       "name": "sparse.<anonymous#5",
+       "fn": "<torch.nn.modules.sparse.<anonymous>>",
+       "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+       "line": 139,
+       "counter": 5,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11:52",
+       "name": "None.to#6",
+       "fn": "<None.to>",
+       "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+       "line": 140,
+       "counter": 6,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11:60",
+       "name": "None.float#7",
+       "fn": "<None.float>",
+       "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+       "line": 57,
+       "counter": 7,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "5f1a84a39d6cece5af18afd86f16be45055d94dccd871a0386dbe4bebcf4af11:70",
+       "name": "torch.rsqrt#8",
+       "fn": "<torch.rsqrt>",
+       "file": "~/bi-check-opg-e2e/runs/full2/norm/checkouts/reference/model.py",
+       "line": 58,
+       "counter": 8,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      }
+     ],
+     "events_in_run": 513,
+     "sites": [
+      {
+       "fn": "<__main__.next>",
+       "file": "train_lm.py",
+       "line": 203,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<None.contiguous>",
+       "file": "train_lm.py",
+       "line": 204,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<None.contiguous>",
+       "file": "train_lm.py",
+       "line": 205,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<torch.arange>",
+       "file": "model.py",
+       "line": 137,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<torch.nn.modules.sparse.<anonymous>>",
+       "file": "model.py",
+       "line": 139,
+       "calls": 4,
+       "statuses": "oddd"
+      },
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 140,
+       "calls": 4,
+       "statuses": "oddd"
+      },
+      {
+       "fn": "<None.float>",
+       "file": "model.py",
+       "line": 57,
+       "calls": 36,
+       "statuses": "oddddddddddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<torch.rsqrt>",
+       "file": "model.py",
+       "line": 58,
+       "calls": 36,
+       "statuses": "oddddddddddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 59,
+       "calls": 36,
+       "statuses": "dddddddddddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 60,
+       "calls": 36,
+       "statuses": "dddddddddddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<torch._C._nn.linear>",
+       "file": "model.py",
+       "line": 36,
+       "calls": 100,
+       "statuses": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<torch._C._nn.scaled_dot_product_attention>",
+       "file": "model.py",
+       "line": 82,
+       "calls": 16,
+       "statuses": "dddddddddddddddd"
+      },
+      {
+       "fn": "<None.transpose>",
+       "file": "model.py",
+       "line": 83,
+       "calls": 16,
+       "statuses": "dddddddddddddddd"
+      },
+      {
+       "fn": "<torch.nn.modules.dropout.<anonymous>>",
+       "file": "model.py",
+       "line": 110,
+       "calls": 16,
+       "statuses": "dddddddddddddddd"
+      },
+      {
+       "fn": "<torch._C._nn.gelu>",
+       "file": "model.py",
+       "line": 95,
+       "calls": 16,
+       "statuses": "dddddddddddddddd"
+      },
+      {
+       "fn": "<torch.nn.modules.dropout.<anonymous>>",
+       "file": "model.py",
+       "line": 112,
+       "calls": 16,
+       "statuses": "dddddddddddddddd"
+      },
+      {
+       "fn": "<torch.nn.functional.cross_entropy>",
+       "file": "train_lm.py",
+       "line": 208,
+       "calls": 4,
+       "statuses": "dddd"
+      },
+      {
+       "fn": "<torch._tensor.backward>",
+       "file": "train_lm.py",
+       "line": 210,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<torch._C._linalg.linalg_vector_norm>",
+       "file": "train_lm.py",
+       "line": 134,
+       "calls": 144,
+       "statuses": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<None.append>",
+       "file": "train_lm.py",
+       "line": 215,
+       "calls": 4,
+       "statuses": "dddd"
+      },
+      {
+       "fn": "<builtins.float>",
+       "file": "train_lm.py",
+       "line": 217,
+       "calls": 4,
+       "statuses": "dddd"
+      },
+      {
+       "fn": "<None.items>",
+       "file": "train_lm.py",
+       "line": 224,
+       "calls": 1,
+       "statuses": "o"
+      },
+      {
+       "fn": "<None.hex>",
+       "file": "train_lm.py",
+       "line": 226,
+       "calls": 4,
+       "statuses": "dddd"
+      }
+     ],
+     "unaligned_sites": [
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 61,
+       "reason": "no_corresponding_trace_file",
+       "run": "run2",
+       "events": 36
+      }
+     ]
+    },
+    "suggest": {
+     "schema": "opguard-suggest-v1",
+     "verdict": "none: leads only",
+     "evidence": [
+      "First observed difference: <None.to> at model.py:59 in RMSNorm.forward, call 9; fields that differ: ['outputs'].",
+      "Source line: normed = (hidden32 * inv_rms).to(mul_dtype)",
+      "Call sites captured on one side only: model.py:61 (run2).",
+      "The recorded dtype differs: ['torch.bfloat16'] vs ['torch.float32']."
+     ],
+     "leads": [
+      {
+       "kind": "rounding-point",
+       "title": "A cast or rounding point moved",
+       "reason": "The same call produces ['torch.bfloat16'] on the reference and ['torch.float32'] on the suspect. The two runs round at different places, and one side has call sites the other never runs.",
+       "check": "Write down both sequences (where each cast happens, what is fused, the accumulator dtype) and compare the next boundary with equal dtype element by element (bi_check.first_mismatch).",
+       "handbook": "skills/batch-invariant-kernel/SKILL.md (section 3) and skills/batch-invariant-kernel/references/operator-recipes.md (1. Row-wise reductions)",
+       "fix_options": [
+        "Make the suspect round where the reference rounds.",
+        "If the new order is wanted, change both runs together and accept a new reference."
+       ]
+      },
+      {
+       "kind": "operator-class",
+       "title": "Row-wise reductions",
+       "reason": "'rmsnorm' names this class in the operator, its source line or its callers.",
+       "check": "Run bi_check.check_repeat on the op with the captured shapes (L1), then bi_check.check_batch (L2) if the two runs batch differently.",
+       "handbook": "skills/batch-invariant-kernel/references/operator-recipes.md (1. Row-wise reductions) and handbook/03-batch-invariant-kernels.md",
+       "fix_options": []
+      }
+     ],
+     "handoff": "validate-hypothesis (OpGuard harness skill), entered through investigate-first-diff"
+    },
+    "param_names": [
+     "tok_emb.weight",
+     "pos_emb.weight",
+     "blocks.0.norm1.weight",
+     "blocks.0.attn.q_proj.weight",
+     "blocks.0.attn.k_proj.weight",
+     "blocks.0.attn.v_proj.weight",
+     "blocks.0.attn.o_proj.weight",
+     "blocks.0.norm2.weight",
+     "blocks.0.mlp.fc1.weight",
+     "blocks.0.mlp.fc2.weight",
+     "blocks.1.norm1.weight",
+     "blocks.1.attn.q_proj.weight",
+     "blocks.1.attn.k_proj.weight",
+     "blocks.1.attn.v_proj.weight",
+     "blocks.1.attn.o_proj.weight",
+     "blocks.1.norm2.weight",
+     "blocks.1.mlp.fc1.weight",
+     "blocks.1.mlp.fc2.weight",
+     "blocks.2.norm1.weight",
+     "blocks.2.attn.q_proj.weight",
+     "blocks.2.attn.k_proj.weight",
+     "blocks.2.attn.v_proj.weight",
+     "blocks.2.attn.o_proj.weight",
+     "blocks.2.norm2.weight",
+     "blocks.2.mlp.fc1.weight",
+     "blocks.2.mlp.fc2.weight",
+     "blocks.3.norm1.weight",
+     "blocks.3.attn.q_proj.weight",
+     "blocks.3.attn.k_proj.weight",
+     "blocks.3.attn.v_proj.weight",
+     "blocks.3.attn.o_proj.weight",
+     "blocks.3.norm2.weight",
+     "blocks.3.mlp.fc1.weight",
+     "blocks.3.mlp.fc2.weight",
+     "norm_f.weight",
+     "head.weight"
+    ],
+    "final_parameters": {
+     "parameters": 36,
+     "differing": 36,
+     "first": {
+      "tok_emb.weight": {
+       "mismatched_elements": 1566534,
+       "of": 1572864
+      },
+      "pos_emb.weight": {
+       "mismatched_elements": 393073,
+       "of": 393216
+      },
+      "blocks.0.norm1.weight": {
+       "mismatched_elements": 372,
+       "of": 384
+      }
+     }
+    }
+   },
+   "backward": {
+    "reference_args": {
+     "det": "warn"
+    },
+    "suspect_args": {
+     "det": "warn"
+    },
+    "status": "succeeded",
+    "launches": 4,
+    "wall_seconds": 45.69,
+    "verdict": "not_evaluated",
+    "errors": [],
+    "stages": [
+     {
+      "side": "baseline",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 7.99
+     },
+     {
+      "side": "baseline",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 3.79
+     },
+     {
+      "side": "baseline",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 9.76
+     },
+     {
+      "side": "candidate",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 7.95
+     },
+     {
+      "side": "candidate",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 4.07
+     },
+     {
+      "side": "candidate",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 8.56
+     },
+     {
+      "side": "comparison",
+      "action": "compare",
+      "status": "succeeded",
+      "seconds": 3.49
+     }
+    ],
+    "coverage": {
+     "baseline": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/",
+      "discovered_lines": 30,
+      "planned_lines": 24,
+      "wrapped_calls": 23,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     },
+     "candidate": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/suspect/",
+      "discovered_lines": 30,
+      "planned_lines": 24,
+      "wrapped_calls": 23,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     }
+    },
+    "preflight": {
+     "summary": "1 differences, 0 blocking; 1 uncontrolled surfaces",
+     "bitwise_comparison": "meaningful",
+     "blocking": [],
+     "declared": [],
+     "at_risk": [
+      {
+       "path": "torch.deterministic_algorithms.warn_only",
+       "value": true,
+       "sides": [
+        "a",
+        "b"
+       ]
+      }
+     ]
+    },
+    "query_seconds": 5.5,
+    "facts": {
+     "schema": "opguard-first-divergence-v1",
+     "artifact": {
+      "path": "~/bi-check-opg-e2e/runs/full2/backward/experiments/0e542254b46a481d956c4dcc9c5ef7d9/comparison-compare-1/output/perfetto_gpu_000.json.gz",
+      "sha256": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2"
+     },
+     "verdict": "not_evaluated",
+     "operation_count": 1026,
+     "status_counts": {
+      "run1": {
+       "ok": 144,
+       "diff": 369
+      },
+      "run2": {
+       "ok": 144,
+       "diff": 369
+      }
+     },
+     "alignment_policy": "callsite_sequence_v1",
+     "diverged": true,
+     "pivot": {
+      "event_ref": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2:834",
+      "name": "_linalg.linalg_vector_norm#90",
+      "fn": "<torch._C._linalg.linalg_vector_norm>",
+      "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/train_lm.py",
+      "line": 134,
+      "counter": 90,
+      "status": "diff",
+      "run": "run1",
+      "rank": 0,
+      "pairing": "callsite_sequence_order",
+      "paired": true,
+      "diff_fields": [
+       "args",
+       "outputs"
+      ],
+      "diff_summary": "args[1]::xor_signature: (2347547712, 895822216, 859954544, 266190320) vs (3015804832, 3082372136, 857670704, 2221392112); outputs::xor_signature: (1043185044, 0, 0, 0) vs (1043185007, 0, 0, 0)",
+      "reference": {
+       "inputs": [
+        {
+         "shape": [
+          4096,
+          384
+         ],
+         "dtype": "torch.float32",
+         "xor_signature": [
+          2347547712,
+          895822216,
+          859954544,
+          266190320
+         ]
+        }
+       ],
+       "outputs": [
+        {
+         "shape": [],
+         "dtype": "torch.float32",
+         "xor_signature": [
+          1043185044,
+          0,
+          0,
+          0
+         ]
+        }
+       ]
+      },
+      "suspect": {
+       "inputs": [
+        {
+         "shape": [
+          4096,
+          384
+         ],
+         "dtype": "torch.float32",
+         "xor_signature": [
+          3015804832,
+          3082372136,
+          857670704,
+          2221392112
+         ]
+        }
+       ],
+       "outputs": [
+        {
+         "shape": [],
+         "dtype": "torch.float32",
+         "xor_signature": [
+          1043185007,
+          0,
+          0,
+          0
+         ]
+        }
+       ]
+      },
+      "peer": {
+       "event_ref": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2:845",
+       "name": "_linalg.linalg_vector_norm#90",
+       "fn": "<torch._C._linalg.linalg_vector_norm>",
+       "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/suspect/train_lm.py",
+       "line": 134,
+       "counter": 90,
+       "status": "diff",
+       "run": "run2",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      "regional": [
+       {
+        "slot": [
+         "inputs",
+         0
+        ],
+        "status": "available",
+        "differing_regions": [
+         0,
+         1,
+         2,
+         3
+        ],
+        "byte_ranges": [
+         [
+          0,
+          1572864
+         ],
+         [
+          1572864,
+          3145728
+         ],
+         [
+          3145728,
+          4718592
+         ],
+         [
+          4718592,
+          6291456
+         ]
+        ]
+       },
+       {
+        "slot": [
+         "outputs",
+         0
+        ],
+        "status": "available",
+        "differing_regions": [
+         0
+        ],
+        "byte_ranges": [
+         [
+          0,
+          4
+         ]
+        ]
+       }
+      ],
+      "callers": [
+       {
+        "function": "run_path",
+        "file": "~/miniforge3/envs/torchdbg/lib/python3.10/runpy.py",
+        "line": 289
+       },
+       {
+        "function": "_run_module_code",
+        "file": "~/miniforge3/envs/torchdbg/lib/python3.10/runpy.py",
+        "line": 96
+       },
+       {
+        "function": "_run_code",
+        "file": "~/miniforge3/envs/torchdbg/lib/python3.10/runpy.py",
+        "line": 86
+       },
+       {
+        "function": "main",
+        "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/train_lm.py",
+        "line": 245
+       },
+       {
+        "function": "run",
+        "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/train_lm.py",
+        "line": 222
+       },
+       {
+        "function": "grad_norms",
+        "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/train_lm.py",
+        "line": 145
+       }
+      ],
+      "source": {
+       "sha256": "e0a0a57116e144f5df62856e5d1084ac0f43bc685e31ef4681375245b9b268e9",
+       "text": "norms[name] = torch.linalg.vector_norm(param.grad)",
+       "enclosing": "grad_norms"
+      },
+      "inputs_recorded": 1,
+      "inputs_differ": true,
+      "outputs_differ": true,
+      "dtype_differs": false,
+      "shape_differs": false
+     },
+     "unaligned_first": {},
+     "rank": 0,
+     "unaligned_before": 0,
+     "previous_ok": {
+      "event_ref": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2:822",
+      "name": "_tensor.backward#89",
+      "fn": "<torch._tensor.backward>",
+      "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/train_lm.py",
+      "line": 210,
+      "counter": 89,
+      "status": "ok",
+      "run": "run1",
+      "rank": 0,
+      "pairing": "callsite_sequence_order",
+      "paired": true
+     },
+     "site_statuses": {
+      "calls": 144,
+      "statuses": "dddddddddddddddddddddddoddddoooooooodddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "pivot_call": 0
+     },
+     "preceding": [
+      {
+       "event_ref": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2:775",
+       "name": "torch.rsqrt#84",
+       "fn": "<torch.rsqrt>",
+       "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/model.py",
+       "line": 58,
+       "counter": 84,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2:784",
+       "name": "None.to#85",
+       "fn": "<None.to>",
+       "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/model.py",
+       "line": 59,
+       "counter": 85,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2:792",
+       "name": "None.to#86",
+       "fn": "<None.to>",
+       "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/model.py",
+       "line": 60,
+       "counter": 86,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2:800",
+       "name": "_nn.linear#87",
+       "fn": "<torch._C._nn.linear>",
+       "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/model.py",
+       "line": 36,
+       "counter": 87,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2:809",
+       "name": "functional.cross_entropy#88",
+       "fn": "<torch.nn.functional.cross_entropy>",
+       "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/train_lm.py",
+       "line": 208,
+       "counter": 88,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "ea8f542e1f2f35ad2d30dcffced1568f8db1549f8a87cb55c0269dd5da85a4d2:822",
+       "name": "_tensor.backward#89",
+       "fn": "<torch._tensor.backward>",
+       "file": "~/bi-check-opg-e2e/runs/full2/backward/checkouts/reference/train_lm.py",
+       "line": 210,
+       "counter": 89,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      }
+     ],
+     "events_in_run": 513,
+     "sites": [
+      {
+       "fn": "<__main__.next>",
+       "file": "train_lm.py",
+       "line": 203,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<None.contiguous>",
+       "file": "train_lm.py",
+       "line": 204,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<None.contiguous>",
+       "file": "train_lm.py",
+       "line": 205,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<torch.arange>",
+       "file": "model.py",
+       "line": 137,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<torch.nn.modules.sparse.<anonymous>>",
+       "file": "model.py",
+       "line": 139,
+       "calls": 4,
+       "statuses": "oddd"
+      },
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 140,
+       "calls": 4,
+       "statuses": "oddd"
+      },
+      {
+       "fn": "<None.float>",
+       "file": "model.py",
+       "line": 57,
+       "calls": 36,
+       "statuses": "oooooooooddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<torch.rsqrt>",
+       "file": "model.py",
+       "line": 58,
+       "calls": 36,
+       "statuses": "oooooooooddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 59,
+       "calls": 36,
+       "statuses": "oooooooooddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 60,
+       "calls": 36,
+       "statuses": "oooooooooooooooooooooooooooooooooooo"
+      },
+      {
+       "fn": "<torch._C._nn.linear>",
+       "file": "model.py",
+       "line": 36,
+       "calls": 100,
+       "statuses": "oooooooooooooooooooooooooddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<torch._C._nn.scaled_dot_product_attention>",
+       "file": "model.py",
+       "line": 82,
+       "calls": 16,
+       "statuses": "oooodddddddddddd"
+      },
+      {
+       "fn": "<None.transpose>",
+       "file": "model.py",
+       "line": 83,
+       "calls": 16,
+       "statuses": "oooodddddddddddd"
+      },
+      {
+       "fn": "<torch.nn.modules.dropout.<anonymous>>",
+       "file": "model.py",
+       "line": 110,
+       "calls": 16,
+       "statuses": "oooodddddddddddd"
+      },
+      {
+       "fn": "<torch._C._nn.gelu>",
+       "file": "model.py",
+       "line": 95,
+       "calls": 16,
+       "statuses": "oooodddddddddddd"
+      },
+      {
+       "fn": "<torch.nn.modules.dropout.<anonymous>>",
+       "file": "model.py",
+       "line": 112,
+       "calls": 16,
+       "statuses": "oooodddddddddddd"
+      },
+      {
+       "fn": "<torch.nn.functional.cross_entropy>",
+       "file": "train_lm.py",
+       "line": 208,
+       "calls": 4,
+       "statuses": "oddd"
+      },
+      {
+       "fn": "<torch._tensor.backward>",
+       "file": "train_lm.py",
+       "line": 210,
+       "calls": 4,
+       "statuses": "oooo"
+      },
+      {
+       "fn": "<torch._C._linalg.linalg_vector_norm>",
+       "file": "train_lm.py",
+       "line": 134,
+       "calls": 144,
+       "statuses": "dddddddddddddddddddddddoddddoooooooodddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<None.append>",
+       "file": "train_lm.py",
+       "line": 215,
+       "calls": 4,
+       "statuses": "oddd"
+      },
+      {
+       "fn": "<builtins.float>",
+       "file": "train_lm.py",
+       "line": 217,
+       "calls": 4,
+       "statuses": "oddd"
+      },
+      {
+       "fn": "<None.items>",
+       "file": "train_lm.py",
+       "line": 224,
+       "calls": 1,
+       "statuses": "o"
+      },
+      {
+       "fn": "<None.hex>",
+       "file": "train_lm.py",
+       "line": 226,
+       "calls": 4,
+       "statuses": "oddd"
+      }
+     ],
+     "unaligned_sites": []
+    },
+    "suggest": {
+     "schema": "opguard-suggest-v1",
+     "verdict": "none: leads only",
+     "evidence": [
+      "First observed difference: <torch._C._linalg.linalg_vector_norm> at train_lm.py:134 in grad_norms, call 90; fields that differ: ['args', 'outputs'].",
+      "Source line: norms[name] = torch.linalg.vector_norm(param.grad)",
+      "Recorded inputs already differ at this call: it is a consumer, not the origin."
+     ],
+     "leads": [
+      {
+       "kind": "preflight",
+       "title": "Uncontrolled surface: torch.deterministic_algorithms.warn_only",
+       "reason": "Ops without a deterministic implementation only warn and stay nondeterministic. Measured: the backward of SDPA flash and memory-efficient attention differs run to run in dQ (handbook/cases/attention-backward.md).",
+       "check": "torch.use_deterministic_algorithms(True, warn_only=False)",
+       "handbook": "handbook/01-pretraining.md (step 2)",
+       "fix_options": []
+      },
+      {
+       "kind": "nondeterministic-backward",
+       "title": "A backward kernel upstream",
+       "reason": "The operator reads gradients (norms[name] = torch.linalg.vector_norm(param.grad)), and its input differs while the forward events before it agree: a backward kernel upstream produced different bits from the same forward. At this call site 135 of 144 calls differ and 9 agree; the calls that agree mark values that do not depend on the nondeterministic op.",
+       "check": "Map each call at this site to its parameter (call order) and find the most downstream parameter that differs. Then repeat that op's backward 5 times on fixed inputs (bi_check.check_repeat).",
+       "handbook": "skills/batch-invariant-kernel/references/operator-recipes.md (4. Softmax attention, Backward) and handbook/cases/attention-backward.md",
+       "fix_options": [
+        "torch.use_deterministic_algorithms(True, warn_only=False): warn_only=True leaves SDPA's backward nondeterministic (measured).",
+        "An atomic-free backward (tools/bi_kernels.py attention_fixed_blocks_train).",
+        "For index_add / scatter_add / embedding-style backward: the deterministic flag, or a sorted fixed-order accumulation."
+       ]
+      }
+     ],
+     "handoff": "trace-upstream (OpGuard harness skill), entered through investigate-first-diff"
+    },
+    "param_names": [
+     "tok_emb.weight",
+     "pos_emb.weight",
+     "blocks.0.norm1.weight",
+     "blocks.0.attn.q_proj.weight",
+     "blocks.0.attn.k_proj.weight",
+     "blocks.0.attn.v_proj.weight",
+     "blocks.0.attn.o_proj.weight",
+     "blocks.0.norm2.weight",
+     "blocks.0.mlp.fc1.weight",
+     "blocks.0.mlp.fc2.weight",
+     "blocks.1.norm1.weight",
+     "blocks.1.attn.q_proj.weight",
+     "blocks.1.attn.k_proj.weight",
+     "blocks.1.attn.v_proj.weight",
+     "blocks.1.attn.o_proj.weight",
+     "blocks.1.norm2.weight",
+     "blocks.1.mlp.fc1.weight",
+     "blocks.1.mlp.fc2.weight",
+     "blocks.2.norm1.weight",
+     "blocks.2.attn.q_proj.weight",
+     "blocks.2.attn.k_proj.weight",
+     "blocks.2.attn.v_proj.weight",
+     "blocks.2.attn.o_proj.weight",
+     "blocks.2.norm2.weight",
+     "blocks.2.mlp.fc1.weight",
+     "blocks.2.mlp.fc2.weight",
+     "blocks.3.norm1.weight",
+     "blocks.3.attn.q_proj.weight",
+     "blocks.3.attn.k_proj.weight",
+     "blocks.3.attn.v_proj.weight",
+     "blocks.3.attn.o_proj.weight",
+     "blocks.3.norm2.weight",
+     "blocks.3.mlp.fc1.weight",
+     "blocks.3.mlp.fc2.weight",
+     "norm_f.weight",
+     "head.weight"
+    ],
+    "final_parameters": {
+     "parameters": 36,
+     "differing": 36,
+     "first": {
+      "tok_emb.weight": {
+       "mismatched_elements": 1555409,
+       "of": 1572864
+      },
+      "pos_emb.weight": {
+       "mismatched_elements": 392986,
+       "of": 393216
+      },
+      "blocks.0.norm1.weight": {
+       "mismatched_elements": 366,
+       "of": 384
+      }
+     }
+    }
+   },
+   "norm_and_backward_fixed": {
+    "reference_args": {},
+    "suspect_args": {},
+    "status": "succeeded",
+    "launches": 4,
+    "wall_seconds": 45.54,
+    "verdict": "not_evaluated",
+    "errors": [],
+    "stages": [
+     {
+      "side": "baseline",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 7.78
+     },
+     {
+      "side": "baseline",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 3.94
+     },
+     {
+      "side": "baseline",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 9.86
+     },
+     {
+      "side": "candidate",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 7.9
+     },
+     {
+      "side": "candidate",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 3.96
+     },
+     {
+      "side": "candidate",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 8.61
+     },
+     {
+      "side": "comparison",
+      "action": "compare",
+      "status": "succeeded",
+      "seconds": 3.41
+     }
+    ],
+    "coverage": {
+     "baseline": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/norm-backward-fixed/checkouts/reference/",
+      "discovered_lines": 30,
+      "planned_lines": 24,
+      "wrapped_calls": 23,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     },
+     "candidate": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/norm-backward-fixed/checkouts/suspect/",
+      "discovered_lines": 30,
+      "planned_lines": 24,
+      "wrapped_calls": 23,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     }
+    },
+    "preflight": {
+     "summary": "1 differences, 0 blocking; 0 uncontrolled surfaces",
+     "bitwise_comparison": "meaningful",
+     "blocking": [],
+     "declared": [],
+     "at_risk": []
+    },
+    "query_seconds": 0.3,
+    "facts": {
+     "schema": "opguard-first-divergence-v1",
+     "artifact": {
+      "path": "~/bi-check-opg-e2e/runs/full2/norm-backward-fixed/experiments/2ef11fe0a35e42c4a9fb1ed87eed4b3f/comparison-compare-1/output/perfetto_gpu_000.json.gz",
+      "sha256": "3315dfc2317172cb928aa48c257dfb26ab64f915a547b7898b7d3f9ad9dd5a49"
+     },
+     "verdict": "not_evaluated",
+     "operation_count": 1026,
+     "status_counts": {
+      "run1": {
+       "ok": 513
+      },
+      "run2": {
+       "ok": 513
+      }
+     },
+     "alignment_policy": "callsite_sequence_v1",
+     "diverged": false,
+     "pivot": null,
+     "unaligned_first": {},
+     "note": "No paired event is labelled different. That is not proof of equivalence: check coverage and the unaligned events."
+    },
+    "suggest": {
+     "schema": "opguard-suggest-v1",
+     "verdict": "none: leads only",
+     "evidence": [
+      "OpGuard labelled no paired event as different."
+     ],
+     "leads": [],
+     "handoff": "none: check coverage, then extend the run or the boundaries"
+    },
+    "param_names": [
+     "tok_emb.weight",
+     "pos_emb.weight",
+     "blocks.0.norm1.weight",
+     "blocks.0.attn.q_proj.weight",
+     "blocks.0.attn.k_proj.weight",
+     "blocks.0.attn.v_proj.weight",
+     "blocks.0.attn.o_proj.weight",
+     "blocks.0.norm2.weight",
+     "blocks.0.mlp.fc1.weight",
+     "blocks.0.mlp.fc2.weight",
+     "blocks.1.norm1.weight",
+     "blocks.1.attn.q_proj.weight",
+     "blocks.1.attn.k_proj.weight",
+     "blocks.1.attn.v_proj.weight",
+     "blocks.1.attn.o_proj.weight",
+     "blocks.1.norm2.weight",
+     "blocks.1.mlp.fc1.weight",
+     "blocks.1.mlp.fc2.weight",
+     "blocks.2.norm1.weight",
+     "blocks.2.attn.q_proj.weight",
+     "blocks.2.attn.k_proj.weight",
+     "blocks.2.attn.v_proj.weight",
+     "blocks.2.attn.o_proj.weight",
+     "blocks.2.norm2.weight",
+     "blocks.2.mlp.fc1.weight",
+     "blocks.2.mlp.fc2.weight",
+     "blocks.3.norm1.weight",
+     "blocks.3.attn.q_proj.weight",
+     "blocks.3.attn.k_proj.weight",
+     "blocks.3.attn.v_proj.weight",
+     "blocks.3.attn.o_proj.weight",
+     "blocks.3.norm2.weight",
+     "blocks.3.mlp.fc1.weight",
+     "blocks.3.mlp.fc2.weight",
+     "norm_f.weight",
+     "head.weight"
+    ],
+    "final_parameters": {
+     "parameters": 36,
+     "differing": 0,
+     "first": {}
+    }
+   },
+   "resume": {
+    "reference_args": {
+     "resume": "~/bi-check-opg-e2e/runs/full2/phase1.pt"
+    },
+    "suspect_args": {
+     "resume": "~/bi-check-opg-e2e/runs/full2/phase1.pt",
+     "resume_skip": "opt-step"
+    },
+    "status": "succeeded",
+    "launches": 4,
+    "wall_seconds": 48.42,
+    "verdict": "not_evaluated",
+    "errors": [],
+    "stages": [
+     {
+      "side": "baseline",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 8.93
+     },
+     {
+      "side": "baseline",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 4.46
+     },
+     {
+      "side": "baseline",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 8.66
+     },
+     {
+      "side": "candidate",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 9.1
+     },
+     {
+      "side": "candidate",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 4.32
+     },
+     {
+      "side": "candidate",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 9.61
+     },
+     {
+      "side": "comparison",
+      "action": "compare",
+      "status": "succeeded",
+      "seconds": 3.25
+     }
+    ],
+    "coverage": {
+     "baseline": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/",
+      "discovered_lines": 33,
+      "planned_lines": 24,
+      "wrapped_calls": 23,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 126,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 147,
+        "ops": [
+         "aten.copy_.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 148,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     },
+     "candidate": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/suspect/",
+      "discovered_lines": 33,
+      "planned_lines": 24,
+      "wrapped_calls": 23,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 126,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 147,
+        "ops": [
+         "aten.copy_.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 148,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     }
+    },
+    "preflight": {
+     "summary": "3 differences, 2 blocking; 0 uncontrolled surfaces",
+     "bitwise_comparison": "not_meaningful",
+     "blocking": [
+      {
+       "path": "optimizer.state.step.max",
+       "a": 2.0,
+       "b": 0.0,
+       "effect": "different_state"
+      },
+      {
+       "path": "optimizer.state.step.min",
+       "a": 2.0,
+       "b": 0.0,
+       "effect": "different_state"
+      }
+     ],
+     "declared": [
+      {
+       "path": "launch.argv",
+       "a": [
+        "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/train_lm.py",
+        "--steps",
+        "4",
+        "--layers",
+        "4",
+        "--dim",
+        "384",
+        "--heads",
+        "6",
+        "--seq-len",
+        "1024",
+        "--batch",
+        "8",
+        "--vocab",
+        "4096",
+        "--corpus-seqs",
+        "256",
+        "--resume",
+        "~/bi-check-opg-e2e/runs/full2/phase1.pt",
+        "--out",
+        "~/bi-check-opg-e2e/runs/full2/resume/reference.json",
+        "--state-out",
+        "~/bi-check-opg-e2e/runs/full2/resume/reference.pt"
+       ],
+       "b": [
+        "~/bi-check-opg-e2e/runs/full2/resume/checkouts/suspect/train_lm.py",
+        "--steps",
+        "4",
+        "--layers",
+        "4",
+        "--dim",
+        "384",
+        "--heads",
+        "6",
+        "--seq-len",
+        "1024",
+        "--batch",
+        "8",
+        "--vocab",
+        "4096",
+        "--corpus-seqs",
+        "256",
+        "--resume",
+        "~/bi-check-opg-e2e/runs/full2/phase1.pt",
+        "--resume-skip",
+        "opt-step",
+        "--out",
+        "~/bi-check-opg-e2e/runs/full2/resume/suspect.json",
+        "--state-out",
+        "~/bi-check-opg-e2e/runs/full2/resume/suspect.pt"
+       ]
+      }
+     ],
+     "at_risk": []
+    },
+    "query_seconds": 2.5,
+    "facts": {
+     "schema": "opguard-first-divergence-v1",
+     "artifact": {
+      "path": "~/bi-check-opg-e2e/runs/full2/resume/experiments/2679d4636d2f475484ea26cbe14d379b/comparison-compare-1/output/perfetto_gpu_000.json.gz",
+      "sha256": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a"
+     },
+     "verdict": "not_evaluated",
+     "operation_count": 514,
+     "status_counts": {
+      "run1": {
+       "ok": 135,
+       "diff": 122
+      },
+      "run2": {
+       "ok": 135,
+       "diff": 122
+      }
+     },
+     "alignment_policy": "callsite_sequence_v1",
+     "diverged": true,
+     "pivot": {
+      "event_ref": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a:1027",
+      "name": "sparse.<anonymous#131",
+      "fn": "<torch.nn.modules.sparse.<anonymous>>",
+      "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/model.py",
+      "line": 139,
+      "counter": 131,
+      "status": "diff",
+      "run": "run1",
+      "rank": 0,
+      "pairing": "callsite_sequence_order",
+      "paired": true,
+      "diff_fields": [
+       "outputs"
+      ],
+      "diff_summary": "outputs::xor_signature: (2252147065, 2498519761, 2657736509, 155510910) vs (221524521, 2384142284, 2336042079, 2224998049)",
+      "reference": {
+       "inputs": [
+        {
+         "shape": [
+          8,
+          1024
+         ],
+         "dtype": "torch.int64",
+         "xor_signature": [
+          1833,
+          2436,
+          3611,
+          3618
+         ]
+        }
+       ],
+       "outputs": [
+        {
+         "shape": [
+          8,
+          1024,
+          384
+         ],
+         "dtype": "torch.float32",
+         "xor_signature": [
+          2252147065,
+          2498519761,
+          2657736509,
+          155510910
+         ]
+        }
+       ]
+      },
+      "suspect": {
+       "inputs": [
+        {
+         "shape": [
+          8,
+          1024
+         ],
+         "dtype": "torch.int64",
+         "xor_signature": [
+          1833,
+          2436,
+          3611,
+          3618
+         ]
+        }
+       ],
+       "outputs": [
+        {
+         "shape": [
+          8,
+          1024,
+          384
+         ],
+         "dtype": "torch.float32",
+         "xor_signature": [
+          221524521,
+          2384142284,
+          2336042079,
+          2224998049
+         ]
+        }
+       ]
+      },
+      "peer": {
+       "event_ref": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a:1040",
+       "name": "sparse.<anonymous#131",
+       "fn": "<torch.nn.modules.sparse.<anonymous>>",
+       "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/suspect/model.py",
+       "line": 139,
+       "counter": 131,
+       "status": "diff",
+       "run": "run2",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      "regional": [
+       {
+        "slot": [
+         "inputs",
+         0
+        ],
+        "status": "available",
+        "differing_regions": [],
+        "byte_ranges": []
+       },
+       {
+        "slot": [
+         "outputs",
+         0
+        ],
+        "status": "available",
+        "differing_regions": [
+         0,
+         1,
+         2,
+         3
+        ],
+        "byte_ranges": [
+         [
+          0,
+          3145728
+         ],
+         [
+          3145728,
+          6291456
+         ],
+         [
+          6291456,
+          9437184
+         ],
+         [
+          9437184,
+          12582912
+         ]
+        ]
+       }
+      ],
+      "callers": [
+       {
+        "function": "run_path",
+        "file": "~/miniforge3/envs/torchdbg/lib/python3.10/runpy.py",
+        "line": 289
+       },
+       {
+        "function": "_run_module_code",
+        "file": "~/miniforge3/envs/torchdbg/lib/python3.10/runpy.py",
+        "line": 96
+       },
+       {
+        "function": "_run_code",
+        "file": "~/miniforge3/envs/torchdbg/lib/python3.10/runpy.py",
+        "line": 86
+       },
+       {
+        "function": "main",
+        "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/train_lm.py",
+        "line": 245
+       },
+       {
+        "function": "run",
+        "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/train_lm.py",
+        "line": 218
+       },
+       {
+        "function": "forward",
+        "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/model.py",
+        "line": 158
+       }
+      ],
+      "source": {
+       "sha256": "1cdd9f152932b3205e48a51fd78c1aeeeaf91f0215638fa193c0a532dbc91f4a",
+       "text": "embedded = self.tok_emb(tokens) + pos_part",
+       "enclosing": "TinyLM.forward"
+      },
+      "inputs_recorded": 1,
+      "inputs_differ": false,
+      "outputs_differ": true,
+      "dtype_differs": false,
+      "shape_differs": false
+     },
+     "unaligned_first": {},
+     "rank": 0,
+     "unaligned_before": 0,
+     "previous_ok": {
+      "event_ref": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a:1018",
+      "name": "torch.arange#130",
+      "fn": "<torch.arange>",
+      "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/model.py",
+      "line": 137,
+      "counter": 130,
+      "status": "ok",
+      "run": "run1",
+      "rank": 0,
+      "pairing": "callsite_sequence_order",
+      "paired": true
+     },
+     "site_statuses": {
+      "calls": 2,
+      "statuses": "od",
+      "pivot_call": 1
+     },
+     "preceding": [
+      {
+       "event_ref": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a:982",
+       "name": "_linalg.linalg_vector_norm#125",
+       "fn": "<torch._C._linalg.linalg_vector_norm>",
+       "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/train_lm.py",
+       "line": 134,
+       "counter": 125,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a:986",
+       "name": "None.append#126",
+       "fn": "<None.append>",
+       "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/train_lm.py",
+       "line": 215,
+       "counter": 126,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a:993",
+       "name": "__main__.next#127",
+       "fn": "<__main__.next>",
+       "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/train_lm.py",
+       "line": 203,
+       "counter": 127,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a:1002",
+       "name": "None.contiguous#128",
+       "fn": "<None.contiguous>",
+       "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/train_lm.py",
+       "line": 204,
+       "counter": 128,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a:1010",
+       "name": "None.contiguous#129",
+       "fn": "<None.contiguous>",
+       "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/train_lm.py",
+       "line": 205,
+       "counter": 129,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      },
+      {
+       "event_ref": "c7ee35d879932ad4b46d395201064b5bc9cf0a166c0d771a3f425dca3de0370a:1018",
+       "name": "torch.arange#130",
+       "fn": "<torch.arange>",
+       "file": "~/bi-check-opg-e2e/runs/full2/resume/checkouts/reference/model.py",
+       "line": 137,
+       "counter": 130,
+       "status": "ok",
+       "run": "run1",
+       "rank": 0,
+       "pairing": "callsite_sequence_order",
+       "paired": true
+      }
+     ],
+     "events_in_run": 257,
+     "sites": [
+      {
+       "fn": "<__main__.next>",
+       "file": "train_lm.py",
+       "line": 203,
+       "calls": 2,
+       "statuses": "oo"
+      },
+      {
+       "fn": "<None.contiguous>",
+       "file": "train_lm.py",
+       "line": 204,
+       "calls": 2,
+       "statuses": "oo"
+      },
+      {
+       "fn": "<None.contiguous>",
+       "file": "train_lm.py",
+       "line": 205,
+       "calls": 2,
+       "statuses": "oo"
+      },
+      {
+       "fn": "<torch.arange>",
+       "file": "model.py",
+       "line": 137,
+       "calls": 2,
+       "statuses": "oo"
+      },
+      {
+       "fn": "<torch.nn.modules.sparse.<anonymous>>",
+       "file": "model.py",
+       "line": 139,
+       "calls": 2,
+       "statuses": "od"
+      },
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 140,
+       "calls": 2,
+       "statuses": "od"
+      },
+      {
+       "fn": "<None.float>",
+       "file": "model.py",
+       "line": 57,
+       "calls": 18,
+       "statuses": "oooooooooddddddddd"
+      },
+      {
+       "fn": "<torch.rsqrt>",
+       "file": "model.py",
+       "line": 58,
+       "calls": 18,
+       "statuses": "oooooooooddddddddd"
+      },
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 59,
+       "calls": 18,
+       "statuses": "oooooooooddddddddd"
+      },
+      {
+       "fn": "<None.to>",
+       "file": "model.py",
+       "line": 60,
+       "calls": 18,
+       "statuses": "oooooooooddddddodd"
+      },
+      {
+       "fn": "<torch._C._nn.linear>",
+       "file": "model.py",
+       "line": 36,
+       "calls": 50,
+       "statuses": "oooooooooooooooooooooooooddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<torch._C._nn.scaled_dot_product_attention>",
+       "file": "model.py",
+       "line": 82,
+       "calls": 8,
+       "statuses": "oooodddd"
+      },
+      {
+       "fn": "<None.transpose>",
+       "file": "model.py",
+       "line": 83,
+       "calls": 8,
+       "statuses": "oooodddd"
+      },
+      {
+       "fn": "<torch.nn.modules.dropout.<anonymous>>",
+       "file": "model.py",
+       "line": 110,
+       "calls": 8,
+       "statuses": "oooodddd"
+      },
+      {
+       "fn": "<torch._C._nn.gelu>",
+       "file": "model.py",
+       "line": 95,
+       "calls": 8,
+       "statuses": "oooodddd"
+      },
+      {
+       "fn": "<torch.nn.modules.dropout.<anonymous>>",
+       "file": "model.py",
+       "line": 112,
+       "calls": 8,
+       "statuses": "oooodddd"
+      },
+      {
+       "fn": "<torch.nn.functional.cross_entropy>",
+       "file": "train_lm.py",
+       "line": 208,
+       "calls": 2,
+       "statuses": "od"
+      },
+      {
+       "fn": "<torch._tensor.backward>",
+       "file": "train_lm.py",
+       "line": 210,
+       "calls": 2,
+       "statuses": "oo"
+      },
+      {
+       "fn": "<torch._C._linalg.linalg_vector_norm>",
+       "file": "train_lm.py",
+       "line": 134,
+       "calls": 72,
+       "statuses": "oooooooooooooooooooooooooooooooooooodddddddddddddddddddddddddddddddddddd"
+      },
+      {
+       "fn": "<None.append>",
+       "file": "train_lm.py",
+       "line": 215,
+       "calls": 2,
+       "statuses": "od"
+      },
+      {
+       "fn": "<builtins.float>",
+       "file": "train_lm.py",
+       "line": 217,
+       "calls": 2,
+       "statuses": "od"
+      },
+      {
+       "fn": "<None.items>",
+       "file": "train_lm.py",
+       "line": 224,
+       "calls": 1,
+       "statuses": "o"
+      },
+      {
+       "fn": "<None.hex>",
+       "file": "train_lm.py",
+       "line": 226,
+       "calls": 2,
+       "statuses": "od"
+      }
+     ],
+     "unaligned_sites": []
+    },
+    "suggest": {
+     "schema": "opguard-suggest-v1",
+     "verdict": "none: leads only",
+     "evidence": [
+      "First observed difference: <torch.nn.modules.sparse.<anonymous>> at model.py:139 in TinyLM.forward, call 131; fields that differ: ['outputs'].",
+      "Source line: embedded = self.tok_emb(tokens) + pos_part",
+      "Recorded inputs agree and the output differs: a candidate origin (fingerprints can collide; weights and state are not inputs)."
+     ],
+     "leads": [
+      {
+       "kind": "preflight",
+       "title": "Preflight difference: optimizer.state.step.max",
+       "reason": "The two runs differ on a controlled surface (2.0 vs 0.0): Optimizer state differs (step counters or moments): updates differ from the first step.",
+       "check": "Make the two runs agree on it, or declare it as the difference under test, before reading the first divergence.",
+       "handbook": "handbook/01-pretraining.md (step 2)",
+       "fix_options": []
+      },
+      {
+       "kind": "preflight",
+       "title": "Preflight difference: optimizer.state.step.min",
+       "reason": "The two runs differ on a controlled surface (2.0 vs 0.0): Optimizer state differs (step counters or moments): updates differ from the first step.",
+       "check": "Make the two runs agree on it, or declare it as the difference under test, before reading the first divergence.",
+       "handbook": "handbook/01-pretraining.md (step 2)",
+       "fix_options": []
+      },
+      {
+       "kind": "state",
+       "title": "A lookup with equal indices and a different result",
+       "reason": "A table lookup moves data exactly, so equal indices with a different output mean the table differs: the weights changed before this call.",
+       "check": "Find the last event that agrees. If it is a gradient consumer of the previous step, the optimizer update between them differs: compare optimizer state (step counters, moments), learning rate and the restore path.",
+       "handbook": "handbook/01-pretraining.md (step 2, surface 4; root cause 'state bookkeeping')",
+       "fix_options": [
+        "Restore every piece of optimizer and scheduler state on resume; compare determinism_preflight reports taken right after the restore."
+       ]
+      }
+     ],
+     "handoff": "validate-hypothesis (OpGuard harness skill), entered through investigate-first-diff"
+    },
+    "param_names": [
+     "tok_emb.weight",
+     "pos_emb.weight",
+     "blocks.0.norm1.weight",
+     "blocks.0.attn.q_proj.weight",
+     "blocks.0.attn.k_proj.weight",
+     "blocks.0.attn.v_proj.weight",
+     "blocks.0.attn.o_proj.weight",
+     "blocks.0.norm2.weight",
+     "blocks.0.mlp.fc1.weight",
+     "blocks.0.mlp.fc2.weight",
+     "blocks.1.norm1.weight",
+     "blocks.1.attn.q_proj.weight",
+     "blocks.1.attn.k_proj.weight",
+     "blocks.1.attn.v_proj.weight",
+     "blocks.1.attn.o_proj.weight",
+     "blocks.1.norm2.weight",
+     "blocks.1.mlp.fc1.weight",
+     "blocks.1.mlp.fc2.weight",
+     "blocks.2.norm1.weight",
+     "blocks.2.attn.q_proj.weight",
+     "blocks.2.attn.k_proj.weight",
+     "blocks.2.attn.v_proj.weight",
+     "blocks.2.attn.o_proj.weight",
+     "blocks.2.norm2.weight",
+     "blocks.2.mlp.fc1.weight",
+     "blocks.2.mlp.fc2.weight",
+     "blocks.3.norm1.weight",
+     "blocks.3.attn.q_proj.weight",
+     "blocks.3.attn.k_proj.weight",
+     "blocks.3.attn.v_proj.weight",
+     "blocks.3.attn.o_proj.weight",
+     "blocks.3.norm2.weight",
+     "blocks.3.mlp.fc1.weight",
+     "blocks.3.mlp.fc2.weight",
+     "norm_f.weight",
+     "head.weight"
+    ],
+    "final_parameters": {
+     "parameters": 36,
+     "differing": 36,
+     "first": {
+      "tok_emb.weight": {
+       "mismatched_elements": 1572473,
+       "of": 1572864
+      },
+      "pos_emb.weight": {
+       "mismatched_elements": 393214,
+       "of": 393216
+      },
+      "blocks.0.norm1.weight": {
+       "mismatched_elements": 384,
+       "of": 384
+      }
+     }
+    }
+   },
+   "resume_fixed": {
+    "reference_args": {
+     "resume": "~/bi-check-opg-e2e/runs/full2/phase1.pt"
+    },
+    "suspect_args": {
+     "resume": "~/bi-check-opg-e2e/runs/full2/phase1.pt"
+    },
+    "status": "succeeded",
+    "launches": 4,
+    "wall_seconds": 48.88,
+    "verdict": "not_evaluated",
+    "errors": [],
+    "stages": [
+     {
+      "side": "baseline",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 9.0
+     },
+     {
+      "side": "baseline",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 4.35
+     },
+     {
+      "side": "baseline",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 9.44
+     },
+     {
+      "side": "candidate",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 9.1
+     },
+     {
+      "side": "candidate",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 4.22
+     },
+     {
+      "side": "candidate",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 9.44
+     },
+     {
+      "side": "comparison",
+      "action": "compare",
+      "status": "succeeded",
+      "seconds": 3.24
+     }
+    ],
+    "coverage": {
+     "baseline": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/resume-fixed/checkouts/reference/",
+      "discovered_lines": 33,
+      "planned_lines": 24,
+      "wrapped_calls": 23,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 126,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 147,
+        "ops": [
+         "aten.copy_.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 148,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     },
+     "candidate": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/resume-fixed/checkouts/suspect/",
+      "discovered_lines": 33,
+      "planned_lines": 24,
+      "wrapped_calls": 23,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 126,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 147,
+        "ops": [
+         "aten.copy_.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 148,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     }
+    },
+    "preflight": {
+     "summary": "1 differences, 0 blocking; 0 uncontrolled surfaces",
+     "bitwise_comparison": "meaningful",
+     "blocking": [],
+     "declared": [],
+     "at_risk": []
+    },
+    "query_seconds": 0.3,
+    "facts": {
+     "schema": "opguard-first-divergence-v1",
+     "artifact": {
+      "path": "~/bi-check-opg-e2e/runs/full2/resume-fixed/experiments/d91b5ef7be49490eaa441c0d1bf5b3ba/comparison-compare-1/output/perfetto_gpu_000.json.gz",
+      "sha256": "f29692cd0a04d3e9795df7496f86a9eaad1bf14002f8a1b953b6c3a3070a3bfa"
+     },
+     "verdict": "not_evaluated",
+     "operation_count": 514,
+     "status_counts": {
+      "run1": {
+       "ok": 257
+      },
+      "run2": {
+       "ok": 257
+      }
+     },
+     "alignment_policy": "callsite_sequence_v1",
+     "diverged": false,
+     "pivot": null,
+     "unaligned_first": {},
+     "note": "No paired event is labelled different. That is not proof of equivalence: check coverage and the unaligned events."
+    },
+    "suggest": {
+     "schema": "opguard-suggest-v1",
+     "verdict": "none: leads only",
+     "evidence": [
+      "OpGuard labelled no paired event as different."
+     ],
+     "leads": [],
+     "handoff": "none: check coverage, then extend the run or the boundaries"
+    },
+    "param_names": [
+     "tok_emb.weight",
+     "pos_emb.weight",
+     "blocks.0.norm1.weight",
+     "blocks.0.attn.q_proj.weight",
+     "blocks.0.attn.k_proj.weight",
+     "blocks.0.attn.v_proj.weight",
+     "blocks.0.attn.o_proj.weight",
+     "blocks.0.norm2.weight",
+     "blocks.0.mlp.fc1.weight",
+     "blocks.0.mlp.fc2.weight",
+     "blocks.1.norm1.weight",
+     "blocks.1.attn.q_proj.weight",
+     "blocks.1.attn.k_proj.weight",
+     "blocks.1.attn.v_proj.weight",
+     "blocks.1.attn.o_proj.weight",
+     "blocks.1.norm2.weight",
+     "blocks.1.mlp.fc1.weight",
+     "blocks.1.mlp.fc2.weight",
+     "blocks.2.norm1.weight",
+     "blocks.2.attn.q_proj.weight",
+     "blocks.2.attn.k_proj.weight",
+     "blocks.2.attn.v_proj.weight",
+     "blocks.2.attn.o_proj.weight",
+     "blocks.2.norm2.weight",
+     "blocks.2.mlp.fc1.weight",
+     "blocks.2.mlp.fc2.weight",
+     "blocks.3.norm1.weight",
+     "blocks.3.attn.q_proj.weight",
+     "blocks.3.attn.k_proj.weight",
+     "blocks.3.attn.v_proj.weight",
+     "blocks.3.attn.o_proj.weight",
+     "blocks.3.norm2.weight",
+     "blocks.3.mlp.fc1.weight",
+     "blocks.3.mlp.fc2.weight",
+     "norm_f.weight",
+     "head.weight"
+    ],
+    "final_parameters": {
+     "parameters": 36,
+     "differing": 0,
+     "first": {}
+    }
+   },
+   "nn_linear": {
+    "reference_args": {
+     "linear": "nn"
+    },
+    "suspect_args": {
+     "linear": "nn"
+    },
+    "status": "succeeded",
+    "launches": 4,
+    "wall_seconds": 45.7,
+    "verdict": "not_evaluated",
+    "errors": [],
+    "stages": [
+     {
+      "side": "baseline",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 7.95
+     },
+     {
+      "side": "baseline",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 4.03
+     },
+     {
+      "side": "baseline",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 8.51
+     },
+     {
+      "side": "candidate",
+      "action": "discover",
+      "status": "succeeded",
+      "seconds": 8.0
+     },
+     {
+      "side": "candidate",
+      "action": "prepare",
+      "status": "succeeded",
+      "seconds": 3.91
+     },
+     {
+      "side": "candidate",
+      "action": "trace",
+      "status": "succeeded",
+      "seconds": 9.93
+     },
+     {
+      "side": "comparison",
+      "action": "compare",
+      "status": "succeeded",
+      "seconds": 3.28
+     }
+    ],
+    "coverage": {
+     "baseline": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/nn-linear/checkouts/reference/",
+      "discovered_lines": 36,
+      "planned_lines": 23,
+      "wrapped_calls": 22,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 79,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 80,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 81,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 84,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 94,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 96,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 144,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     },
+     "candidate": {
+      "checkout": "~/bi-check-opg-e2e/runs/full2/nn-linear/checkouts/suspect/",
+      "discovered_lines": 36,
+      "planned_lines": 23,
+      "wrapped_calls": 22,
+      "discovered_not_planned": [
+       {
+        "file": "model.py",
+        "line": 79,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 80,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 81,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 84,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 94,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 96,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 138,
+        "ops": [
+         "aten.embedding.default"
+        ]
+       },
+       {
+        "file": "model.py",
+        "line": 144,
+        "ops": [
+         "aten._to_copy.default",
+         "aten._unsafe_view.default",
+         "aten.mm.default",
+         "aten.t.default",
+         "aten.view.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 110,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 188,
+        "ops": [
+         "aten._to_copy.default"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 209,
+        "ops": [
+         "profiler._record_function_enter_new"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 212,
+        "ops": [
+         "aten._foreach_mul_.Tensor",
+         "aten._foreach_norm.Scalar",
+         "aten.add.Tensor",
+         "aten.clamp.default",
+         "aten.linalg_vector_norm.default",
+         "aten.mul.Tensor"
+        ]
+       },
+       {
+        "file": "train_lm.py",
+        "line": 213,
+        "ops": [
+         "aten._foreach_add_.Scalar",
+         "aten._foreach_addcdiv_.ScalarList",
+         "aten._foreach_addcmul_.Scalar",
+         "aten._foreach_div_.ScalarList",
+         "aten._foreach_lerp_.Scalar",
+         "aten._foreach_mul_.Scalar"
+        ]
+       }
+      ]
+     }
+    },
+    "preflight": {
+     "summary": "1 differences, 0 blocking; 0 uncontrolled surfaces",
+     "bitwise_comparison": "meaningful",
+     "blocking": [],
+     "declared": [],
+     "at_risk": []
+    },
+    "query_seconds": 0.3,
+    "facts": {
+     "schema": "opguard-first-divergence-v1",
+     "artifact": {
+      "path": "~/bi-check-opg-e2e/runs/full2/nn-linear/experiments/5940b6119a194f9fa5a91a44f16bbde8/comparison-compare-1/output/perfetto_gpu_000.json.gz",
+      "sha256": "2c08aac4e1344fa434ce642acafa9141e88391ced05c572d1fa0bf3ebd7519ae"
+     },
+     "verdict": "not_evaluated",
+     "operation_count": 826,
+     "status_counts": {
+      "run1": {
+       "ok": 413
+      },
+      "run2": {
+       "ok": 413
+      }
+     },
+     "alignment_policy": "callsite_sequence_v1",
+     "diverged": false,
+     "pivot": null,
+     "unaligned_first": {},
+     "note": "No paired event is labelled different. That is not proof of equivalence: check coverage and the unaligned events."
+    },
+    "suggest": {
+     "schema": "opguard-suggest-v1",
+     "verdict": "none: leads only",
+     "evidence": [
+      "OpGuard labelled no paired event as different."
+     ],
+     "leads": [],
+     "handoff": "none: check coverage, then extend the run or the boundaries"
+    },
+    "param_names": [
+     "tok_emb.weight",
+     "pos_emb.weight",
+     "blocks.0.norm1.weight",
+     "blocks.0.attn.q_proj.weight",
+     "blocks.0.attn.k_proj.weight",
+     "blocks.0.attn.v_proj.weight",
+     "blocks.0.attn.o_proj.weight",
+     "blocks.0.norm2.weight",
+     "blocks.0.mlp.fc1.weight",
+     "blocks.0.mlp.fc2.weight",
+     "blocks.1.norm1.weight",
+     "blocks.1.attn.q_proj.weight",
+     "blocks.1.attn.k_proj.weight",
+     "blocks.1.attn.v_proj.weight",
+     "blocks.1.attn.o_proj.weight",
+     "blocks.1.norm2.weight",
+     "blocks.1.mlp.fc1.weight",
+     "blocks.1.mlp.fc2.weight",
+     "blocks.2.norm1.weight",
+     "blocks.2.attn.q_proj.weight",
+     "blocks.2.attn.k_proj.weight",
+     "blocks.2.attn.v_proj.weight",
+     "blocks.2.attn.o_proj.weight",
+     "blocks.2.norm2.weight",
+     "blocks.2.mlp.fc1.weight",
+     "blocks.2.mlp.fc2.weight",
+     "blocks.3.norm1.weight",
+     "blocks.3.attn.q_proj.weight",
+     "blocks.3.attn.k_proj.weight",
+     "blocks.3.attn.v_proj.weight",
+     "blocks.3.attn.o_proj.weight",
+     "blocks.3.norm2.weight",
+     "blocks.3.mlp.fc1.weight",
+     "blocks.3.mlp.fc2.weight",
+     "norm_f.weight",
+     "head.weight"
+    ],
+    "final_parameters": {
+     "parameters": 36,
+     "differing": 0,
+     "first": {}
+    }
+   }
+  },
+  "writer": {
+   "export": {
+    "verdict": "not_evaluated",
+    "ranks": [
+     0
+    ],
+    "coverage": "observed_callsites_only"
+   },
+   "pivot": {
+    "event_ref": "fc3f7856f5fc02f7ac4c31d873a516c68dd1b2dd771e1dfedb464263f1afcce2:14",
+    "name": "layer1.op#4",
+    "fn": "<layer1.op>",
+    "file": "external",
+    "line": 11,
+    "counter": 4,
+    "status": "diff",
+    "run": "run1",
+    "rank": 0,
+    "pairing": "callsite_sequence_order",
+    "paired": true,
+    "diff_fields": [
+     "outputs"
+    ],
+    "diff_summary": "outputs::xor_signature: (2112389535, 4173953067, 4241750254, 4294608484) vs (2112389535, 4173953067, 4241750255, 4294608484)",
+    "reference": {
+     "inputs": [
+      {
+       "shape": [
+        4,
+        8,
+        64
+       ],
+       "dtype": "torch.bfloat16",
+       "xor_signature": [
+        2095642783,
+        4190701099,
+        4258498030,
+        2231040612
+       ]
+      }
+     ],
+     "outputs": [
+      {
+       "shape": [
+        4,
+        8,
+        64
+       ],
+       "dtype": "torch.bfloat16",
+       "xor_signature": [
+        2112389535,
+        4173953067,
+        4241750254,
+        4294608484
+       ]
+      }
+     ]
+    },
+    "suspect": {
+     "inputs": [
+      {
+       "shape": [
+        4,
+        8,
+        64
+       ],
+       "dtype": "torch.bfloat16",
+       "xor_signature": [
+        2095642783,
+        4190701099,
+        4258498030,
+        2231040612
+       ]
+      }
+     ],
+     "outputs": [
+      {
+       "shape": [
+        4,
+        8,
+        64
+       ],
+       "dtype": "torch.bfloat16",
+       "xor_signature": [
+        2112389535,
+        4173953067,
+        4241750255,
+        4294608484
+       ]
+      }
+     ]
+    },
+    "peer": {
+     "event_ref": "fc3f7856f5fc02f7ac4c31d873a516c68dd1b2dd771e1dfedb464263f1afcce2:20",
+     "name": "layer1.op#4",
+     "fn": "<layer1.op>",
+     "file": "external",
+     "line": 11,
+     "counter": 4,
+     "status": "diff",
+     "run": "run2",
+     "rank": 0,
+     "pairing": "callsite_sequence_order",
+     "paired": true
+    },
+    "regional": [
+     {
+      "slot": [
+       "inputs",
+       0
+      ],
+      "status": "available",
+      "differing_regions": [],
+      "byte_ranges": []
+     },
+     {
+      "slot": [
+       "outputs",
+       0
+      ],
+      "status": "available",
+      "differing_regions": [
+       2
+      ],
+      "byte_ranges": [
+       [
+        2048,
+        3072
+       ]
+      ]
+     }
+    ],
+    "callers": [],
+    "source": {},
+    "inputs_recorded": 1,
+    "inputs_differ": false,
+    "outputs_differ": true,
+    "dtype_differs": false,
+    "shape_differs": false
+   }
+  }
+ }
+}

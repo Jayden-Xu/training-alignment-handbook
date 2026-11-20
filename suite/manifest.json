@@ -1,0 +1,365 @@
+{
+ "schema": "bi-suite-manifest-v1",
+ "doc": [
+  "One entry per example. tools/bi_suite.py runs the entries this machine can run; see handbook/4-operations/regression.md.",
+  "name      the entry, and the 'example' field of its result",
+  "gpus      GPUs it needs on one node (default nodes: 1). nodes: 2 means two nodes with that many GPUs each",
+  "quick     command for quick mode; full: command for full mode. A list is run step by step, even after a failing step",
+  "result    where the bi-results-v1 file lands (default {run}/<name>.json)",
+  "timeout   seconds per mode, for the whole entry; waiting for the runner's lock is not counted",
+  "own_lock  true when the command takes the machine's lock itself, one launch at a time ({pylocked}, or a two-node launcher)",
+  "committed optional: the result file behind the case page, compared by --vs-committed; with 'adapter' when it is in the example's own format",
+  "python    optional: this entry's own interpreter (~ expanded); the entry is skipped where it does not exist",
+  "Placeholders: {python} interpreter (the entry's own when it names one), {opguard} the OpGuard checkout (--opguard-root; entries using it are skipped without one), {repo} repository root (commands run there), {out} this run's directory, {run} this entry's directory in it, {result}, {timeout}, {pylocked} suite/bin/python-locked, {launcher2} the two-node launcher, {peer} the second node.",
+  "Commands go through str.format: write a literal brace as {{ or }}."
+ ],
+ "entries": [
+  {
+   "name": "kernel_cases",
+   "gpus": 1,
+   "quick": "{python} examples/kernel_cases/kernel_cases.py --quick --bi-json {result}",
+   "full": "{python} examples/kernel_cases/kernel_cases.py --json {run}/legacy.json --bi-json {result}",
+   "timeout": {
+    "quick": 600,
+    "full": 900
+   },
+   "committed": {
+    "file": "examples/kernel_cases/results-a40.json",
+    "adapter": "kernel_cases"
+   }
+  },
+  {
+   "name": "moe_combine",
+   "gpus": 1,
+   "quick": "{python} examples/moe_combine/moe_bi.py --quick --bi-json {result}",
+   "full": "{python} examples/moe_combine/moe_bi.py --json {run}/legacy.json --bi-json {result}",
+   "timeout": {
+    "quick": 600,
+    "full": 1800
+   },
+   "committed": {
+    "file": "examples/moe_combine/results-a40.json",
+    "adapter": "moe_combine"
+   }
+  },
+  {
+   "name": "attention_backward",
+   "gpus": 1,
+   "quick": "{python} examples/attention_backward/attn_bwd.py --quick --bi-json {result}",
+   "full": "{python} examples/attention_backward/attn_bwd.py --json {run}/legacy.json --bi-json {result}",
+   "timeout": {
+    "quick": 600,
+    "full": 900
+   },
+   "committed": {
+    "file": "examples/attention_backward/results-a40.json",
+    "adapter": "attention_backward"
+   }
+  },
+  {
+   "name": "attention_serving",
+   "gpus": 1,
+   "quick": "{python} examples/attention_serving/serving_cases.py --quick --bi-json {result}",
+   "full": [
+    "{python} examples/attention_serving/serving_cases.py --json {run}/legacy.json --only paged,paged_timing,varlen,varlen_timing,eager,graphs",
+    "{python} examples/attention_serving/serving_cases.py --json {run}/legacy.json --only compile,compile_diag",
+    "{python} examples/attention_serving/serving_cases.py --json {run}/legacy.json --only timing --bi-json {result}"
+   ],
+   "timeout": {
+    "quick": 900,
+    "full": 3600
+   },
+   "committed": {
+    "file": "examples/attention_serving/results-a40.json",
+    "adapter": "attention_serving"
+   }
+  },
+  {
+   "name": "mla_sparse",
+   "gpus": 1,
+   "quick": "{python} examples/mla_sparse/mla_sparse.py --quick --bi-json {result}",
+   "full": [
+    "{python} examples/mla_sparse/mla_sparse.py --json {run}/legacy.json --cases sdpa_probe tune components mla topk_ties",
+    "{python} examples/mla_sparse/mla_sparse.py --json {run}/legacy.json --cases sparse",
+    "{python} examples/mla_sparse/mla_sparse.py --json {run}/legacy.json --cases timing --bi-json {result}"
+   ],
+   "timeout": {
+    "quick": 900,
+    "full": 3600
+   },
+   "committed": {
+    "file": "examples/mla_sparse/results-a40.json",
+    "adapter": "mla_sparse"
+   }
+  },
+  {
+   "name": "linear_attention",
+   "gpus": 1,
+   "quick": "{python} examples/linear_attention/gdn_bi.py --quick --bi-json {result}",
+   "full": [
+    "{python} examples/linear_attention/gdn_bi.py --json {run}/legacy.json --only repeat batch modes cross",
+    "{python} examples/linear_attention/gdn_bi.py --json {run}/legacy.json --only configs",
+    "{python} examples/linear_attention/gdn_bi.py --json {run}/legacy.json --only timing --bi-json {result}"
+   ],
+   "timeout": {
+    "quick": 900,
+    "full": 3600
+   },
+   "committed": {
+    "file": "examples/linear_attention/results-a40.json",
+    "adapter": "linear_attention"
+   }
+  },
+  {
+   "name": "sampling",
+   "gpus": 1,
+   "quick": "{python} examples/sampling/sampling_bi.py --quick --json {result}",
+   "full": "{python} examples/sampling/sampling_bi.py --json {result}",
+   "timeout": {
+    "quick": 900,
+    "full": 3600
+   },
+   "committed": "examples/sampling/results-a40.json"
+  },
+  {
+   "name": "lora",
+   "gpus": 1,
+   "quick": "{python} examples/lora/lora_bi.py --quick --json {result}",
+   "full": "{python} examples/lora/lora_bi.py --json {result}",
+   "timeout": {
+    "quick": 900,
+    "full": 3600
+   },
+   "committed": "examples/lora/results-a40.json"
+  },
+  {
+   "name": "pretraining_e2e",
+   "gpus": 1,
+   "quick": "cd examples/pretraining_e2e && {python} pretraining_e2e.py --quick --json {result}",
+   "full": "cd examples/pretraining_e2e && {python} pretraining_e2e.py --opguard-root {opguard} --work {run}/work --json {result}",
+   "timeout": {
+    "quick": 900,
+    "full": 3600
+   },
+   "committed": "examples/pretraining_e2e/results-a16.json"
+  },
+  {
+   "name": "training_step",
+   "gpus": 1,
+   "quick": "{python} examples/training_step/train_step.py --quick --json {result}",
+   "full": "{python} examples/training_step/train_step.py --json {result}",
+   "timeout": {
+    "quick": 1200,
+    "full": 5400
+   },
+   "committed": "examples/training_step/results-a40.json"
+  },
+  {
+   "name": "whole_model",
+   "gpus": 1,
+   "quick": "cd examples/whole_model && {python} whole_model.py --quick --json {result}",
+   "full": "cd examples/whole_model && {python} whole_model.py --json {result}",
+   "timeout": {
+    "quick": 900,
+    "full": 5400
+   },
+   "committed": "examples/whole_model/results-a40.json"
+  },
+  {
+   "name": "sdc_scan",
+   "gpus": 1,
+   "quick": "{python} tools/sdc_scan.py --quick --json {result}",
+   "full": "{python} tools/sdc_scan.py --json {result}",
+   "timeout": {
+    "quick": 900,
+    "full": 3600
+   },
+   "committed": "examples/sdc_scan/results-a40.json"
+  },
+  {
+   "name": "graph_probe",
+   "gpus": 1,
+   "quick": "{python} examples/graph_probe/graph_probe_cases.py --quick --opguard-root {opguard} --work {run}/work --json {result}",
+   "full": "{python} examples/graph_probe/graph_probe_cases.py --opguard-root {opguard} --work {run}/work --json {result}",
+   "timeout": {
+    "quick": 900,
+    "full": 3600
+   },
+   "committed": "examples/graph_probe/results-a40.json"
+  },
+  {
+   "name": "rl_loop",
+   "gpus": 1,
+   "quick": "PY={python} OPGUARD_ROOT={opguard} bash examples/rl_loop/run.sh --quick --work {run}/work --json {result}",
+   "full": "PY={python} OPGUARD_ROOT={opguard} bash examples/rl_loop/run.sh --work {run}/work --json {result}",
+   "timeout": {
+    "quick": 900,
+    "full": 3600
+   },
+   "committed": "examples/rl_loop/results-a16.json"
+  },
+  {
+   "name": "cross_engine",
+   "gpus": 1,
+   "python": "~/miniconda3/envs/vllm-l4/bin/python",
+   "quick": "cd examples/cross_engine && {python} cross_engine.py --quick --workdir {run}/work --json {result}",
+   "full": "cd examples/cross_engine && {python} cross_engine.py --workdir {run}/work --json {result}",
+   "timeout": {
+    "quick": 1200,
+    "full": 7200
+   },
+   "committed": "examples/cross_engine/results-A16.json"
+  },
+  {
+   "name": "whole_model_tp",
+   "gpus": 4,
+   "quick": "cd examples/whole_model_tp && {python} -m torch.distributed.run --standalone --nproc_per_node=4 whole_model_tp.py --quick --json {result}",
+   "full": "cd examples/whole_model_tp && {python} -m torch.distributed.run --standalone --nproc_per_node=8 whole_model_tp.py --json {result}",
+   "timeout": {
+    "quick": 900,
+    "full": 5400
+   },
+   "committed": "examples/whole_model_tp/results-a16.json"
+  },
+  {
+   "name": "training_dp",
+   "gpus": 8,
+   "quick": "{python} examples/training_dp/training_dp.py --quick --out {run}/out --json {result}",
+   "full": "{python} examples/training_dp/training_dp.py --out {run}/out --json {result}",
+   "timeout": {
+    "quick": 1200,
+    "full": 7200
+   },
+   "committed": "examples/training_dp/results-a16.json"
+  },
+  {
+   "name": "moe_ep",
+   "gpus": 8,
+   "own_lock": true,
+   "quick": [
+    "QUICK=1 RESULTS={run}/legacy.json bash examples/moe_ep/run_all.sh {run}/dumps {pylocked}",
+    "{python} suite/adapters/convert.py moe_ep {run}/legacy.json --quick --live --json {result}",
+    "find {run}/dumps -name '*.pt' ! -path '*/ep1/*__contig.pt' -delete"
+   ],
+   "full": [
+    "RESULTS={run}/legacy.json bash examples/moe_ep/run_all.sh {run}/dumps {pylocked}",
+    "{python} suite/adapters/convert.py moe_ep {run}/legacy.json --live --json {result}",
+    "find {run}/dumps -name '*.pt' ! -path '*/ep1/*__contig.pt' -delete"
+   ],
+   "timeout": {
+    "quick": 2400,
+    "full": 10800
+   },
+   "committed": {
+    "file": "examples/moe_ep/results-a16.json",
+    "adapter": "moe_ep"
+   }
+  },
+  {
+   "name": "collectives_tp",
+   "gpus": 8,
+   "own_lock": true,
+   "quick": [
+    "PY={pylocked} bash examples/collectives_tp/run_all.sh {run}/out --quick",
+    "{python} suite/adapters/convert.py collectives_tp {run}/out/results-a16.json --quick --live --json {result}"
+   ],
+   "full": [
+    "PY={pylocked} bash examples/collectives_tp/run_all.sh {run}/out",
+    "{python} suite/adapters/convert.py collectives_tp {run}/out/results-a16.json --live --json {result}"
+   ],
+   "timeout": {
+    "quick": 1800,
+    "full": 5400
+   },
+   "committed": {
+    "file": "examples/collectives_tp/results-a16.json",
+    "adapter": "collectives_tp"
+   }
+  },
+  {
+   "name": "moe_ep_2node",
+   "gpus": 8,
+   "nodes": 2,
+   "own_lock": true,
+   "quick": [
+    "TIMEOUT={timeout} {launcher2} {repo}/examples/moe_ep moe_ep_2node.py --parts l5,l1,l2 --tg4096-k 0 --l2-sizes 1,3,31,129 --ref1node {out}/moe_ep/dumps --json {run}/legacy.json",
+    "{python} suite/adapters/convert.py moe_ep_2node {run}/legacy.json --quick --live --json {result}",
+    "mv -f examples/moe_ep/node1.log {run}/node1.log"
+   ],
+   "full": [
+    "TIMEOUT={timeout} {launcher2} {repo}/examples/moe_ep moe_ep_2node.py --parts l5,l1,l2,timing --ref1node {out}/moe_ep/dumps --json {run}/legacy.json",
+    "{python} suite/adapters/convert.py moe_ep_2node {run}/legacy.json --live --json {result}",
+    "mv -f examples/moe_ep/node1.log {run}/node1.log"
+   ],
+   "timeout": {
+    "quick": 900,
+    "full": 2400
+   },
+   "committed": {
+    "file": "examples/moe_ep/results-a16-2node.json",
+    "adapter": "moe_ep_2node"
+   }
+  },
+  {
+   "name": "collectives_tp_2node",
+   "gpus": 8,
+   "nodes": 2,
+   "own_lock": true,
+   "quick": [
+    "rm -rf examples/collectives_tp/suite-out2n",
+    "XARGS=--quick bash examples/collectives_tp/run_2node.sh suite-out2n",
+    "{python} suite/adapters/convert.py collectives_tp examples/collectives_tp/suite-out2n/results-a16-2node.json --example collectives_tp_2node --quick --live --json {result}",
+    "rm -rf {run}/out2n && mv examples/collectives_tp/suite-out2n {run}/out2n; rm -f examples/collectives_tp/node1.log"
+   ],
+   "full": [
+    "rm -rf examples/collectives_tp/suite-out2n",
+    "bash examples/collectives_tp/run_2node.sh suite-out2n",
+    "{python} suite/adapters/convert.py collectives_tp examples/collectives_tp/suite-out2n/results-a16-2node.json --example collectives_tp_2node --live --json {result}",
+    "rm -rf {run}/out2n && mv examples/collectives_tp/suite-out2n {run}/out2n; rm -f examples/collectives_tp/node1.log"
+   ],
+   "timeout": {
+    "quick": 2400,
+    "full": 5400
+   },
+   "committed": {
+    "file": "examples/collectives_tp/results-a16-2node.json",
+    "adapter": "collectives_tp"
+   }
+  },
+  {
+   "name": "training_dp_2node",
+   "gpus": 8,
+   "nodes": 2,
+   "own_lock": true,
+   "quick": "{python} examples/training_dp/training_dp.py --quick --two-node --launcher {launcher2} --out {run}/out --json {result}",
+   "full": "{python} examples/training_dp/training_dp.py --two-node --launcher {launcher2} --out {run}/out --json {result}",
+   "timeout": {
+    "quick": 2400,
+    "full": 7200
+   },
+   "committed": "examples/training_dp/results-a16-2node.json"
+  },
+  {
+   "name": "data_alignment",
+   "gpus": 0,
+   "quick": "cd examples/data_alignment && {python} data_alignment.py --quick --json {result}",
+   "full": "cd examples/data_alignment && {python} data_alignment.py --opguard-root {opguard} --json {result}",
+   "timeout": {
+    "quick": 300,
+    "full": 900
+   },
+   "committed": "examples/data_alignment/results-cpu.json"
+  },
+  {
+   "name": "ckpt_conversion",
+   "gpus": 0,
+   "quick": "{python} examples/ckpt_conversion/ckpt_conversion.py --quick --json {result}",
+   "full": "{python} examples/ckpt_conversion/ckpt_conversion.py --json {result}",
+   "timeout": {
+    "quick": 600,
+    "full": 1200
+   },
+   "committed": "examples/ckpt_conversion/results-cpu.json"
+  }
+ ]
+}

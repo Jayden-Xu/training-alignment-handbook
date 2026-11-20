@@ -1,0 +1,4898 @@
+{
+ "schema": "bi-results-v1",
+ "example": "rl_loop",
+ "quick": false,
+ "argv": [
+  "examples/rl_loop/rl_loop.py",
+  "--gpus",
+  "0,1",
+  "--json",
+  "examples/rl_loop/results-a16.json",
+  "--transcript",
+  "examples/rl_loop/transcript-a16.json"
+ ],
+ "env": {
+  "python": "3.10.22",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "535.309.01"
+ },
+ "counts": {
+  "ok": 21,
+  "regression": 0,
+  "changed": 0,
+  "info": 2
+ },
+ "checks": [
+  {
+   "name": "sync: rl.weight_sync_check clean at every pushed version (fused QKV on the rollout)",
+   "impl": "rl.weight_sync_check",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "versions": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11
+    ],
+    "summary": {
+     "0": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "1": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "2": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "3": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "4": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "5": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "6": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "7": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "8": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "9": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "10": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "11": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     }
+    }
+   }
+  },
+  {
+   "name": "sync: rl.decompose numeric exactly zero for every non-mixed token (staleness-zero points)",
+   "impl": "rl.decompose",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tokens": 1419,
+    "mixed_version_tokens": 0,
+    "numeric_zero": 1419,
+    "numeric_nonzero": 0,
+    "numeric_missing": 0,
+    "staleness_zero": 1419,
+    "staleness_nonzero": 0,
+    "staleness_zero_points": 1419,
+    "mixed_sequences": 0
+   }
+  },
+  {
+   "name": "async1: rl.weight_sync_check clean at every pushed version (fused QKV on the rollout)",
+   "impl": "rl.weight_sync_check",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "versions": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11
+    ],
+    "summary": {
+     "0": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "1": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "2": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "3": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "4": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "5": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "6": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "7": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "8": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "9": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "10": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "11": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     }
+    }
+   }
+  },
+  {
+   "name": "async1: rl.decompose numeric exactly zero for every non-mixed token (after trainer replays from snapshots)",
+   "impl": "rl.decompose",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tokens": 1419,
+    "mixed_version_tokens": 914,
+    "numeric_zero": 505,
+    "numeric_nonzero": 0,
+    "numeric_missing": 0,
+    "staleness_zero": 438,
+    "staleness_nonzero": 67,
+    "staleness_zero_points": 438,
+    "mixed_sequences": 114
+   }
+  },
+  {
+   "name": "async1: mixed-version sequences flagged and not split",
+   "impl": "rl.decompose",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mixed_sequences": 114,
+    "mixed_tokens": 914
+   }
+  },
+  {
+   "name": "async1: staleness carries the whole gap (nonzero staleness tokens)",
+   "impl": "rl.decompose",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "staleness_nonzero": 67,
+    "staleness_zero": 438
+   }
+  },
+  {
+   "name": "async2: rl.weight_sync_check clean at every pushed version (fused QKV on the rollout)",
+   "impl": "rl.weight_sync_check",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "versions": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10
+    ],
+    "summary": {
+     "0": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "1": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "2": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "3": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "4": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "5": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "6": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "7": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "8": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "9": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     },
+     "10": {
+      "trainer_rows": 6613,
+      "trainer_unmatched_rows": 0,
+      "rollout_rows": 6613,
+      "rollout_unmatched_rows": 0
+     }
+    }
+   }
+  },
+  {
+   "name": "async2: rl.decompose numeric exactly zero for every non-mixed token (after trainer replays from snapshots)",
+   "impl": "rl.decompose",
+   "level": "L3",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tokens": 1419,
+    "mixed_version_tokens": 852,
+    "numeric_zero": 567,
+    "numeric_nonzero": 0,
+    "numeric_missing": 0,
+    "staleness_zero": 141,
+    "staleness_nonzero": 426,
+    "staleness_zero_points": 119,
+    "mixed_sequences": 105
+   }
+  },
+  {
+   "name": "async2: mixed-version sequences flagged and not split",
+   "impl": "rl.decompose",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "mixed_sequences": 105,
+    "mixed_tokens": 852
+   }
+  },
+  {
+   "name": "async2: staleness carries the whole gap (nonzero staleness tokens)",
+   "impl": "rl.decompose",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "staleness_nonzero": 426,
+    "staleness_zero": 141
+   }
+  },
+  {
+   "name": "stock: fault detected: weight sync clean, numeric != 0 at staleness-zero points",
+   "impl": "rl.decompose",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tokens": 448,
+    "mixed_version_tokens": 0,
+    "numeric_zero": 82,
+    "numeric_nonzero": 366,
+    "numeric_missing": 0,
+    "staleness_zero": 448,
+    "staleness_nonzero": 0,
+    "staleness_zero_points": 448,
+    "mixed_sequences": 0
+   }
+  },
+  {
+   "name": "stock: localized by recapture + vectors.compare to a paired first candidate",
+   "impl": "vectors.compare",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "token": {
+     "seq_id": 4,
+     "position": 4,
+     "scoring_row": [
+      4,
+      3
+     ]
+    },
+    "candidate": {
+     "op": "model.layers.0.mlp.gate_proj",
+     "observed_at": "model.layers.0.mlp.gate_proj.outputs[0]",
+     "input_agrees_at": "model.layers.0.post_attention_layernorm.outputs[0]",
+     "differing_vectors": [
+      0
+     ],
+     "pair": "same input row on both sides, different output row of the same width"
+    },
+    "recapture_reproduces_online_rollout": true,
+    "forward_index": 1,
+    "harness_calls": 49
+   }
+  },
+  {
+   "name": "stock: validate: rollout replay without the fault equals the trainer",
+   "impl": "validate-hypothesis",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "rollout_fault": null,
+    "equal_to_trainer": 98,
+    "tokens": 98
+   }
+  },
+  {
+   "name": "norm: fault detected: weight sync clean, numeric != 0 at staleness-zero points",
+   "impl": "rl.decompose",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tokens": 448,
+    "mixed_version_tokens": 0,
+    "numeric_zero": 4,
+    "numeric_nonzero": 444,
+    "numeric_missing": 0,
+    "staleness_zero": 448,
+    "staleness_nonzero": 0,
+    "staleness_zero_points": 448,
+    "mixed_sequences": 0
+   }
+  },
+  {
+   "name": "norm: localized by recapture + vectors.compare to a paired first candidate (model.layers.0.input_layernorm (RMSNorm))",
+   "impl": "vectors.compare",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "token": {
+     "seq_id": 4,
+     "position": 3,
+     "scoring_row": [
+      4,
+      2
+     ]
+    },
+    "candidate": {
+     "op": "model.layers.0.input_layernorm (RMSNorm)",
+     "observed_at": "model.layers.0.input_layernorm.outputs[0]",
+     "input_agrees_at": "model.layers.0.input_layernorm.inputs[0]",
+     "differing_vectors": [
+      0
+     ],
+     "pair": "same input row on both sides, different output row of the same width"
+    },
+    "recapture_reproduces_online_rollout": true,
+    "forward_index": 0,
+    "harness_calls": 49
+   }
+  },
+  {
+   "name": "norm: validate: rollout replay without the fault equals the trainer",
+   "impl": "validate-hypothesis",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "rollout_fault": null,
+    "equal_to_trainer": 98,
+    "tokens": 98
+   }
+  },
+  {
+   "name": "sync_bug: bit flip after repacking named (trainer k_proj row 3 = rollout qkv_proj row nq+3)",
+   "impl": "rl.weight_sync_check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "trainer": [
+     [
+      "model.layers.0.self_attn.k_proj.weight",
+      [
+       3
+      ]
+     ]
+    ],
+    "rollout": [
+     [
+      "model.layers.0.self_attn.qkv_proj.weight",
+      [
+       259
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "name": "sync_bug: stale row named (down_proj row 7 on both sides)",
+   "impl": "rl.weight_sync_check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "trainer": [
+     [
+      "model.layers.1.mlp.down_proj.weight",
+      [
+       7
+      ]
+     ]
+    ],
+    "rollout": [
+     [
+      "model.layers.1.mlp.down_proj.weight",
+      [
+       7
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "name": "sync_bug: clean version stays clean",
+   "impl": "rl.weight_sync_check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "trainer_rows": 6613,
+    "trainer_unmatched_rows": 0,
+    "rollout_rows": 6613,
+    "rollout_unmatched_rows": 0
+   }
+  },
+  {
+   "name": "version: weight sync clean, numeric != 0 only in batch 2 (all tokens staleness-zero points)",
+   "impl": "rl.decompose",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "0": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "1": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 98,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "2": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 0,
+     "numeric_nonzero": 114,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "3": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 117,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   }
+  },
+  {
+   "name": "version: recapture at the recorded version does not reproduce the online log-probs (and matches the trainer exactly)",
+   "impl": "rl.replay_request + vectors.compare",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "recapture_reproduces_online_rollout": false,
+    "recapture_rollout_vs_trainer_equal_tokens": 114,
+    "tokens": 114,
+    "candidate": null
+   }
+  },
+  {
+   "name": "version: batch 2's recorded weights fingerprint matches the version-1 sync, not its label 2; every other batch matches its label",
+   "impl": "rl.decompose weights_check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "batch2": {
+     "status": "recorded",
+     "batch_weights": {
+      "scheme": "xor-of-rows-v1",
+      "value": 2255424371,
+      "rows": 6613
+     },
+     "labelled_versions": [
+      2
+     ],
+     "rollout_sync_versions_matching": [
+      1
+     ],
+     "trainer_sync_versions_matching": [
+      1
+     ],
+     "labelled_versions_without_sync": [],
+     "first_labelled_version_matches": false,
+     "zero_fingerprint": false,
+     "note": "XOR of all weight rows (32 bits, order-free): a match can collide and zero is never evidence. A mixed batch changes weights mid-batch; the fingerprint is of the weights when it started."
+    },
+    "others_match": [
+     true,
+     true,
+     true
+    ]
+   }
+  },
+  {
+   "name": "version: hypothesis 'batch 2 ran at version 1' (caller-supplied version) gives numeric zero on every token",
+   "impl": "validate-hypothesis",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "tokens": 114,
+    "mixed_sequences": 0,
+    "mixed_version_tokens": 0,
+    "staleness_zero_points": 0,
+    "numeric_zero": 114,
+    "numeric_nonzero": 0,
+    "numeric_missing": 0,
+    "staleness_zero": 0,
+    "staleness_nonzero": 114,
+    "staleness_missing": 0
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "async1: trainer replay per batch (load snapshot + prefill + record)",
+   "value": 62.41967901587486,
+   "unit": "ms",
+   "n": 10
+  },
+  {
+   "name": "async2: trainer replay per batch (load snapshot + prefill + record)",
+   "value": 58.62879008054733,
+   "unit": "ms",
+   "n": 20
+  },
+  {
+   "name": "cost tiny: step per step, records on",
+   "value": 614.9967201054096,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: gen per step, records on",
+   "value": 468.86245161294937,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: train per step, records on",
+   "value": 35.00533290207386,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: fingerprint_trainer per step, records on",
+   "value": 22.163424640893936,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: fingerprint_rollout per step, records on",
+   "value": 21.735714748501778,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: record_rollout per step, records on",
+   "value": 1.2100283056497574,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: record_trainer per step, records on",
+   "value": 3.7409011274576187,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: snapshot per step, records on",
+   "value": 5.584981292486191,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: trainer_logprob per step, records on",
+   "value": 15.205584466457367,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: step, records off",
+   "value": 157.45805203914642,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "cost tiny: record bytes per step",
+   "value": 90467.0,
+   "unit": "bytes",
+   "config": "tiny"
+  },
+  {
+   "name": "cost default: step per step, records on",
+   "value": 1720.4840406775475,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: gen per step, records on",
+   "value": 316.7589511722326,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: train per step, records on",
+   "value": 179.13589254021645,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: fingerprint_trainer per step, records on",
+   "value": 12.936953455209732,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: fingerprint_rollout per step, records on",
+   "value": 11.838648468255997,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: record_rollout per step, records on",
+   "value": 1.389775425195694,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: record_trainer per step, records on",
+   "value": 34.19123589992523,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: snapshot per step, records on",
+   "value": 483.3630044013262,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: trainer_logprob per step, records on",
+   "value": 42.825374752283096,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: step, records off",
+   "value": 1160.9218642115593,
+   "unit": "ms",
+   "config": "default"
+  },
+  {
+   "name": "cost default: record bytes per step",
+   "value": 1639823.5,
+   "unit": "bytes",
+   "config": "default"
+  },
+  {
+   "name": "sync tiny: fingerprint_trainer per step",
+   "value": 4.907945170998573,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "sync tiny: fingerprint_rollout per step",
+   "value": 3.65239754319191,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "sync tiny: record_rollout per step",
+   "value": 1.1524371802806854,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "sync tiny: record_trainer per step",
+   "value": 3.114445134997368,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "sync tiny: snapshot per step",
+   "value": 10.586556047201157,
+   "unit": "ms",
+   "config": "tiny"
+  },
+  {
+   "name": "sync tiny: step per step",
+   "value": 219.76522915065289,
+   "unit": "ms",
+   "config": "tiny"
+  }
+ ],
+ "extra": {
+  "devices": {
+   "trainer": "cuda:0",
+   "rollout": "cuda:1"
+  },
+  "opguard": {
+   "root": "~/bi-check-rl-loop/OpGuard",
+   "capabilities_protocol": null
+  },
+  "sync": {
+   "steps": [
+    {
+     "k": 0,
+     "reward": 0.1433080808080808,
+     "loss": 0.0894664004445076,
+     "versions": [
+      0
+     ],
+     "trainer_version": 0,
+     "mixed_sequences": 0,
+     "tokens": 119,
+     "fingerprint_trainer_s": 0.01834706962108612,
+     "load_s": 0.0024986565113067627,
+     "fingerprint_rollout_s": 0.006384825333952904,
+     "record_trainer_s": 0.0035978518426418304,
+     "gen_s": 1.8993141315877438,
+     "record_rollout_s": 0.0019110850989818573,
+     "trainer_logprob_s": 1.4902744591236115,
+     "train_s": 0.2992132045328617,
+     "snapshot_s": 0.00731196254491806,
+     "step_s": 4.889033434912562
+    },
+    {
+     "k": 1,
+     "reward": 0.09375,
+     "loss": 0.03189018741250038,
+     "versions": [
+      1
+     ],
+     "trainer_version": 1,
+     "mixed_sequences": 0,
+     "tokens": 98,
+     "fingerprint_trainer_s": 0.004372965544462204,
+     "load_s": 0.003067905083298683,
+     "fingerprint_rollout_s": 0.003985662013292313,
+     "record_trainer_s": 0.002658126875758171,
+     "gen_s": 0.1133375782519579,
+     "record_rollout_s": 0.001102890819311142,
+     "trainer_logprob_s": 0.014247307553887367,
+     "train_s": 0.03374057076871395,
+     "snapshot_s": 0.011467022821307182,
+     "step_s": 0.2113757450133562
+    },
+    {
+     "k": 2,
+     "reward": 0.2974025974025974,
+     "loss": -0.2542116045951843,
+     "versions": [
+      2
+     ],
+     "trainer_version": 2,
+     "mixed_sequences": 0,
+     "tokens": 114,
+     "fingerprint_trainer_s": 0.004447741433978081,
+     "load_s": 0.0029005631804466248,
+     "fingerprint_rollout_s": 0.0036882255226373672,
+     "record_trainer_s": 0.003114445134997368,
+     "gen_s": 0.13473746180534363,
+     "record_rollout_s": 0.001161474734544754,
+     "trainer_logprob_s": 0.01455412432551384,
+     "train_s": 0.0331229530274868,
+     "snapshot_s": 0.010697878897190094,
+     "step_s": 0.23334975913167
+    },
+    {
+     "k": 3,
+     "reward": 0.1429563492063492,
+     "loss": 0.05578429996967316,
+     "versions": [
+      3
+     ],
+     "trainer_version": 3,
+     "mixed_sequences": 0,
+     "tokens": 117,
+     "fingerprint_trainer_s": 0.004503186792135239,
+     "load_s": 0.002919541671872139,
+     "fingerprint_rollout_s": 0.0036083031445741653,
+     "record_trainer_s": 0.002991417422890663,
+     "gen_s": 0.11338386125862598,
+     "record_rollout_s": 0.0011524371802806854,
+     "trainer_logprob_s": 0.014511184766888618,
+     "train_s": 0.03382411412894726,
+     "snapshot_s": 0.0113646499812603,
+     "step_s": 0.21309369057416916
+    },
+    {
+     "k": 4,
+     "reward": 0.18339646464646464,
+     "loss": -0.5121827721595764,
+     "versions": [
+      4
+     ],
+     "trainer_version": 4,
+     "mixed_sequences": 0,
+     "tokens": 125,
+     "fingerprint_trainer_s": 0.004938948899507523,
+     "load_s": 0.0023135729134082794,
+     "fingerprint_rollout_s": 0.0020293723791837692,
+     "record_trainer_s": 0.0019769836217164993,
+     "gen_s": 0.13165497966110706,
+     "record_rollout_s": 0.0011654272675514221,
+     "trainer_logprob_s": 0.006988227367401123,
+     "train_s": 0.02811282128095627,
+     "snapshot_s": 0.010586556047201157,
+     "step_s": 0.2163805142045021
+    },
+    {
+     "k": 5,
+     "reward": 0.22224702380952382,
+     "loss": 0.2379559576511383,
+     "versions": [
+      5
+     ],
+     "trainer_version": 5,
+     "mixed_sequences": 0,
+     "tokens": 119,
+     "fingerprint_trainer_s": 0.005450563505291939,
+     "load_s": 0.002886580303311348,
+     "fingerprint_rollout_s": 0.003611145541071892,
+     "record_trainer_s": 0.0036300644278526306,
+     "gen_s": 0.12115463800728321,
+     "record_rollout_s": 0.0011210031807422638,
+     "trainer_logprob_s": 0.014869244769215584,
+     "train_s": 0.0323240477591753,
+     "snapshot_s": 0.00980486162006855,
+     "step_s": 0.2233370691537857
+    },
+    {
+     "k": 6,
+     "reward": 0.1308306277056277,
+     "loss": -0.15970322489738464,
+     "versions": [
+      6
+     ],
+     "trainer_version": 6,
+     "mixed_sequences": 0,
+     "tokens": 114,
+     "fingerprint_trainer_s": 0.0054308511316776276,
+     "load_s": 0.0027694087475538254,
+     "fingerprint_rollout_s": 0.0036609433591365814,
+     "record_trainer_s": 0.003498205915093422,
+     "gen_s": 0.09974353760480881,
+     "record_rollout_s": 0.0011252518743276596,
+     "trainer_logprob_s": 0.014733409509062767,
+     "train_s": 0.032631704583764076,
+     "snapshot_s": 0.009322308003902435,
+     "step_s": 0.2015199102461338
+    },
+    {
+     "k": 7,
+     "reward": 0.10058396464646466,
+     "loss": 0.0478796660900116,
+     "versions": [
+      7
+     ],
+     "trainer_version": 7,
+     "mixed_sequences": 0,
+     "tokens": 139,
+     "fingerprint_trainer_s": 0.0054839421063661575,
+     "load_s": 0.0028531979769468307,
+     "fingerprint_rollout_s": 0.00365239754319191,
+     "record_trainer_s": 0.0030992645770311356,
+     "gen_s": 0.11570720560848713,
+     "record_rollout_s": 0.0011773183941841125,
+     "trainer_logprob_s": 0.014405433088541031,
+     "train_s": 0.03343460150063038,
+     "snapshot_s": 0.011175867170095444,
+     "step_s": 0.21976522915065289
+    },
+    {
+     "k": 8,
+     "reward": 0.11685606060606062,
+     "loss": -0.040559567511081696,
+     "versions": [
+      8
+     ],
+     "trainer_version": 8,
+     "mixed_sequences": 0,
+     "tokens": 128,
+     "fingerprint_trainer_s": 0.005013188347220421,
+     "load_s": 0.0030065011233091354,
+     "fingerprint_rollout_s": 0.003363564610481262,
+     "record_trainer_s": 0.003496108576655388,
+     "gen_s": 0.1321979034692049,
+     "record_rollout_s": 0.0012042541056871414,
+     "trainer_logprob_s": 0.015260385349392891,
+     "train_s": 0.03696354292333126,
+     "snapshot_s": 0.00926712155342102,
+     "step_s": 0.23886928148567677
+    },
+    {
+     "k": 9,
+     "reward": 0.2117446789321789,
+     "loss": -0.16402027010917664,
+     "versions": [
+      9
+     ],
+     "trainer_version": 9,
+     "mixed_sequences": 0,
+     "tokens": 108,
+     "fingerprint_trainer_s": 0.004907945170998573,
+     "load_s": 0.003066007047891617,
+     "fingerprint_rollout_s": 0.0036491993814706802,
+     "record_trainer_s": 0.0033369679003953934,
+     "gen_s": 0.12950040213763714,
+     "record_rollout_s": 0.0011028889566659927,
+     "trainer_logprob_s": 0.01440158300101757,
+     "train_s": 0.03333655558526516,
+     "snapshot_s": 0.010659568011760712,
+     "step_s": 0.23316736333072186
+    },
+    {
+     "k": 10,
+     "reward": 0.18242469336219339,
+     "loss": -0.039252787828445435,
+     "versions": [
+      10
+     ],
+     "trainer_version": 10,
+     "mixed_sequences": 0,
+     "tokens": 125,
+     "fingerprint_trainer_s": 0.004689743742346764,
+     "load_s": 0.002998560667037964,
+     "fingerprint_rollout_s": 0.003836836665868759,
+     "record_trainer_s": 0.003213530406355858,
+     "gen_s": 0.13755935989320278,
+     "record_rollout_s": 0.0011639632284641266,
+     "trainer_logprob_s": 0.014968320727348328,
+     "train_s": 0.033667489886283875,
+     "snapshot_s": 0.009150849655270576,
+     "step_s": 0.24022990837693214
+    },
+    {
+     "k": 11,
+     "reward": 0.19832251082251084,
+     "loss": -0.5971783399581909,
+     "versions": [
+      11
+     ],
+     "trainer_version": 11,
+     "mixed_sequences": 0,
+     "tokens": 113,
+     "fingerprint_trainer_s": 0.004511594772338867,
+     "load_s": 0.0029094964265823364,
+     "fingerprint_rollout_s": 0.003656107932329178,
+     "record_trainer_s": 0.003038303926587105,
+     "gen_s": 0.0999808982014656,
+     "record_rollout_s": 0.0011202972382307053,
+     "trainer_logprob_s": 0.014641748741269112,
+     "train_s": 0.03332371823489666,
+     "snapshot_s": 0.009420659393072128,
+     "step_s": 0.20169485919177532
+    }
+   ],
+   "split": {
+    "tokens": 1419,
+    "mixed_version_tokens": 0,
+    "numeric_zero": 1419,
+    "numeric_nonzero": 0,
+    "numeric_missing": 0,
+    "staleness_zero": 1419,
+    "staleness_nonzero": 0,
+    "staleness_zero_points": 1419,
+    "mixed_sequences": 0
+   },
+   "replays": 0,
+   "harness_calls": 25,
+   "harness_s": 3.7,
+   "record_bytes": 1085265
+  },
+  "async1": {
+   "steps": [
+    {
+     "k": 0,
+     "reward": 0.1433080808080808,
+     "loss": 0.0894664004445076,
+     "versions": [
+      0
+     ],
+     "trainer_version": 0,
+     "mixed_sequences": 0,
+     "tokens": 119,
+     "fingerprint_trainer_s": 0.013962842524051666,
+     "load_s": 0.002407422289252281,
+     "fingerprint_rollout_s": 0.006052134558558464,
+     "record_trainer_s": 0.0030090995132923126,
+     "gen_s": 1.760101793333888,
+     "record_rollout_s": 0.0017485301941633224,
+     "trainer_logprob_s": 0.019422810524702072,
+     "train_s": 0.025186868384480476,
+     "snapshot_s": 0.00914081558585167,
+     "step_s": 4.2984596733003855
+    },
+    {
+     "k": 1,
+     "reward": 0.17455357142857142,
+     "loss": -0.26536551117897034,
+     "versions": [
+      0,
+      1
+     ],
+     "trainer_version": 1,
+     "mixed_sequences": 9,
+     "tokens": 98,
+     "fingerprint_trainer_s": 0.0037363991141319275,
+     "gen_s": 0.1195627972483635,
+     "record_rollout_s": 0.0010563042014837265,
+     "record_trainer_s": 0.004270642995834351,
+     "trainer_logprob_s": 0.013938488438725471,
+     "train_s": 0.03163941577076912,
+     "snapshot_s": 0.010815640911459923,
+     "step_s": 0.21063466183841228
+    },
+    {
+     "k": 2,
+     "reward": 0.23445616883116882,
+     "loss": -0.01424981839954853,
+     "versions": [
+      1,
+      2
+     ],
+     "trainer_version": 2,
+     "mixed_sequences": 12,
+     "tokens": 114,
+     "fingerprint_trainer_s": 0.003687668591737747,
+     "gen_s": 0.14720723778009415,
+     "record_rollout_s": 0.0011163409799337387,
+     "record_trainer_s": 0.004144534468650818,
+     "trainer_logprob_s": 0.013770654797554016,
+     "train_s": 0.03135971352458,
+     "snapshot_s": 0.010012120008468628,
+     "step_s": 0.2612245660275221
+    },
+    {
+     "k": 3,
+     "reward": 0.1453373015873016,
+     "loss": -0.046920329332351685,
+     "versions": [
+      2,
+      3
+     ],
+     "trainer_version": 3,
+     "mixed_sequences": 9,
+     "tokens": 117,
+     "fingerprint_trainer_s": 0.0039861369878053665,
+     "gen_s": 0.11464329622685909,
+     "record_rollout_s": 0.0011327508836984634,
+     "record_trainer_s": 0.0041203610599040985,
+     "trainer_logprob_s": 0.013892903923988342,
+     "train_s": 0.03167227283120155,
+     "snapshot_s": 0.010607952252030373,
+     "step_s": 0.20059405826032162
+    },
+    {
+     "k": 4,
+     "reward": 0.13242694805194805,
+     "loss": 0.12193937599658966,
+     "versions": [
+      3,
+      4
+     ],
+     "trainer_version": 4,
+     "mixed_sequences": 10,
+     "tokens": 125,
+     "fingerprint_trainer_s": 0.0056436508893966675,
+     "gen_s": 0.1431373544037342,
+     "record_rollout_s": 0.0011351332068443298,
+     "record_trainer_s": 0.004083877429366112,
+     "trainer_logprob_s": 0.013695534318685532,
+     "train_s": 0.03147041238844395,
+     "snapshot_s": 0.009263457730412483,
+     "step_s": 0.23366150446236134
+    },
+    {
+     "k": 5,
+     "reward": 0.2810267857142857,
+     "loss": 0.09700965881347656,
+     "versions": [
+      4,
+      5
+     ],
+     "trainer_version": 5,
+     "mixed_sequences": 10,
+     "tokens": 119,
+     "fingerprint_trainer_s": 0.005378689616918564,
+     "gen_s": 0.1277445275336504,
+     "record_rollout_s": 0.0011010672897100449,
+     "record_trainer_s": 0.004356954246759415,
+     "trainer_logprob_s": 0.015230603516101837,
+     "train_s": 0.0329608004540205,
+     "snapshot_s": 0.0098883006721735,
+     "step_s": 0.224431112408638
+    },
+    {
+     "k": 6,
+     "reward": 0.24092261904761908,
+     "loss": -0.0059224930591881275,
+     "versions": [
+      5,
+      6
+     ],
+     "trainer_version": 6,
+     "mixed_sequences": 11,
+     "tokens": 114,
+     "fingerprint_trainer_s": 0.0052434951066970825,
+     "gen_s": 0.10642407834529877,
+     "record_rollout_s": 0.0011498704552650452,
+     "record_trainer_s": 0.004208231344819069,
+     "trainer_logprob_s": 0.014282194897532463,
+     "train_s": 0.03275409899652004,
+     "snapshot_s": 0.009375592693686485,
+     "step_s": 0.1999614927917719
+    },
+    {
+     "k": 7,
+     "reward": 0.1821180555555556,
+     "loss": -0.2614452838897705,
+     "versions": [
+      6,
+      7
+     ],
+     "trainer_version": 7,
+     "mixed_sequences": 11,
+     "tokens": 139,
+     "fingerprint_trainer_s": 0.004803810268640518,
+     "gen_s": 0.12198132649064064,
+     "record_rollout_s": 0.0011851992458105087,
+     "record_trainer_s": 0.004450896754860878,
+     "trainer_logprob_s": 0.013411933556199074,
+     "train_s": 0.03661615215241909,
+     "snapshot_s": 0.009393066167831421,
+     "step_s": 0.2191256359219551
+    },
+    {
+     "k": 8,
+     "reward": 0.18508522727272728,
+     "loss": 0.08232596516609192,
+     "versions": [
+      7,
+      8
+     ],
+     "trainer_version": 8,
+     "mixed_sequences": 11,
+     "tokens": 128,
+     "fingerprint_trainer_s": 0.005088400095701218,
+     "gen_s": 0.13613798841834068,
+     "record_rollout_s": 0.001196427270770073,
+     "record_trainer_s": 0.004241917282342911,
+     "trainer_logprob_s": 0.014353688806295395,
+     "train_s": 0.03248380310833454,
+     "snapshot_s": 0.008641500025987625,
+     "step_s": 0.22963077016174793
+    },
+    {
+     "k": 9,
+     "reward": 0.22040494227994226,
+     "loss": -0.19865816831588745,
+     "versions": [
+      8,
+      9
+     ],
+     "trainer_version": 9,
+     "mixed_sequences": 9,
+     "tokens": 108,
+     "fingerprint_trainer_s": 0.005623353645205498,
+     "gen_s": 0.13373993337154388,
+     "record_rollout_s": 0.0011148545891046524,
+     "record_trainer_s": 0.004200955852866173,
+     "trainer_logprob_s": 0.014413928613066673,
+     "train_s": 0.032988084480166435,
+     "snapshot_s": 0.00987665168941021,
+     "step_s": 0.22744882479310036
+    },
+    {
+     "k": 10,
+     "reward": 0.17269796176046176,
+     "loss": -0.22333797812461853,
+     "versions": [
+      9,
+      10
+     ],
+     "trainer_version": 10,
+     "mixed_sequences": 11,
+     "tokens": 125,
+     "fingerprint_trainer_s": 0.005796652287244797,
+     "gen_s": 0.14225986041128635,
+     "record_rollout_s": 0.0011437144130468369,
+     "record_trainer_s": 0.0042538028210401535,
+     "trainer_logprob_s": 0.013260852545499802,
+     "train_s": 0.03136833570897579,
+     "snapshot_s": 0.009308408945798874,
+     "step_s": 0.23336677066981792
+    },
+    {
+     "k": 11,
+     "reward": 0.26459009740259737,
+     "loss": -0.05431021749973297,
+     "versions": [
+      10,
+      11
+     ],
+     "trainer_version": 11,
+     "mixed_sequences": 11,
+     "tokens": 113,
+     "fingerprint_trainer_s": 0.0056453850120306015,
+     "gen_s": 0.10813257284462452,
+     "record_rollout_s": 0.0011476632207632065,
+     "record_trainer_s": 0.003984237089753151,
+     "trainer_logprob_s": 0.014217022806406021,
+     "train_s": 0.03332994692027569,
+     "snapshot_s": 0.009340979158878326,
+     "step_s": 0.20087584294378757
+    }
+   ],
+   "split": {
+    "tokens": 1419,
+    "mixed_version_tokens": 914,
+    "numeric_zero": 505,
+    "numeric_nonzero": 0,
+    "numeric_missing": 0,
+    "staleness_zero": 438,
+    "staleness_nonzero": 67,
+    "staleness_zero_points": 438,
+    "mixed_sequences": 114
+   },
+   "replays": 10,
+   "harness_calls": 45,
+   "harness_s": 6.6
+  },
+  "async2": {
+   "steps": [
+    {
+     "k": 0,
+     "reward": 0.1433080808080808,
+     "loss": 0.0894664004445076,
+     "versions": [
+      0
+     ],
+     "trainer_version": 0,
+     "mixed_sequences": 0,
+     "tokens": 119,
+     "fingerprint_trainer_s": 0.013969751074910164,
+     "load_s": 0.002448311075568199,
+     "fingerprint_rollout_s": 0.005637688562273979,
+     "record_trainer_s": 0.0029844045639038086,
+     "gen_s": 1.7101564276963472,
+     "record_rollout_s": 0.0015981458127498627,
+     "trainer_logprob_s": 0.01623474806547165,
+     "train_s": 0.03690304420888424,
+     "snapshot_s": 0.008883249014616013,
+     "step_s": 4.372371105477214
+    },
+    {
+     "k": 1,
+     "reward": 0.20379464285714283,
+     "loss": -0.18121445178985596,
+     "versions": [
+      0
+     ],
+     "trainer_version": 1,
+     "mixed_sequences": 0,
+     "tokens": 98,
+     "fingerprint_trainer_s": 0.0043688006699085236,
+     "gen_s": 0.11962747201323509,
+     "record_rollout_s": 0.0010461919009685516,
+     "trainer_logprob_s": 0.014209099113941193,
+     "record_trainer_s": 0.001860668882727623,
+     "train_s": 0.03174946270883083,
+     "snapshot_s": 0.011016158387064934,
+     "step_s": 0.18732229433953762
+    },
+    {
+     "k": 2,
+     "reward": 0.2159090909090909,
+     "loss": 0.012450666166841984,
+     "versions": [
+      0,
+      1
+     ],
+     "trainer_version": 2,
+     "mixed_sequences": 12,
+     "tokens": 114,
+     "fingerprint_trainer_s": 0.004334662109613419,
+     "gen_s": 0.13702562637627125,
+     "record_rollout_s": 0.00112142413854599,
+     "record_trainer_s": 0.004040887579321861,
+     "trainer_logprob_s": 0.014709120616316795,
+     "train_s": 0.033833373337984085,
+     "snapshot_s": 0.010447980836033821,
+     "step_s": 0.22864479199051857
+    },
+    {
+     "k": 3,
+     "reward": 0.13154761904761905,
+     "loss": 0.13040637969970703,
+     "versions": [
+      1,
+      2
+     ],
+     "trainer_version": 3,
+     "mixed_sequences": 9,
+     "tokens": 117,
+     "fingerprint_trainer_s": 0.0037139523774385452,
+     "gen_s": 0.12543450482189655,
+     "record_rollout_s": 0.0013588778674602509,
+     "record_trainer_s": 0.0041374750435352325,
+     "trainer_logprob_s": 0.014687687158584595,
+     "train_s": 0.03174380585551262,
+     "snapshot_s": 0.01042461022734642,
+     "step_s": 0.2428518533706665
+    },
+    {
+     "k": 4,
+     "reward": 0.17100919913419915,
+     "loss": 0.3428286910057068,
+     "versions": [
+      2,
+      3
+     ],
+     "trainer_version": 4,
+     "mixed_sequences": 10,
+     "tokens": 125,
+     "fingerprint_trainer_s": 0.004049580544233322,
+     "gen_s": 0.13840770721435547,
+     "record_rollout_s": 0.001148635521531105,
+     "record_trainer_s": 0.004478566348552704,
+     "trainer_logprob_s": 0.014192944392561913,
+     "train_s": 0.0321666169911623,
+     "snapshot_s": 0.009005574509501457,
+     "step_s": 0.22722969762980938
+    },
+    {
+     "k": 5,
+     "reward": 0.22313988095238094,
+     "loss": -0.48222652077674866,
+     "versions": [
+      3,
+      4
+     ],
+     "trainer_version": 5,
+     "mixed_sequences": 10,
+     "tokens": 119,
+     "fingerprint_trainer_s": 0.005308834835886955,
+     "gen_s": 0.12494750134646893,
+     "record_rollout_s": 0.0011377278715372086,
+     "record_trainer_s": 0.004389958456158638,
+     "trainer_logprob_s": 0.01436193659901619,
+     "train_s": 0.03236488066613674,
+     "snapshot_s": 0.00971822626888752,
+     "step_s": 0.21632103249430656
+    },
+    {
+     "k": 6,
+     "reward": 0.24083243145743147,
+     "loss": -0.4658644497394562,
+     "versions": [
+      4,
+      5
+     ],
+     "trainer_version": 6,
+     "mixed_sequences": 11,
+     "tokens": 114,
+     "fingerprint_trainer_s": 0.005052102729678154,
+     "gen_s": 0.10376282036304474,
+     "record_rollout_s": 0.0010809656232595444,
+     "record_trainer_s": 0.004145752638578415,
+     "trainer_logprob_s": 0.014168335124850273,
+     "train_s": 0.03255106694996357,
+     "snapshot_s": 0.009300654754042625,
+     "step_s": 0.19661463610827923
+    },
+    {
+     "k": 7,
+     "reward": 0.20351957070707066,
+     "loss": 0.06555422395467758,
+     "versions": [
+      5,
+      6
+     ],
+     "trainer_version": 7,
+     "mixed_sequences": 11,
+     "tokens": 139,
+     "fingerprint_trainer_s": 0.005375051870942116,
+     "gen_s": 0.11833855509757996,
+     "record_rollout_s": 0.0011355932801961899,
+     "record_trainer_s": 0.004119770601391792,
+     "trainer_logprob_s": 0.014223525300621986,
+     "train_s": 0.03260764479637146,
+     "snapshot_s": 0.010237578302621841,
+     "step_s": 0.2116013914346695
+    },
+    {
+     "k": 8,
+     "reward": 0.16401515151515153,
+     "loss": 0.21204060316085815,
+     "versions": [
+      6,
+      7
+     ],
+     "trainer_version": 8,
+     "mixed_sequences": 11,
+     "tokens": 128,
+     "fingerprint_trainer_s": 0.005377825349569321,
+     "gen_s": 0.1308721974492073,
+     "record_rollout_s": 0.0011758580803871155,
+     "record_trainer_s": 0.004352688789367676,
+     "trainer_logprob_s": 0.0134088434278965,
+     "train_s": 0.031124116852879524,
+     "snapshot_s": 0.008887233212590218,
+     "step_s": 0.22472436912357807
+    },
+    {
+     "k": 9,
+     "reward": 0.27434613997113994,
+     "loss": -0.27629876136779785,
+     "versions": [
+      7,
+      8
+     ],
+     "trainer_version": 9,
+     "mixed_sequences": 9,
+     "tokens": 108,
+     "fingerprint_trainer_s": 0.005224248394370079,
+     "gen_s": 0.12998150661587715,
+     "record_rollout_s": 0.0011053085327148438,
+     "record_trainer_s": 0.00408785417675972,
+     "trainer_logprob_s": 0.014103475958108902,
+     "train_s": 0.03207146190106869,
+     "snapshot_s": 0.010348344221711159,
+     "step_s": 0.22031900472939014
+    },
+    {
+     "k": 10,
+     "reward": 0.2841089466089466,
+     "loss": -0.4280460476875305,
+     "versions": [
+      8,
+      9
+     ],
+     "trainer_version": 10,
+     "mixed_sequences": 11,
+     "tokens": 125,
+     "fingerprint_trainer_s": 0.005496447905898094,
+     "gen_s": 0.13887157663702965,
+     "record_rollout_s": 0.0011459924280643463,
+     "record_trainer_s": 0.004296209663152695,
+     "trainer_logprob_s": 0.014579670503735542,
+     "train_s": 0.03273407183587551,
+     "snapshot_s": 0.009694788604974747,
+     "step_s": 0.231657013297081
+    },
+    {
+     "k": 11,
+     "reward": 0.221387987012987,
+     "loss": 0.16445887088775635,
+     "versions": [
+      9,
+      10
+     ],
+     "trainer_version": 11,
+     "mixed_sequences": 11,
+     "tokens": 113,
+     "fingerprint_trainer_s": 0.00594162754714489,
+     "gen_s": 0.1035107783973217,
+     "record_rollout_s": 0.0010999683290719986,
+     "record_trainer_s": 0.0041720569133758545,
+     "trainer_logprob_s": 0.013138923794031143,
+     "train_s": 0.031128037720918655,
+     "snapshot_s": 0.009570641443133354,
+     "step_s": 0.19319630227982998
+    }
+   ],
+   "split": {
+    "tokens": 1419,
+    "mixed_version_tokens": 852,
+    "numeric_zero": 567,
+    "numeric_nonzero": 0,
+    "numeric_missing": 0,
+    "staleness_zero": 141,
+    "staleness_nonzero": 426,
+    "staleness_zero_points": 119,
+    "mixed_sequences": 105
+   },
+   "replays": 20,
+   "harness_calls": 55,
+   "harness_s": 7.8
+  },
+  "stock": {
+   "split": {
+    "tokens": 448,
+    "mixed_version_tokens": 0,
+    "numeric_zero": 82,
+    "numeric_nonzero": 366,
+    "numeric_missing": 0,
+    "staleness_zero": 448,
+    "staleness_nonzero": 0,
+    "staleness_zero_points": 448,
+    "mixed_sequences": 0
+   },
+   "localize": {
+    "numeric_nonzero": 82,
+    "tokens": 98,
+    "token": {
+     "seq_id": 4,
+     "position": 4,
+     "scoring_row": [
+      4,
+      3
+     ]
+    },
+    "recapture_trainer_s": 0.11509217694401741,
+    "recapture_rollout_s": 0.6174007039517164,
+    "recapture_reproduces_online_rollout": true,
+    "recapture_rollout_vs_trainer_equal_tokens": 16,
+    "artifact_bytes": 257585,
+    "first_diff": {
+     "observed_diffs": 0,
+     "says_silence_is_not_evidence": true,
+     "functions_with_different_call_counts": [
+      30
+     ]
+    },
+    "walk": [
+     {
+      "point": "model.embed_tokens.outputs[0]",
+      "producer": "embedding",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.input_layernorm.inputs[0]",
+      "producer": "residual stream",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.input_layernorm.outputs[0]",
+      "producer": "model.layers.0.input_layernorm (RMSNorm)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.rope.inputs[0]",
+      "producer": "model.layers.0.self_attn.q_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.rope.inputs[1]",
+      "producer": "model.layers.0.self_attn.k_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.rope.outputs[0]",
+      "producer": "model.layers.0.self_attn.rope (q)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.o_proj.inputs[0]",
+      "producer": "model.layers.0 attention (trainer core / engine paged kernel)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.o_proj.outputs[0]",
+      "producer": "model.layers.0.self_attn.o_proj",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.post_attention_layernorm.inputs[0]",
+      "producer": "model.layers.0 residual add (attention)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.post_attention_layernorm.outputs[0]",
+      "producer": "model.layers.0.post_attention_layernorm (RMSNorm)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.gate_proj.outputs[0]",
+      "producer": "model.layers.0.mlp.gate_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.up_proj.outputs[0]",
+      "producer": "model.layers.0.mlp.up_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.act.outputs[0]",
+      "producer": "model.layers.0.mlp.act (SiluMul)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.down_proj.outputs[0]",
+      "producer": "model.layers.0.mlp.down_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.input_layernorm.inputs[0]",
+      "producer": "residual stream",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.input_layernorm.outputs[0]",
+      "producer": "model.layers.1.input_layernorm (RMSNorm)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.rope.inputs[0]",
+      "producer": "model.layers.1.self_attn.q_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.rope.inputs[1]",
+      "producer": "model.layers.1.self_attn.k_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0,
+       1
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.rope.outputs[0]",
+      "producer": "model.layers.1.self_attn.rope (q)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.o_proj.inputs[0]",
+      "producer": "model.layers.1 attention (trainer core / engine paged kernel)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.o_proj.outputs[0]",
+      "producer": "model.layers.1.self_attn.o_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.post_attention_layernorm.inputs[0]",
+      "producer": "model.layers.1 residual add (attention)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.post_attention_layernorm.outputs[0]",
+      "producer": "model.layers.1.post_attention_layernorm (RMSNorm)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.gate_proj.outputs[0]",
+      "producer": "model.layers.1.mlp.gate_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.up_proj.outputs[0]",
+      "producer": "model.layers.1.mlp.up_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.act.outputs[0]",
+      "producer": "model.layers.1.mlp.act (SiluMul)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.down_proj.outputs[0]",
+      "producer": "model.layers.1.mlp.down_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.norm.inputs[0]",
+      "producer": "residual add (last MLP)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.norm.outputs[0]",
+      "producer": "model.norm",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "lm_head.outputs[0]",
+      "producer": "lm_head",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 174,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "logprobs.outputs[0]",
+      "producer": "log_softmax",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 90,
+       "zero_row": 0
+      }
+     }
+    ],
+    "candidate": {
+     "op": "model.layers.0.mlp.gate_proj",
+     "observed_at": "model.layers.0.mlp.gate_proj.outputs[0]",
+     "input_agrees_at": "model.layers.0.post_attention_layernorm.outputs[0]",
+     "differing_vectors": [
+      0
+     ],
+     "pair": "same input row on both sides, different output row of the same width"
+    },
+    "forward_index": 1,
+    "harness_calls": 49,
+    "validate": {
+     "rollout_fault": null,
+     "equal_to_trainer": 98,
+     "tokens": 98
+    }
+   },
+   "steps": [
+    {
+     "k": 0,
+     "reward": 0.10615530303030303,
+     "loss": 0.13241250813007355,
+     "versions": [
+      0
+     ],
+     "trainer_version": 0,
+     "mixed_sequences": 0,
+     "tokens": 119,
+     "fingerprint_trainer_s": 0.012649893760681152,
+     "load_s": 0.0029186829924583435,
+     "fingerprint_rollout_s": 0.00601700134575367,
+     "record_trainer_s": 0.0031262990087270737,
+     "gen_s": 1.1948897503316402,
+     "record_rollout_s": 0.0015712920576334,
+     "trainer_logprob_s": 0.018613137304782867,
+     "train_s": 0.028500281274318695,
+     "snapshot_s": 0.00754161924123764,
+     "step_s": 3.8217117115855217
+    },
+    {
+     "k": 1,
+     "reward": 0.15694444444444444,
+     "loss": -0.14930298924446106,
+     "versions": [
+      1
+     ],
+     "trainer_version": 1,
+     "mixed_sequences": 0,
+     "tokens": 98,
+     "fingerprint_trainer_s": 0.003551684319972992,
+     "load_s": 0.0026572830975055695,
+     "fingerprint_rollout_s": 0.002560654655098915,
+     "record_trainer_s": 0.0025858525186777115,
+     "gen_s": 0.11816002801060677,
+     "record_rollout_s": 0.0010988246649503708,
+     "trainer_logprob_s": 0.014460667967796326,
+     "train_s": 0.024617182090878487,
+     "snapshot_s": 0.01060386560857296,
+     "step_s": 0.2050235103815794
+    },
+    {
+     "k": 2,
+     "reward": 0.30622970779220776,
+     "loss": -0.5074019432067871,
+     "versions": [
+      2
+     ],
+     "trainer_version": 2,
+     "mixed_sequences": 0,
+     "tokens": 114,
+     "fingerprint_trainer_s": 0.004521990194916725,
+     "load_s": 0.0028953496366739273,
+     "fingerprint_rollout_s": 0.0030628908425569534,
+     "record_trainer_s": 0.003095986321568489,
+     "gen_s": 0.13807954639196396,
+     "record_rollout_s": 0.001114794984459877,
+     "trainer_logprob_s": 0.013728020712733269,
+     "train_s": 0.02611854486167431,
+     "snapshot_s": 0.00794142670929432,
+     "step_s": 0.2281840182840824
+    },
+    {
+     "k": 3,
+     "reward": 0.1310515873015873,
+     "loss": -0.3596442937850952,
+     "versions": [
+      3
+     ],
+     "trainer_version": 3,
+     "mixed_sequences": 0,
+     "tokens": 117,
+     "fingerprint_trainer_s": 0.004895299673080444,
+     "load_s": 0.002865217626094818,
+     "fingerprint_rollout_s": 0.002366079017519951,
+     "record_trainer_s": 0.0028171930462121964,
+     "gen_s": 0.12332343496382236,
+     "record_rollout_s": 0.0011885836720466614,
+     "trainer_logprob_s": 0.014001023024320602,
+     "train_s": 0.02489139884710312,
+     "snapshot_s": 0.009522033855319023,
+     "step_s": 0.211211321875453
+    }
+   ]
+  },
+  "norm": {
+   "split": {
+    "tokens": 448,
+    "mixed_version_tokens": 0,
+    "numeric_zero": 4,
+    "numeric_nonzero": 444,
+    "numeric_missing": 0,
+    "staleness_zero": 448,
+    "staleness_nonzero": 0,
+    "staleness_zero_points": 448,
+    "mixed_sequences": 0
+   },
+   "localize": {
+    "numeric_nonzero": 98,
+    "tokens": 98,
+    "token": {
+     "seq_id": 4,
+     "position": 3,
+     "scoring_row": [
+      4,
+      2
+     ]
+    },
+    "recapture_trainer_s": 0.1154616717249155,
+    "recapture_rollout_s": 0.36401192471385,
+    "recapture_reproduces_online_rollout": true,
+    "recapture_rollout_vs_trainer_equal_tokens": 0,
+    "artifact_bytes": 259390,
+    "first_diff": {
+     "observed_diffs": 0,
+     "says_silence_is_not_evidence": true,
+     "functions_with_different_call_counts": [
+      30
+     ]
+    },
+    "walk": [
+     {
+      "point": "model.embed_tokens.outputs[0]",
+      "producer": "embedding",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 28,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.input_layernorm.inputs[0]",
+      "producer": "residual stream",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 28,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.input_layernorm.outputs[0]",
+      "producer": "model.layers.0.input_layernorm (RMSNorm)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.rope.inputs[0]",
+      "producer": "model.layers.0.self_attn.q_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.rope.inputs[1]",
+      "producer": "model.layers.0.self_attn.k_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0,
+       1
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.rope.outputs[0]",
+      "producer": "model.layers.0.self_attn.rope (q)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.o_proj.inputs[0]",
+      "producer": "model.layers.0 attention (trainer core / engine paged kernel)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 8,
+       "differ": 20,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 8
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.o_proj.outputs[0]",
+      "producer": "model.layers.0.self_attn.o_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.post_attention_layernorm.inputs[0]",
+      "producer": "model.layers.0 residual add (attention)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.post_attention_layernorm.outputs[0]",
+      "producer": "model.layers.0.post_attention_layernorm (RMSNorm)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.gate_proj.outputs[0]",
+      "producer": "model.layers.0.mlp.gate_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.up_proj.outputs[0]",
+      "producer": "model.layers.0.mlp.up_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.act.outputs[0]",
+      "producer": "model.layers.0.mlp.act (SiluMul)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.down_proj.outputs[0]",
+      "producer": "model.layers.0.mlp.down_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.input_layernorm.inputs[0]",
+      "producer": "residual stream",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.input_layernorm.outputs[0]",
+      "producer": "model.layers.1.input_layernorm (RMSNorm)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.rope.inputs[0]",
+      "producer": "model.layers.1.self_attn.q_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.rope.inputs[1]",
+      "producer": "model.layers.1.self_attn.k_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0,
+       1
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.rope.outputs[0]",
+      "producer": "model.layers.1.self_attn.rope (q)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.o_proj.inputs[0]",
+      "producer": "model.layers.1 attention (trainer core / engine paged kernel)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 8,
+       "differ": 20,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 8
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.o_proj.outputs[0]",
+      "producer": "model.layers.1.self_attn.o_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.post_attention_layernorm.inputs[0]",
+      "producer": "model.layers.1 residual add (attention)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.post_attention_layernorm.outputs[0]",
+      "producer": "model.layers.1.post_attention_layernorm (RMSNorm)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.gate_proj.outputs[0]",
+      "producer": "model.layers.1.mlp.gate_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.up_proj.outputs[0]",
+      "producer": "model.layers.1.mlp.up_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.act.outputs[0]",
+      "producer": "model.layers.1.mlp.act (SiluMul)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.down_proj.outputs[0]",
+      "producer": "model.layers.1.mlp.down_proj",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.norm.inputs[0]",
+      "producer": "residual add (last MLP)",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.norm.outputs[0]",
+      "producer": "model.norm",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "lm_head.outputs[0]",
+      "producer": "lm_head",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 28,
+       "missing_left": 0,
+       "missing_right": 154,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "logprobs.outputs[0]",
+      "producer": "log_softmax",
+      "studied_row": "differ",
+      "differing_vectors": [
+       0
+      ],
+      "forward_rows": {
+       "equal": 0,
+       "equal_zero_only": 0,
+       "differ": 8,
+       "missing_left": 0,
+       "missing_right": 90,
+       "zero_row": 0
+      }
+     }
+    ],
+    "candidate": {
+     "op": "model.layers.0.input_layernorm (RMSNorm)",
+     "observed_at": "model.layers.0.input_layernorm.outputs[0]",
+     "input_agrees_at": "model.layers.0.input_layernorm.inputs[0]",
+     "differing_vectors": [
+      0
+     ],
+     "pair": "same input row on both sides, different output row of the same width"
+    },
+    "forward_index": 0,
+    "harness_calls": 49,
+    "validate": {
+     "rollout_fault": null,
+     "equal_to_trainer": 98,
+     "tokens": 98
+    }
+   },
+   "steps": [
+    {
+     "k": 0,
+     "reward": 0.1214330808080808,
+     "loss": 0.3524531126022339,
+     "versions": [
+      0
+     ],
+     "trainer_version": 0,
+     "mixed_sequences": 0,
+     "tokens": 119,
+     "fingerprint_trainer_s": 0.013375099748373032,
+     "load_s": 0.002503136172890663,
+     "fingerprint_rollout_s": 0.005805009976029396,
+     "record_trainer_s": 0.002717766910791397,
+     "gen_s": 1.724037941545248,
+     "record_rollout_s": 0.0016078222543001175,
+     "trainer_logprob_s": 0.016725817695260048,
+     "train_s": 0.02759763039648533,
+     "snapshot_s": 0.008335182443261147,
+     "step_s": 4.326266046613455
+    },
+    {
+     "k": 1,
+     "reward": 0.19635416666666666,
+     "loss": -0.2687567472457886,
+     "versions": [
+      1
+     ],
+     "trainer_version": 1,
+     "mixed_sequences": 0,
+     "tokens": 98,
+     "fingerprint_trainer_s": 0.004192376509308815,
+     "load_s": 0.002850200980901718,
+     "fingerprint_rollout_s": 0.003761809319257736,
+     "record_trainer_s": 0.0030366331338882446,
+     "gen_s": 0.11370929330587387,
+     "record_rollout_s": 0.0010765790939331055,
+     "trainer_logprob_s": 0.01435629278421402,
+     "train_s": 0.03489416465163231,
+     "snapshot_s": 0.01084529422223568,
+     "step_s": 0.2178229819983244
+    },
+    {
+     "k": 2,
+     "reward": 0.19742288961038962,
+     "loss": 0.3571974039077759,
+     "versions": [
+      2
+     ],
+     "trainer_version": 2,
+     "mixed_sequences": 0,
+     "tokens": 114,
+     "fingerprint_trainer_s": 0.00502413883805275,
+     "load_s": 0.0027563627809286118,
+     "fingerprint_rollout_s": 0.003650873899459839,
+     "record_trainer_s": 0.0033935904502868652,
+     "gen_s": 0.1362440474331379,
+     "record_rollout_s": 0.001127948984503746,
+     "trainer_logprob_s": 0.014164838939905167,
+     "train_s": 0.03417806327342987,
+     "snapshot_s": 0.010687729343771935,
+     "step_s": 0.24422523751854897
+    },
+    {
+     "k": 3,
+     "reward": 0.13095238095238096,
+     "loss": 0.4254702031612396,
+     "versions": [
+      3
+     ],
+     "trainer_version": 3,
+     "mixed_sequences": 0,
+     "tokens": 117,
+     "fingerprint_trainer_s": 0.004196193069219589,
+     "load_s": 0.002801874652504921,
+     "fingerprint_rollout_s": 0.0036701876670122147,
+     "record_trainer_s": 0.0032932162284851074,
+     "gen_s": 0.11790914088487625,
+     "record_rollout_s": 0.0014056600630283356,
+     "trainer_logprob_s": 0.013588402420282364,
+     "train_s": 0.032496269792318344,
+     "snapshot_s": 0.010019861161708832,
+     "step_s": 0.22226428985595703
+    }
+   ]
+  },
+  "sync_bug": {
+   "weight_sync_unmatched": {
+    "1": {
+     "trainer": [
+      [
+       "model.layers.0.self_attn.k_proj.weight",
+       [
+        3
+       ]
+      ]
+     ],
+     "rollout": [
+      [
+       "model.layers.0.self_attn.qkv_proj.weight",
+       [
+        259
+       ]
+      ]
+     ]
+    },
+    "2": {
+     "trainer": [
+      [
+       "model.layers.1.mlp.down_proj.weight",
+       [
+        7
+       ]
+      ]
+     ],
+     "rollout": [
+      [
+       "model.layers.1.mlp.down_proj.weight",
+       [
+        7
+       ]
+      ]
+     ]
+    }
+   },
+   "decompose_at_faulty_versions": {
+    "1": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 19,
+     "numeric_nonzero": 79,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "2": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 31,
+     "numeric_nonzero": 83,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   }
+  },
+  "version": {
+   "split_per_batch": {
+    "0": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "1": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 98,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "2": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 0,
+     "numeric_nonzero": 114,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "3": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 117,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   "localize": {
+    "numeric_nonzero": 114,
+    "tokens": 114,
+    "token": {
+     "seq_id": 0,
+     "position": 3,
+     "scoring_row": [
+      0,
+      2
+     ]
+    },
+    "recapture_trainer_s": 0.10453533381223679,
+    "recapture_rollout_s": 0.3790111728012562,
+    "recapture_reproduces_online_rollout": false,
+    "recapture_rollout_vs_trainer_equal_tokens": 114,
+    "artifact_bytes": 265974,
+    "first_diff": {
+     "observed_diffs": 0,
+     "says_silence_is_not_evidence": true,
+     "functions_with_different_call_counts": [
+      30
+     ]
+    },
+    "walk": [
+     {
+      "point": "model.embed_tokens.outputs[0]",
+      "producer": "embedding",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.input_layernorm.inputs[0]",
+      "producer": "residual stream",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.input_layernorm.outputs[0]",
+      "producer": "model.layers.0.input_layernorm (RMSNorm)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.rope.inputs[0]",
+      "producer": "model.layers.0.self_attn.q_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.rope.inputs[1]",
+      "producer": "model.layers.0.self_attn.k_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.rope.outputs[0]",
+      "producer": "model.layers.0.self_attn.rope (q)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.o_proj.inputs[0]",
+      "producer": "model.layers.0 attention (trainer core / engine paged kernel)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 24,
+       "equal_zero_only": 8,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 8
+      }
+     },
+     {
+      "point": "model.layers.0.self_attn.o_proj.outputs[0]",
+      "producer": "model.layers.0.self_attn.o_proj",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.post_attention_layernorm.inputs[0]",
+      "producer": "model.layers.0 residual add (attention)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.post_attention_layernorm.outputs[0]",
+      "producer": "model.layers.0.post_attention_layernorm (RMSNorm)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.gate_proj.outputs[0]",
+      "producer": "model.layers.0.mlp.gate_proj",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.up_proj.outputs[0]",
+      "producer": "model.layers.0.mlp.up_proj",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.act.outputs[0]",
+      "producer": "model.layers.0.mlp.act (SiluMul)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.0.mlp.down_proj.outputs[0]",
+      "producer": "model.layers.0.mlp.down_proj",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.input_layernorm.inputs[0]",
+      "producer": "residual stream",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.input_layernorm.outputs[0]",
+      "producer": "model.layers.1.input_layernorm (RMSNorm)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.rope.inputs[0]",
+      "producer": "model.layers.1.self_attn.q_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.rope.inputs[1]",
+      "producer": "model.layers.1.self_attn.k_proj (trainer) / qkv_proj + split (rollout)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.rope.outputs[0]",
+      "producer": "model.layers.1.self_attn.rope (q)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.o_proj.inputs[0]",
+      "producer": "model.layers.1 attention (trainer core / engine paged kernel)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 24,
+       "equal_zero_only": 8,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 8
+      }
+     },
+     {
+      "point": "model.layers.1.self_attn.o_proj.outputs[0]",
+      "producer": "model.layers.1.self_attn.o_proj",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.post_attention_layernorm.inputs[0]",
+      "producer": "model.layers.1 residual add (attention)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.post_attention_layernorm.outputs[0]",
+      "producer": "model.layers.1.post_attention_layernorm (RMSNorm)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.gate_proj.outputs[0]",
+      "producer": "model.layers.1.mlp.gate_proj",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.up_proj.outputs[0]",
+      "producer": "model.layers.1.mlp.up_proj",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.act.outputs[0]",
+      "producer": "model.layers.1.mlp.act (SiluMul)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.layers.1.mlp.down_proj.outputs[0]",
+      "producer": "model.layers.1.mlp.down_proj",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.norm.inputs[0]",
+      "producer": "residual add (last MLP)",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "model.norm.outputs[0]",
+      "producer": "model.norm",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "lm_head.outputs[0]",
+      "producer": "lm_head",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 32,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 158,
+       "zero_row": 0
+      }
+     },
+     {
+      "point": "logprobs.outputs[0]",
+      "producer": "log_softmax",
+      "studied_row": "equal",
+      "differing_vectors": [],
+      "forward_rows": {
+       "equal": 8,
+       "equal_zero_only": 0,
+       "differ": 0,
+       "missing_left": 0,
+       "missing_right": 106,
+       "zero_row": 0
+      }
+     }
+    ],
+    "candidate": null,
+    "forward_index": 0,
+    "harness_calls": 49
+   },
+   "hypothesis": {
+    "tokens": 114,
+    "mixed_sequences": 0,
+    "mixed_version_tokens": 0,
+    "staleness_zero_points": 0,
+    "numeric_zero": 114,
+    "numeric_nonzero": 0,
+    "numeric_missing": 0,
+    "staleness_zero": 0,
+    "staleness_nonzero": 114,
+    "staleness_missing": 0
+   }
+  },
+  "split_rows": [
+   {
+    "k": 0,
+    "before_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 1,
+    "before_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 98,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 98,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 2,
+    "before_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 114,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 114,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 3,
+    "before_replay": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 117,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 117,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 4,
+    "before_replay": {
+     "tokens": 125,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 125,
+     "numeric_zero": 125,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 125,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 125,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 125,
+     "numeric_zero": 125,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 125,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 5,
+    "before_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 6,
+    "before_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 114,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 114,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 7,
+    "before_replay": {
+     "tokens": 139,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 139,
+     "numeric_zero": 139,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 139,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 139,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 139,
+     "numeric_zero": 139,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 139,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 8,
+    "before_replay": {
+     "tokens": 128,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 128,
+     "numeric_zero": 128,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 128,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 128,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 128,
+     "numeric_zero": 128,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 128,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 9,
+    "before_replay": {
+     "tokens": 108,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 108,
+     "numeric_zero": 108,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 108,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 108,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 108,
+     "numeric_zero": 108,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 108,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 10,
+    "before_replay": {
+     "tokens": 125,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 125,
+     "numeric_zero": 125,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 125,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 125,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 125,
+     "numeric_zero": 125,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 125,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 11,
+    "before_replay": {
+     "tokens": 113,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 113,
+     "numeric_zero": 113,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 113,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 113,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 113,
+     "numeric_zero": 113,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 113,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 0,
+    "before_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 1,
+    "before_replay": {
+     "tokens": 98,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 62,
+     "staleness_zero_points": 25,
+     "numeric_zero": 25,
+     "numeric_nonzero": 0,
+     "numeric_missing": 11,
+     "staleness_zero": 25,
+     "staleness_nonzero": 0,
+     "staleness_missing": 11
+    },
+    "after_replay": {
+     "tokens": 98,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 62,
+     "staleness_zero_points": 25,
+     "numeric_zero": 36,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 25,
+     "staleness_nonzero": 11,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 2,
+    "before_replay": {
+     "tokens": 114,
+     "mixed_sequences": 12,
+     "mixed_version_tokens": 89,
+     "staleness_zero_points": 25,
+     "numeric_zero": 25,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 25,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 114,
+     "mixed_sequences": 12,
+     "mixed_version_tokens": 89,
+     "staleness_zero_points": 25,
+     "numeric_zero": 25,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 25,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 3,
+    "before_replay": {
+     "tokens": 117,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 74,
+     "staleness_zero_points": 31,
+     "numeric_zero": 31,
+     "numeric_nonzero": 0,
+     "numeric_missing": 12,
+     "staleness_zero": 31,
+     "staleness_nonzero": 0,
+     "staleness_missing": 12
+    },
+    "after_replay": {
+     "tokens": 117,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 74,
+     "staleness_zero_points": 31,
+     "numeric_zero": 43,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 31,
+     "staleness_nonzero": 12,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 4,
+    "before_replay": {
+     "tokens": 125,
+     "mixed_sequences": 10,
+     "mixed_version_tokens": 81,
+     "staleness_zero_points": 37,
+     "numeric_zero": 37,
+     "numeric_nonzero": 0,
+     "numeric_missing": 7,
+     "staleness_zero": 37,
+     "staleness_nonzero": 0,
+     "staleness_missing": 7
+    },
+    "after_replay": {
+     "tokens": 125,
+     "mixed_sequences": 10,
+     "mixed_version_tokens": 81,
+     "staleness_zero_points": 37,
+     "numeric_zero": 44,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 37,
+     "staleness_nonzero": 7,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 5,
+    "before_replay": {
+     "tokens": 119,
+     "mixed_sequences": 10,
+     "mixed_version_tokens": 87,
+     "staleness_zero_points": 25,
+     "numeric_zero": 25,
+     "numeric_nonzero": 0,
+     "numeric_missing": 7,
+     "staleness_zero": 25,
+     "staleness_nonzero": 0,
+     "staleness_missing": 7
+    },
+    "after_replay": {
+     "tokens": 119,
+     "mixed_sequences": 10,
+     "mixed_version_tokens": 87,
+     "staleness_zero_points": 25,
+     "numeric_zero": 32,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 25,
+     "staleness_nonzero": 7,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 6,
+    "before_replay": {
+     "tokens": 114,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 87,
+     "staleness_zero_points": 23,
+     "numeric_zero": 23,
+     "numeric_nonzero": 0,
+     "numeric_missing": 4,
+     "staleness_zero": 23,
+     "staleness_nonzero": 0,
+     "staleness_missing": 4
+    },
+    "after_replay": {
+     "tokens": 114,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 87,
+     "staleness_zero_points": 23,
+     "numeric_zero": 27,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 23,
+     "staleness_nonzero": 4,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 7,
+    "before_replay": {
+     "tokens": 139,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 103,
+     "staleness_zero_points": 32,
+     "numeric_zero": 32,
+     "numeric_nonzero": 0,
+     "numeric_missing": 4,
+     "staleness_zero": 32,
+     "staleness_nonzero": 0,
+     "staleness_missing": 4
+    },
+    "after_replay": {
+     "tokens": 139,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 103,
+     "staleness_zero_points": 32,
+     "numeric_zero": 36,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 32,
+     "staleness_nonzero": 4,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 8,
+    "before_replay": {
+     "tokens": 128,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 92,
+     "staleness_zero_points": 32,
+     "numeric_zero": 32,
+     "numeric_nonzero": 0,
+     "numeric_missing": 4,
+     "staleness_zero": 32,
+     "staleness_nonzero": 0,
+     "staleness_missing": 4
+    },
+    "after_replay": {
+     "tokens": 128,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 92,
+     "staleness_zero_points": 32,
+     "numeric_zero": 36,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 32,
+     "staleness_nonzero": 4,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 9,
+    "before_replay": {
+     "tokens": 108,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 66,
+     "staleness_zero_points": 31,
+     "numeric_zero": 31,
+     "numeric_nonzero": 0,
+     "numeric_missing": 11,
+     "staleness_zero": 31,
+     "staleness_nonzero": 0,
+     "staleness_missing": 11
+    },
+    "after_replay": {
+     "tokens": 108,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 66,
+     "staleness_zero_points": 31,
+     "numeric_zero": 42,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 31,
+     "staleness_nonzero": 11,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 10,
+    "before_replay": {
+     "tokens": 125,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 85,
+     "staleness_zero_points": 36,
+     "numeric_zero": 36,
+     "numeric_nonzero": 0,
+     "numeric_missing": 4,
+     "staleness_zero": 36,
+     "staleness_nonzero": 0,
+     "staleness_missing": 4
+    },
+    "after_replay": {
+     "tokens": 125,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 85,
+     "staleness_zero_points": 36,
+     "numeric_zero": 40,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 36,
+     "staleness_nonzero": 4,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 11,
+    "before_replay": {
+     "tokens": 113,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 88,
+     "staleness_zero_points": 22,
+     "numeric_zero": 22,
+     "numeric_nonzero": 0,
+     "numeric_missing": 3,
+     "staleness_zero": 22,
+     "staleness_nonzero": 0,
+     "staleness_missing": 3
+    },
+    "after_replay": {
+     "tokens": 113,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 88,
+     "staleness_zero_points": 22,
+     "numeric_zero": 25,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 22,
+     "staleness_nonzero": 3,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 0,
+    "before_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 1,
+    "before_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 98,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 98
+    },
+    "after_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 0,
+     "numeric_zero": 98,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 0,
+     "staleness_nonzero": 98,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 2,
+    "before_replay": {
+     "tokens": 114,
+     "mixed_sequences": 12,
+     "mixed_version_tokens": 89,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 25,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 25
+    },
+    "after_replay": {
+     "tokens": 114,
+     "mixed_sequences": 12,
+     "mixed_version_tokens": 89,
+     "staleness_zero_points": 0,
+     "numeric_zero": 25,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 0,
+     "staleness_nonzero": 25,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 3,
+    "before_replay": {
+     "tokens": 117,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 74,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 43,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 43
+    },
+    "after_replay": {
+     "tokens": 117,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 74,
+     "staleness_zero_points": 0,
+     "numeric_zero": 43,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 2,
+     "staleness_nonzero": 41,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 4,
+    "before_replay": {
+     "tokens": 125,
+     "mixed_sequences": 10,
+     "mixed_version_tokens": 81,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 44,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 44
+    },
+    "after_replay": {
+     "tokens": 125,
+     "mixed_sequences": 10,
+     "mixed_version_tokens": 81,
+     "staleness_zero_points": 0,
+     "numeric_zero": 44,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 0,
+     "staleness_nonzero": 44,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 5,
+    "before_replay": {
+     "tokens": 119,
+     "mixed_sequences": 10,
+     "mixed_version_tokens": 87,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 32,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 32
+    },
+    "after_replay": {
+     "tokens": 119,
+     "mixed_sequences": 10,
+     "mixed_version_tokens": 87,
+     "staleness_zero_points": 0,
+     "numeric_zero": 32,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 4,
+     "staleness_nonzero": 28,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 6,
+    "before_replay": {
+     "tokens": 114,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 87,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 27,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 27
+    },
+    "after_replay": {
+     "tokens": 114,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 87,
+     "staleness_zero_points": 0,
+     "numeric_zero": 27,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 0,
+     "staleness_nonzero": 27,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 7,
+    "before_replay": {
+     "tokens": 139,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 103,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 36,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 36
+    },
+    "after_replay": {
+     "tokens": 139,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 103,
+     "staleness_zero_points": 0,
+     "numeric_zero": 36,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 1,
+     "staleness_nonzero": 35,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 8,
+    "before_replay": {
+     "tokens": 128,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 92,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 36,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 36
+    },
+    "after_replay": {
+     "tokens": 128,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 92,
+     "staleness_zero_points": 0,
+     "numeric_zero": 36,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 4,
+     "staleness_nonzero": 32,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 9,
+    "before_replay": {
+     "tokens": 108,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 66,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 42,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 42
+    },
+    "after_replay": {
+     "tokens": 108,
+     "mixed_sequences": 9,
+     "mixed_version_tokens": 66,
+     "staleness_zero_points": 0,
+     "numeric_zero": 42,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 5,
+     "staleness_nonzero": 37,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 10,
+    "before_replay": {
+     "tokens": 125,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 85,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 40,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 40
+    },
+    "after_replay": {
+     "tokens": 125,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 85,
+     "staleness_zero_points": 0,
+     "numeric_zero": 40,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 3,
+     "staleness_nonzero": 37,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 11,
+    "before_replay": {
+     "tokens": 113,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 88,
+     "staleness_zero_points": 0,
+     "numeric_zero": 0,
+     "numeric_nonzero": 0,
+     "numeric_missing": 25,
+     "staleness_zero": 0,
+     "staleness_nonzero": 0,
+     "staleness_missing": 25
+    },
+    "after_replay": {
+     "tokens": 113,
+     "mixed_sequences": 11,
+     "mixed_version_tokens": 88,
+     "staleness_zero_points": 0,
+     "numeric_zero": 25,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 3,
+     "staleness_nonzero": 22,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 0,
+    "before_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 16,
+     "numeric_nonzero": 103,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 16,
+     "numeric_nonzero": 103,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 1,
+    "before_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 16,
+     "numeric_nonzero": 82,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 16,
+     "numeric_nonzero": 82,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 2,
+    "before_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 24,
+     "numeric_nonzero": 90,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 24,
+     "numeric_nonzero": 90,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 3,
+    "before_replay": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 26,
+     "numeric_nonzero": 91,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 26,
+     "numeric_nonzero": 91,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 0,
+    "before_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 0,
+     "numeric_nonzero": 119,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 0,
+     "numeric_nonzero": 119,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 1,
+    "before_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 0,
+     "numeric_nonzero": 98,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 0,
+     "numeric_nonzero": 98,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 2,
+    "before_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 0,
+     "numeric_nonzero": 114,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 0,
+     "numeric_nonzero": 114,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 3,
+    "before_replay": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 4,
+     "numeric_nonzero": 113,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 4,
+     "numeric_nonzero": 113,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 0,
+    "before_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 119,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 119,
+     "numeric_zero": 119,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 119,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 1,
+    "before_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 98,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 98,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 98,
+     "numeric_zero": 98,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 98,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 2,
+    "before_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 0,
+     "numeric_nonzero": 114,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 114,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 114,
+     "numeric_zero": 0,
+     "numeric_nonzero": 114,
+     "numeric_missing": 0,
+     "staleness_zero": 114,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   },
+   {
+    "k": 3,
+    "before_replay": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 117,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    },
+    "after_replay": {
+     "tokens": 117,
+     "mixed_sequences": 0,
+     "mixed_version_tokens": 0,
+     "staleness_zero_points": 117,
+     "numeric_zero": 117,
+     "numeric_nonzero": 0,
+     "numeric_missing": 0,
+     "staleness_zero": 117,
+     "staleness_nonzero": 0,
+     "staleness_missing": 0
+    }
+   }
+  ],
+  "runtime_s": 140.6
+ }
+}

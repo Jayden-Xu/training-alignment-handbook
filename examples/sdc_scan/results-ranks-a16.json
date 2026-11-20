@@ -1,0 +1,153 @@
+{
+ "schema": "bi-results-v1",
+ "example": "sdc_scan_ranks",
+ "quick": false,
+ "argv": [
+  "guard_demo.py",
+  "--part",
+  "ranks",
+  "--json",
+  "results-ranks-a16.json"
+ ],
+ "env": {
+  "python": "3.11.14",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "535.288.01"
+ },
+ "counts": {
+  "ok": 3,
+  "regression": 0,
+  "changed": 0,
+  "info": 0
+ },
+ "checks": [
+  {
+   "name": "cross_rank_check: 4 ranks compute rank 0's micro-batch, all agree",
+   "impl": "cross_rank_check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "ok": true,
+    "outliers": [],
+    "input_outliers": [],
+    "undecided": [],
+    "compared": {
+     "415440496": [
+      0,
+      1,
+      2,
+      3
+     ]
+    },
+    "groups": 1,
+    "src": 0,
+    "ranks": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "outputs": 1
+   }
+  },
+  {
+   "name": "cross_rank_check: a bit flipped on rank 3's output names rank 3",
+   "impl": "cross_rank_check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "ok": false,
+    "outliers": [
+     3
+    ],
+    "input_outliers": [],
+    "undecided": [],
+    "compared": {
+     "415440496": [
+      0,
+      1,
+      2,
+      3
+     ]
+    },
+    "groups": 1,
+    "src": 0,
+    "ranks": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "outputs": 1
+   }
+  },
+  {
+   "name": "replica_check: 4 replicas hold the same parameters",
+   "impl": "replica_check",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "ok": true,
+    "outliers": [],
+    "input_outliers": [],
+    "undecided": [],
+    "compared": {
+     "415440496": [
+      0,
+      1,
+      2,
+      3
+     ]
+    },
+    "groups": 1,
+    "tensors": 36
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "cross_rank_check (broadcast, forward, fingerprints, all-gather)",
+   "value": 8.96,
+   "unit": "ms",
+   "impl": "cross_rank_check",
+   "world": 4
+  }
+ ],
+ "extra": {}
+}

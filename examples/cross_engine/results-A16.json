@@ -1,0 +1,3235 @@
+{
+ "schema": "bi-results-v1",
+ "example": "cross_engine",
+ "quick": false,
+ "argv": [
+  "cross_engine.py",
+  "--workdir",
+  "~/bi-check-l4/wf",
+  "--tput-dir",
+  "~/bi-check-l4/wt",
+  "--json",
+  "~/bi-check-l4/wf/results-A16.json"
+ ],
+ "env": {
+  "python": "3.12.16",
+  "torch": "2.10.0+cu128",
+  "cuda_build": "12.8",
+  "cudnn": 91002,
+  "nccl": "2.27.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   }
+  ],
+  "triton": "3.6.0",
+  "driver": "535.288.01"
+ },
+ "counts": {
+  "ok": 17,
+  "regression": 0,
+  "changed": 0,
+  "info": 66
+ },
+ "checks": [
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "default",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "default",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14197,
+    "logprob_differ": 11826,
+    "max_abs_dlogp": 0.35508155822753906
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "default",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 21,
+    "logprobs": 14407,
+    "logprob_differ": 13965,
+    "max_abs_dlogp": 0.40848827362060547
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "default",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 23,
+    "logprobs": 14305,
+    "logprob_differ": 13673,
+    "max_abs_dlogp": 0.40848827362060547
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "eager",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14256,
+    "logprob_differ": 11408,
+    "max_abs_dlogp": 0.3854808807373047
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 31,
+    "logprobs": 14017,
+    "logprob_differ": 13568,
+    "max_abs_dlogp": 0.45335960388183594
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 31,
+    "logprobs": 14000,
+    "logprob_differ": 13167,
+    "max_abs_dlogp": 0.45335960388183594
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "bi",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "bi",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1133,
+    "max_abs_dlogp": 0.004860281944274902
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "bi",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1133,
+    "max_abs_dlogp": 0.004860281944274902
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "bi",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1133,
+    "max_abs_dlogp": 0.004860281944274902
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "bi_eager",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "bi_eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1116,
+    "max_abs_dlogp": 0.004045248031616211
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "bi_eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1116,
+    "max_abs_dlogp": 0.004045248031616211
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "bi_eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1116,
+    "max_abs_dlogp": 0.004045248031616211
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "bi_eager_lmhead",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "bi_eager_lmhead",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "bi_eager_lmhead",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "bi_eager_lmhead",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "triton",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "triton",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 23,
+    "logprobs": 14340,
+    "logprob_differ": 11977,
+    "max_abs_dlogp": 0.420623779296875
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "triton",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 22,
+    "logprobs": 14365,
+    "logprob_differ": 13918,
+    "max_abs_dlogp": 0.45263099670410156
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "triton",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 25,
+    "logprobs": 14261,
+    "logprob_differ": 13625,
+    "max_abs_dlogp": 0.2999911308288574
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "flashinfer",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "flashinfer",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 14,
+    "logprobs": 14676,
+    "logprob_differ": 12312,
+    "max_abs_dlogp": 0.3252525329589844
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "flashinfer",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 27,
+    "logprobs": 14144,
+    "logprob_differ": 13698,
+    "max_abs_dlogp": 0.4845237731933594
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "flashinfer",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 19,
+    "logprobs": 14440,
+    "logprob_differ": 13806,
+    "max_abs_dlogp": 0.4845237731933594
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "flex",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "flex",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14320,
+    "logprob_differ": 11957,
+    "max_abs_dlogp": 0.4551124572753906
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "flex",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 25,
+    "logprobs": 14244,
+    "logprob_differ": 13798,
+    "max_abs_dlogp": 0.3678922653198242
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "flex",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14296,
+    "logprob_differ": 13658,
+    "max_abs_dlogp": 0.3678922653198242
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "bi_triton_eager",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "bi_triton_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1137,
+    "max_abs_dlogp": 0.001767873764038086
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "bi_triton_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1137,
+    "max_abs_dlogp": 0.001767873764038086
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "bi_triton_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1137,
+    "max_abs_dlogp": 0.001767873764038086
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "v063_default",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "v063_default",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14331,
+    "logprob_differ": 5157,
+    "max_abs_dlogp": 0.3854808807373047
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "v063_default",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 27,
+    "logprobs": 14147,
+    "logprob_differ": 10741,
+    "max_abs_dlogp": 0.4638381004333496
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "v063_default",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14215,
+    "logprob_differ": 8649,
+    "max_abs_dlogp": 0.684208869934082
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "v063_eager",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "v063_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14331,
+    "logprob_differ": 5157,
+    "max_abs_dlogp": 0.3854808807373047
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "v063_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 27,
+    "logprobs": 14147,
+    "logprob_differ": 10741,
+    "max_abs_dlogp": 0.4638381004333496
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "v063_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14215,
+    "logprob_differ": 8649,
+    "max_abs_dlogp": 0.684208869934082
+   }
+  },
+  {
+   "name": "forward_matched(REFERENCE) == model.py stock prefill, bitwise",
+   "impl": "trainer",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "trainer's copy of vLLM cos_sin_cache == engine's (default)",
+   "impl": "default",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine default: realized-token logprobs, all batches",
+   "impl": "default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76154,
+    "frac_differ": 0.999986868885825,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine default: realized-token logprobs, all batches",
+   "impl": "default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76152,
+    "frac_differ": 0.9999606066574749,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer matched:eager vs engine default: realized-token logprobs, all batches",
+   "impl": "default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager vs engine default: realized-token logprobs, all batches",
+   "impl": "default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76154,
+    "frac_differ": 0.999986868885825,
+    "max_abs_dlogp": 1.326385498046875,
+    "tokens_B1": 15231,
+    "differ_B1": 15230
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager_lmhead vs engine default: realized-token logprobs, all batches",
+   "impl": "default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76154,
+    "frac_differ": 0.999986868885825,
+    "max_abs_dlogp": 1.326385498046875,
+    "tokens_B1": 15231,
+    "differ_B1": 15230
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine eager: realized-token logprobs, all batches",
+   "impl": "eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76129,
+    "frac_differ": 0.999658591031449,
+    "max_abs_dlogp": 0.6329669952392578,
+    "tokens_B1": 15231,
+    "differ_B1": 15226
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine eager: realized-token logprobs, all batches",
+   "impl": "eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76060,
+    "frac_differ": 0.9987525441533714,
+    "max_abs_dlogp": 0.7343907356262207,
+    "tokens_B1": 15231,
+    "differ_B1": 15192
+   }
+  },
+  {
+   "name": "L4 trainer matched:eager vs engine eager: realized-token logprobs, all batches",
+   "impl": "eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 64285,
+    "frac_differ": 0.8441336747423018,
+    "max_abs_dlogp": 0.7343907356262207,
+    "tokens_B1": 15231,
+    "differ_B1": 5616
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager vs engine eager: realized-token logprobs, all batches",
+   "impl": "eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76151,
+    "frac_differ": 0.9999474755432999,
+    "max_abs_dlogp": 0.923551082611084,
+    "tokens_B1": 15231,
+    "differ_B1": 15230
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager_lmhead vs engine eager: realized-token logprobs, all batches",
+   "impl": "eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76151,
+    "frac_differ": 0.9999474755432999,
+    "max_abs_dlogp": 0.923551082611084,
+    "tokens_B1": 15231,
+    "differ_B1": 15230
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine bi: realized-token logprobs, all batches",
+   "impl": "bi",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76145,
+    "frac_differ": 0.9998686888582496,
+    "max_abs_dlogp": 1.1381454467773438,
+    "tokens_B1": 15231,
+    "differ_B1": 15229
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine bi: realized-token logprobs, all batches",
+   "impl": "bi",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.1381454467773438,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer matched:eager vs engine bi: realized-token logprobs, all batches",
+   "impl": "bi",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.1381454467773438,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager vs engine bi: realized-token logprobs, all batches",
+   "impl": "bi",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.181218147277832,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager_lmhead vs engine bi: realized-token logprobs, all batches",
+   "impl": "bi",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.181218147277832,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine bi_eager: realized-token logprobs, all batches",
+   "impl": "bi_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76150,
+    "frac_differ": 0.9999343444291248,
+    "max_abs_dlogp": 0.6908588409423828,
+    "tokens_B1": 15231,
+    "differ_B1": 15230
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine bi_eager: realized-token logprobs, all batches",
+   "impl": "bi_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.6019706726074219,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer matched:eager vs engine bi_eager: realized-token logprobs, all batches",
+   "impl": "bi_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.5057356357574463,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager vs engine bi_eager: realized-token logprobs, all batches",
+   "impl": "bi_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 2527,
+    "frac_differ": 0.033182325520320397,
+    "max_abs_dlogp": 0.004045248031616211,
+    "tokens_B1": 15231,
+    "differ_B1": 1319
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager_lmhead vs engine bi_eager: realized-token logprobs, all batches",
+   "impl": "bi_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 1116,
+    "frac_differ": 0.01465432341934213,
+    "max_abs_dlogp": 0.004045248031616211,
+    "tokens_B1": 15231,
+    "differ_B1": 1116
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine bi_eager_lmhead: realized-token logprobs, all batches",
+   "impl": "bi_eager_lmhead",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76150,
+    "frac_differ": 0.9999343444291248,
+    "max_abs_dlogp": 0.6908588409423828,
+    "tokens_B1": 15231,
+    "differ_B1": 15230
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine bi_eager_lmhead: realized-token logprobs, all batches",
+   "impl": "bi_eager_lmhead",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.6019706726074219,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer matched:eager vs engine bi_eager_lmhead: realized-token logprobs, all batches",
+   "impl": "bi_eager_lmhead",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.5057356357574463,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager vs engine bi_eager_lmhead: realized-token logprobs, all batches",
+   "impl": "bi_eager_lmhead",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 1510,
+    "frac_differ": 0.019827982404307005,
+    "max_abs_dlogp": 0.00041961669921875,
+    "tokens_B1": 15231,
+    "differ_B1": 302
+   }
+  },
+  {
+   "name": "L4 trainer matched:bi_eager_lmhead vs engine bi_eager_lmhead: realized-token logprobs, all batches",
+   "impl": "bi_eager_lmhead",
+   "level": "L4",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 0,
+    "frac_differ": 0.0,
+    "max_abs_dlogp": 0.0,
+    "tokens_B1": 15231,
+    "differ_B1": 0
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine triton: realized-token logprobs, all batches",
+   "impl": "triton",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76153,
+    "frac_differ": 0.9999737377716499,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine triton: realized-token logprobs, all batches",
+   "impl": "triton",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76151,
+    "frac_differ": 0.9999474755432999,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine flashinfer: realized-token logprobs, all batches",
+   "impl": "flashinfer",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine flashinfer: realized-token logprobs, all batches",
+   "impl": "flashinfer",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76151,
+    "frac_differ": 0.9999474755432999,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine flex: realized-token logprobs, all batches",
+   "impl": "flex",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76150,
+    "frac_differ": 0.9999343444291248,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15228
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine flex: realized-token logprobs, all batches",
+   "impl": "flex",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine bi_triton_eager: realized-token logprobs, all batches",
+   "impl": "bi_triton_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.6908588409423828,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine bi_triton_eager: realized-token logprobs, all batches",
+   "impl": "bi_triton_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.7128562927246094,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine v063_default: realized-token logprobs, all batches",
+   "impl": "v063_default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76134,
+    "frac_differ": 0.9997242466023242,
+    "max_abs_dlogp": 0.7448196411132812,
+    "tokens_B1": 15231,
+    "differ_B1": 15226
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine v063_default: realized-token logprobs, all batches",
+   "impl": "v063_default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 75917,
+    "frac_differ": 0.996874794826341,
+    "max_abs_dlogp": 0.7343907356262207,
+    "tokens_B1": 15231,
+    "differ_B1": 15172
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine v063_eager: realized-token logprobs, all batches",
+   "impl": "v063_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76134,
+    "frac_differ": 0.9997242466023242,
+    "max_abs_dlogp": 0.7448196411132812,
+    "tokens_B1": 15231,
+    "differ_B1": 15226
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine v063_eager: realized-token logprobs, all batches",
+   "impl": "v063_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 75917,
+    "frac_differ": 0.996874794826341,
+    "max_abs_dlogp": 0.7343907356262207,
+    "tokens_B1": 15231,
+    "differ_B1": 15172
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "engine runs wall time (0 when records were reused)",
+   "value": 5.9,
+   "unit": "s"
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 138.8,
+   "unit": "tok/s",
+   "impl": "default",
+   "median_s": 0.922,
+   "runs_s": [
+    0.917,
+    0.922,
+    0.923
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 951.9,
+   "unit": "tok/s",
+   "impl": "default",
+   "median_s": 1.076,
+   "runs_s": [
+    1.076,
+    1.075,
+    1.077
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 4067.4,
+   "unit": "tok/s",
+   "impl": "default",
+   "median_s": 2.014,
+   "runs_s": [
+    2.011,
+    2.014,
+    2.014
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 99.8,
+   "unit": "tok/s",
+   "impl": "eager",
+   "median_s": 1.283,
+   "runs_s": [
+    1.283,
+    1.279,
+    1.293
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 705.9,
+   "unit": "tok/s",
+   "impl": "eager",
+   "median_s": 1.451,
+   "runs_s": [
+    1.431,
+    1.451,
+    1.457
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 3927.7,
+   "unit": "tok/s",
+   "impl": "eager",
+   "median_s": 2.086,
+   "runs_s": [
+    2.084,
+    2.087,
+    2.086
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 85.7,
+   "unit": "tok/s",
+   "impl": "bi",
+   "median_s": 1.493,
+   "runs_s": [
+    1.493,
+    1.493,
+    1.496
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 639.4,
+   "unit": "tok/s",
+   "impl": "bi",
+   "median_s": 1.601,
+   "runs_s": [
+    1.601,
+    1.602,
+    1.601
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 3312.6,
+   "unit": "tok/s",
+   "impl": "bi",
+   "median_s": 2.473,
+   "runs_s": [
+    2.476,
+    2.473,
+    2.472
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 65.6,
+   "unit": "tok/s",
+   "impl": "bi_eager",
+   "median_s": 1.951,
+   "runs_s": [
+    1.951,
+    1.951,
+    1.944
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 469.5,
+   "unit": "tok/s",
+   "impl": "bi_eager",
+   "median_s": 2.181,
+   "runs_s": [
+    2.094,
+    2.181,
+    2.266
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 3007.2,
+   "unit": "tok/s",
+   "impl": "bi_eager",
+   "median_s": 2.724,
+   "runs_s": [
+    2.724,
+    2.77,
+    2.724
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 63.2,
+   "unit": "tok/s",
+   "impl": "bi_eager_lmhead",
+   "median_s": 2.024,
+   "runs_s": [
+    2.025,
+    2.022,
+    2.024
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 470.5,
+   "unit": "tok/s",
+   "impl": "bi_eager_lmhead",
+   "median_s": 2.176,
+   "runs_s": [
+    2.176,
+    2.176,
+    2.545
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 2959.4,
+   "unit": "tok/s",
+   "impl": "bi_eager_lmhead",
+   "median_s": 2.768,
+   "runs_s": [
+    2.776,
+    2.768,
+    2.765
+   ],
+   "setup": "128-token prompts, 128 new tokens, greedy, no logprobs; warm-up 1, median of 3; one config at a time on one GPU"
+  },
+  {
+   "name": "trainer forward+logprobs T=512: model.py stock",
+   "value": 68.28,
+   "unit": "ms",
+   "impl": "trainer"
+  },
+  {
+   "name": "trainer forward+logprobs T=512: model.py bi",
+   "value": 70.96,
+   "unit": "ms",
+   "impl": "trainer"
+  },
+  {
+   "name": "trainer forward+logprobs T=512: matched:eager",
+   "value": 65.1,
+   "unit": "ms",
+   "impl": "trainer"
+  },
+  {
+   "name": "trainer forward+logprobs T=512: matched:bi_eager",
+   "value": 65.37,
+   "unit": "ms",
+   "impl": "trainer"
+  },
+  {
+   "name": "trainer forward+logprobs T=512: matched:bi_eager_lmhead",
+   "value": 66.22,
+   "unit": "ms",
+   "impl": "trainer"
+  }
+ ],
+ "extra": {
+  "engines": {
+   "default": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 17.8
+   },
+   "eager": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 7.3
+   },
+   "bi": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 52.1
+   },
+   "bi_eager": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 5.9
+   },
+   "bi_eager_lmhead": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 4.7
+   },
+   "triton": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "TritonAttentionImpl",
+    "init_s": 27.8
+   },
+   "flashinfer": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashInferImpl",
+    "init_s": 13.4
+   },
+   "flex": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlexAttentionImpl",
+    "init_s": 20.7
+   },
+   "bi_triton_eager": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "TritonAttentionImpl",
+    "init_s": 8.9
+   },
+   "v063_default": {
+    "vllm": "0.6.3.post1",
+    "torch": "2.4.0+cu121",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 39.1
+   },
+   "v063_eager": {
+    "vllm": "0.6.3.post1",
+    "torch": "2.4.0+cu121",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 14.5
+   }
+  },
+  "engine_vs_engine_B1": {
+   "default vs eager": {
+    "prompts": 64,
+    "token_seq_differ": 23,
+    "logprobs": 14342,
+    "logprob_differ": 14342,
+    "max_abs_dlogp": 0.8323092460632324
+   },
+   "default vs bi": {
+    "prompts": 64,
+    "token_seq_differ": 31,
+    "logprobs": 13982,
+    "logprob_differ": 13982,
+    "max_abs_dlogp": 0.5505456924438477
+   },
+   "bi vs bi_eager": {
+    "prompts": 64,
+    "token_seq_differ": 30,
+    "logprobs": 14020,
+    "logprob_differ": 14020,
+    "max_abs_dlogp": 1.181218147277832
+   },
+   "bi_eager vs bi_eager_lmhead": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1116,
+    "max_abs_dlogp": 0.004045248031616211
+   },
+   "eager vs triton": {
+    "prompts": 64,
+    "token_seq_differ": 28,
+    "logprobs": 14137,
+    "logprob_differ": 14137,
+    "max_abs_dlogp": 0.8323092460632324
+   },
+   "eager vs flashinfer": {
+    "prompts": 64,
+    "token_seq_differ": 18,
+    "logprobs": 14499,
+    "logprob_differ": 14499,
+    "max_abs_dlogp": 0.8323092460632324
+   },
+   "eager vs flex": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14219,
+    "logprob_differ": 14219,
+    "max_abs_dlogp": 0.8323092460632324
+   },
+   "bi_eager vs bi_triton_eager": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14292,
+    "logprob_differ": 14184,
+    "max_abs_dlogp": 0.3115081787109375
+   },
+   "eager vs v063_eager": {
+    "prompts": 64,
+    "token_seq_differ": 10,
+    "logprobs": 14805,
+    "logprob_differ": 10049,
+    "max_abs_dlogp": 0.23403453826904297
+   },
+   "default vs v063_default": {
+    "prompts": 64,
+    "token_seq_differ": 22,
+    "logprobs": 14397,
+    "logprob_differ": 14397,
+    "max_abs_dlogp": 0.7736620903015137
+   },
+   "v063_default vs v063_eager": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  "rope_table_hf_vs_vllm": {
+   "entries_differ": 26,
+   "entries": 262144,
+   "first_positions_differ": [
+    459,
+    850,
+    918,
+    1451,
+    1652,
+    1836,
+    1911,
+    2065,
+    2085,
+    2445
+   ],
+   "positions_differ": 26
+  },
+  "kl": {
+   "default": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.001503628379184662,
+     "max_kl": 0.024444409943361348,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0009612657890626115,
+     "max_kl": 0.007706489978170028,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:eager": {
+     "positions": 192,
+     "mean_kl": 0.0009836624085345729,
+     "max_kl": 0.014203943787540682,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:bi_eager": {
+     "positions": 192,
+     "mean_kl": 0.0009457590595479153,
+     "max_kl": 0.005276553234277942,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:bi_eager_lmhead": {
+     "positions": 192,
+     "mean_kl": 0.0009457590595479153,
+     "max_kl": 0.005276553234277942,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "eager": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0013775756712903484,
+     "max_kl": 0.03455892807886918,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0008630436746960369,
+     "max_kl": 0.007510912434634531,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:eager": {
+     "positions": 192,
+     "mean_kl": 0.0009809298648641778,
+     "max_kl": 0.02086828419726186,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:bi_eager": {
+     "positions": 192,
+     "mean_kl": 0.001055828357587028,
+     "max_kl": 0.009387682372412845,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:bi_eager_lmhead": {
+     "positions": 192,
+     "mean_kl": 0.001055828357587028,
+     "max_kl": 0.009387682372412845,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "bi": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.001482081485274933,
+     "max_kl": 0.009894383405733044,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0011506763768644316,
+     "max_kl": 0.010432300091690175,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:eager": {
+     "positions": 192,
+     "mean_kl": 0.0012305358917438511,
+     "max_kl": 0.014234325976803672,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:bi_eager": {
+     "positions": 192,
+     "mean_kl": 0.0012115535229084025,
+     "max_kl": 0.009006025921687432,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:bi_eager_lmhead": {
+     "positions": 192,
+     "mean_kl": 0.0012115535229084025,
+     "max_kl": 0.009006025921687432,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "bi_eager": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.001422558503947241,
+     "max_kl": 0.012364593921137985,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0011383089625066022,
+     "max_kl": 0.011545167516827,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:eager": {
+     "positions": 192,
+     "mean_kl": 0.001031790875867921,
+     "max_kl": 0.007923478820451886,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:bi_eager": {
+     "positions": 192,
+     "mean_kl": 9.293691873450088e-08,
+     "max_kl": 1.4225310897424077e-05,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:bi_eager_lmhead": {
+     "positions": 192,
+     "mean_kl": 9.293691873450088e-08,
+     "max_kl": 1.4225310897424077e-05,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "bi_eager_lmhead": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0014226316669933598,
+     "max_kl": 0.012364612471518027,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0011381422950507603,
+     "max_kl": 0.011545167310734197,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:eager": {
+     "positions": 192,
+     "mean_kl": 0.0010316806496622804,
+     "max_kl": 0.007923492708343294,
+     "logit_rows_bit_equal": 0
+    },
+    "matched:bi_eager": {
+     "positions": 192,
+     "mean_kl": 0.0,
+     "max_kl": 0.0,
+     "logit_rows_bit_equal": 192
+    },
+    "matched:bi_eager_lmhead": {
+     "positions": 192,
+     "mean_kl": 0.0,
+     "max_kl": 0.0,
+     "logit_rows_bit_equal": 192
+    }
+   },
+   "triton": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0013337398349219543,
+     "max_kl": 0.013940489068003506,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0009657670106943322,
+     "max_kl": 0.007270636368565037,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "flashinfer": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0013210048885332253,
+     "max_kl": 0.019334799311007164,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0010106547783769206,
+     "max_kl": 0.018555367660820575,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "flex": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0015682611488302925,
+     "max_kl": 0.04169729050596804,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0009422200968866029,
+     "max_kl": 0.006468151781209477,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "bi_triton_eager": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0013330257918512502,
+     "max_kl": 0.007436313963706108,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0011285072444879732,
+     "max_kl": 0.010267145266984287,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "v063_eager": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0013775756712903484,
+     "max_kl": 0.03455892807886918,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0008630436746960369,
+     "max_kl": 0.007510912434634531,
+     "logit_rows_bit_equal": 0
+    }
+   }
+  },
+  "kl_capture_reproduces_engine_logprobs": {
+   "default": true,
+   "eager": true,
+   "bi": true,
+   "bi_eager": true,
+   "bi_eager_lmhead": true,
+   "triton": true,
+   "flashinfer": true,
+   "flex": true,
+   "bi_triton_eager": true,
+   "v063_default": false,
+   "v063_eager": true
+  },
+  "op_replay": {
+   "eager": {
+    "rmsnorm": {
+     "hf": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     },
+     "vllm_cuda": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.739271
+     }
+    },
+    "rmsnorm (+residual add)": {
+     "hf": {
+      "calls": 141,
+      "exact": 137,
+      "elem_eq": 0.999995
+     },
+     "vllm_cuda": {
+      "calls": 141,
+      "exact": 141,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 141,
+      "exact": 0,
+      "elem_eq": 0.742453
+     }
+    },
+    "qkv_proj": {
+     "cublas_sep": {
+      "calls": 72,
+      "exact": 42,
+      "elem_eq": 0.973038
+     },
+     "cublas_packed": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "cublas_packed+bias_after_cast": {
+      "calls": 72,
+      "exact": 0,
+      "elem_eq": 0.716514
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 0,
+      "elem_eq": 0.716514
+     }
+    },
+    "o_proj": {
+     "cublas": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "down_proj": {
+     "cublas": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 26,
+      "elem_eq": 0.997318
+     }
+    },
+    "gate_up_proj": {
+     "cublas_sep": {
+      "calls": 72,
+      "exact": 48,
+      "elem_eq": 0.999904
+     },
+     "cublas_packed": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 24,
+      "elem_eq": 0.999663
+     }
+    },
+    "silu_and_mul": {
+     "torch": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_cuda": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "attention prefill": {
+     "sdpa": {
+      "calls": 24,
+      "exact": 11,
+      "elem_eq": 0.99976
+     },
+     "bi": {
+      "calls": 24,
+      "exact": 12,
+      "elem_eq": 0.999762
+     },
+     "fa2_split0": {
+      "calls": 24,
+      "exact": 24,
+      "elem_eq": 1.0
+     },
+     "fa2_split1": {
+      "calls": 24,
+      "exact": 24,
+      "elem_eq": 1.0
+     }
+    },
+    "attention decode vs trainer prefill": {
+     "sdpa": {
+      "calls": 48,
+      "exact": 45,
+      "elem_eq": 0.99993
+     },
+     "bi": {
+      "calls": 48,
+      "exact": 45,
+      "elem_eq": 0.99993
+     },
+     "fa2_split0": {
+      "calls": 48,
+      "exact": 48,
+      "elem_eq": 1.0
+     },
+     "fa2_split1": {
+      "calls": 48,
+      "exact": 48,
+      "elem_eq": 1.0
+     }
+    },
+    "rope": {
+     "table=hf,op=hf": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "table=hf,op=vllm_cuda": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "table=vllm,op=hf": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "table=vllm,op=vllm_cuda": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "final norm (+residual add)": {
+     "hf": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     },
+     "vllm_cuda": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.734576
+     }
+    },
+    "lm_head (engine M)": {
+     "cublas": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.998971
+     }
+    },
+    "lm_head (trainer M = all prompt rows)": {
+     "cublas": {
+      "calls": 1,
+      "exact": 0,
+      "elem_eq": 0.998414
+     },
+     "vllm_bi": {
+      "calls": 1,
+      "exact": 0,
+      "elem_eq": 0.998414
+     }
+    }
+   },
+   "bi_eager": {
+    "rmsnorm": {
+     "hf": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.739271
+     },
+     "vllm_cuda": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.739271
+     },
+     "vllm_bi": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     }
+    },
+    "rmsnorm (+residual add)": {
+     "hf": {
+      "calls": 141,
+      "exact": 0,
+      "elem_eq": 0.745517
+     },
+     "vllm_cuda": {
+      "calls": 141,
+      "exact": 0,
+      "elem_eq": 0.745517
+     },
+     "vllm_bi": {
+      "calls": 141,
+      "exact": 141,
+      "elem_eq": 1.0
+     }
+    },
+    "qkv_proj": {
+     "cublas_sep": {
+      "calls": 72,
+      "exact": 0,
+      "elem_eq": 0.7031
+     },
+     "cublas_packed": {
+      "calls": 72,
+      "exact": 0,
+      "elem_eq": 0.714677
+     },
+     "cublas_packed+bias_after_cast": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "o_proj": {
+     "cublas": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "down_proj": {
+     "cublas": {
+      "calls": 72,
+      "exact": 24,
+      "elem_eq": 0.997597
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "gate_up_proj": {
+     "cublas_sep": {
+      "calls": 72,
+      "exact": 1,
+      "elem_eq": 0.999577
+     },
+     "cublas_packed": {
+      "calls": 72,
+      "exact": 25,
+      "elem_eq": 0.999674
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "silu_and_mul": {
+     "torch": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_cuda": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "attention prefill": {
+     "sdpa": {
+      "calls": 24,
+      "exact": 12,
+      "elem_eq": 0.999809
+     },
+     "bi": {
+      "calls": 24,
+      "exact": 12,
+      "elem_eq": 0.99981
+     },
+     "fa2_split0": {
+      "calls": 24,
+      "exact": 24,
+      "elem_eq": 1.0
+     },
+     "fa2_split1": {
+      "calls": 24,
+      "exact": 24,
+      "elem_eq": 1.0
+     }
+    },
+    "attention decode vs trainer prefill": {
+     "sdpa": {
+      "calls": 48,
+      "exact": 45,
+      "elem_eq": 0.999767
+     },
+     "bi": {
+      "calls": 48,
+      "exact": 45,
+      "elem_eq": 0.999767
+     },
+     "fa2_split0": {
+      "calls": 48,
+      "exact": 48,
+      "elem_eq": 1.0
+     },
+     "fa2_split1": {
+      "calls": 48,
+      "exact": 48,
+      "elem_eq": 1.0
+     }
+    },
+    "rope": {
+     "table=hf,op=hf": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "table=hf,op=vllm_cuda": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "table=vllm,op=hf": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "table=vllm,op=vllm_cuda": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "final norm (+residual add)": {
+     "hf": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.74218
+     },
+     "vllm_cuda": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.74218
+     },
+     "vllm_bi": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     }
+    },
+    "lm_head (engine M)": {
+     "cublas": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.998894
+     }
+    },
+    "lm_head (trainer M = all prompt rows)": {
+     "cublas": {
+      "calls": 1,
+      "exact": 0,
+      "elem_eq": 0.998157
+     },
+     "vllm_bi": {
+      "calls": 1,
+      "exact": 0,
+      "elem_eq": 0.998157
+     }
+    }
+   },
+   "bi_eager_lmhead": {
+    "rmsnorm": {
+     "hf": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.739271
+     },
+     "vllm_cuda": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.739271
+     },
+     "vllm_bi": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     }
+    },
+    "rmsnorm (+residual add)": {
+     "hf": {
+      "calls": 141,
+      "exact": 0,
+      "elem_eq": 0.745517
+     },
+     "vllm_cuda": {
+      "calls": 141,
+      "exact": 0,
+      "elem_eq": 0.745517
+     },
+     "vllm_bi": {
+      "calls": 141,
+      "exact": 141,
+      "elem_eq": 1.0
+     }
+    },
+    "qkv_proj": {
+     "cublas_sep": {
+      "calls": 72,
+      "exact": 0,
+      "elem_eq": 0.7031
+     },
+     "cublas_packed": {
+      "calls": 72,
+      "exact": 0,
+      "elem_eq": 0.714677
+     },
+     "cublas_packed+bias_after_cast": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "o_proj": {
+     "cublas": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "down_proj": {
+     "cublas": {
+      "calls": 72,
+      "exact": 24,
+      "elem_eq": 0.997597
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "gate_up_proj": {
+     "cublas_sep": {
+      "calls": 72,
+      "exact": 1,
+      "elem_eq": 0.999577
+     },
+     "cublas_packed": {
+      "calls": 72,
+      "exact": 25,
+      "elem_eq": 0.999674
+     },
+     "vllm_bi": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "silu_and_mul": {
+     "torch": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "vllm_cuda": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "attention prefill": {
+     "sdpa": {
+      "calls": 24,
+      "exact": 12,
+      "elem_eq": 0.999809
+     },
+     "bi": {
+      "calls": 24,
+      "exact": 12,
+      "elem_eq": 0.99981
+     },
+     "fa2_split0": {
+      "calls": 24,
+      "exact": 24,
+      "elem_eq": 1.0
+     },
+     "fa2_split1": {
+      "calls": 24,
+      "exact": 24,
+      "elem_eq": 1.0
+     }
+    },
+    "attention decode vs trainer prefill": {
+     "sdpa": {
+      "calls": 48,
+      "exact": 45,
+      "elem_eq": 0.999767
+     },
+     "bi": {
+      "calls": 48,
+      "exact": 45,
+      "elem_eq": 0.999767
+     },
+     "fa2_split0": {
+      "calls": 48,
+      "exact": 48,
+      "elem_eq": 1.0
+     },
+     "fa2_split1": {
+      "calls": 48,
+      "exact": 48,
+      "elem_eq": 1.0
+     }
+    },
+    "rope": {
+     "table=hf,op=hf": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "table=hf,op=vllm_cuda": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "table=vllm,op=hf": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     },
+     "table=vllm,op=vllm_cuda": {
+      "calls": 72,
+      "exact": 72,
+      "elem_eq": 1.0
+     }
+    },
+    "final norm (+residual add)": {
+     "hf": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.74218
+     },
+     "vllm_cuda": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.74218
+     },
+     "vllm_bi": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     }
+    },
+    "lm_head (engine M)": {
+     "cublas": {
+      "calls": 3,
+      "exact": 0,
+      "elem_eq": 0.998894
+     },
+     "vllm_bi": {
+      "calls": 3,
+      "exact": 3,
+      "elem_eq": 1.0
+     }
+    },
+    "lm_head (trainer M = all prompt rows)": {
+     "cublas": {
+      "calls": 1,
+      "exact": 1,
+      "elem_eq": 1.0
+     },
+     "vllm_bi": {
+      "calls": 1,
+      "exact": 1,
+      "elem_eq": 1.0
+     }
+    }
+   }
+  },
+  "steps": {
+   "eager": [
+    {
+     "step": "model.py stock (reference)",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76129,
+     "frac_differ": 0.999658591031449,
+     "max_abs_dlogp": 0.6329669952392578,
+     "tokens_B1": 15231,
+     "differ_B1": 15226,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.10870535671710968
+     }
+    },
+    {
+     "step": "+ gemm=cublas_packed",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76103,
+     "frac_differ": 0.999317182062898,
+     "max_abs_dlogp": 0.7343907356262207,
+     "tokens_B1": 15231,
+     "differ_B1": 15201,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9939062595367432
+     }
+    },
+    {
+     "step": "+ norm=vllm_cuda",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76104,
+     "frac_differ": 0.9993303131770731,
+     "max_abs_dlogp": 0.7343907356262207,
+     "tokens_B1": 15231,
+     "differ_B1": 15201,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9939062595367432
+     }
+    },
+    {
+     "step": "+ rope_table=vllm",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76104,
+     "frac_differ": 0.9993303131770731,
+     "max_abs_dlogp": 0.7343907356262207,
+     "tokens_B1": 15231,
+     "differ_B1": 15201,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9939062595367432
+     }
+    },
+    {
+     "step": "+ rope=vllm_cuda",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76104,
+     "frac_differ": 0.9993303131770731,
+     "max_abs_dlogp": 0.7343907356262207,
+     "tokens_B1": 15231,
+     "differ_B1": 15201,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9939062595367432
+     }
+    },
+    {
+     "step": "+ attn=fa2_split0",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 64285,
+     "frac_differ": 0.8441336747423018,
+     "max_abs_dlogp": 0.7343907356262207,
+     "tokens_B1": 15231,
+     "differ_B1": 5616,
+     "first_layer_diff": {
+      "first_layer": "final",
+      "tensor": "logits (last prompt row)",
+      "elem_eq": 0.9984138011932373
+     }
+    },
+    {
+     "step": "+ act=vllm_cuda",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 64285,
+     "frac_differ": 0.8441336747423018,
+     "max_abs_dlogp": 0.7343907356262207,
+     "tokens_B1": 15231,
+     "differ_B1": 5616,
+     "first_layer_diff": {
+      "first_layer": "final",
+      "tensor": "logits (last prompt row)",
+      "elem_eq": 0.9984138011932373
+     }
+    }
+   ],
+   "bi_eager": [
+    {
+     "step": "model.py stock (reference)",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76150,
+     "frac_differ": 0.9999343444291248,
+     "max_abs_dlogp": 0.6908588409423828,
+     "tokens_B1": 15231,
+     "differ_B1": 15230,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.10627232491970062
+     }
+    },
+    {
+     "step": "+ gemm=cublas_packed",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76155,
+     "frac_differ": 1.0,
+     "max_abs_dlogp": 0.5057356357574463,
+     "tokens_B1": 15231,
+     "differ_B1": 15231,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.43310266733169556
+     }
+    },
+    {
+     "step": "+ bias=after_cast",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76155,
+     "frac_differ": 1.0,
+     "max_abs_dlogp": 0.563666582107544,
+     "tokens_B1": 15231,
+     "differ_B1": 15231,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.5112053751945496
+     }
+    },
+    {
+     "step": "+ gemm=vllm_bi",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76155,
+     "frac_differ": 1.0,
+     "max_abs_dlogp": 0.4465517997741699,
+     "tokens_B1": 15231,
+     "differ_B1": 15231,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.5112053751945496
+     }
+    },
+    {
+     "step": "+ norm=vllm_bi",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 75985,
+     "frac_differ": 0.9977677105902436,
+     "max_abs_dlogp": 0.24100303649902344,
+     "tokens_B1": 15231,
+     "differ_B1": 15197,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9910937547683716
+     }
+    },
+    {
+     "step": "+ rope_table=vllm",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 75985,
+     "frac_differ": 0.9977677105902436,
+     "max_abs_dlogp": 0.24100303649902344,
+     "tokens_B1": 15231,
+     "differ_B1": 15197,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9910937547683716
+     }
+    },
+    {
+     "step": "+ rope=vllm_cuda",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 75985,
+     "frac_differ": 0.9977677105902436,
+     "max_abs_dlogp": 0.24100303649902344,
+     "tokens_B1": 15231,
+     "differ_B1": 15197,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9910937547683716
+     }
+    },
+    {
+     "step": "+ attn=fa2_split1",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 43182,
+     "frac_differ": 0.5670277723064802,
+     "max_abs_dlogp": 0.004045248031616211,
+     "tokens_B1": 15231,
+     "differ_B1": 8694,
+     "first_layer_diff": {
+      "first_layer": "final",
+      "tensor": "logits (last prompt row)",
+      "elem_eq": 0.9981571435928345
+     }
+    },
+    {
+     "step": "+ act=vllm_cuda",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 43182,
+     "frac_differ": 0.5670277723064802,
+     "max_abs_dlogp": 0.004045248031616211,
+     "tokens_B1": 15231,
+     "differ_B1": 8694,
+     "first_layer_diff": {
+      "first_layer": "final",
+      "tensor": "logits (last prompt row)",
+      "elem_eq": 0.9981571435928345
+     }
+    },
+    {
+     "step": "+ logsoftmax=vllm_bi",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 2527,
+     "frac_differ": 0.033182325520320397,
+     "max_abs_dlogp": 0.004045248031616211,
+     "tokens_B1": 15231,
+     "differ_B1": 1319,
+     "first_layer_diff": {
+      "first_layer": "final",
+      "tensor": "logits (last prompt row)",
+      "elem_eq": 0.9981571435928345
+     }
+    }
+   ],
+   "bi_eager_lmhead": [
+    {
+     "step": "model.py stock (reference)",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76150,
+     "frac_differ": 0.9999343444291248,
+     "max_abs_dlogp": 0.6908588409423828,
+     "tokens_B1": 15231,
+     "differ_B1": 15230,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.10627232491970062
+     }
+    },
+    {
+     "step": "+ gemm=cublas_packed",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76155,
+     "frac_differ": 1.0,
+     "max_abs_dlogp": 0.5057356357574463,
+     "tokens_B1": 15231,
+     "differ_B1": 15231,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.43310266733169556
+     }
+    },
+    {
+     "step": "+ bias=after_cast",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76155,
+     "frac_differ": 1.0,
+     "max_abs_dlogp": 0.563666582107544,
+     "tokens_B1": 15231,
+     "differ_B1": 15231,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.5112053751945496
+     }
+    },
+    {
+     "step": "+ gemm=vllm_bi",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 76155,
+     "frac_differ": 1.0,
+     "max_abs_dlogp": 0.4465517997741699,
+     "tokens_B1": 15231,
+     "differ_B1": 15231,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.5112053751945496
+     }
+    },
+    {
+     "step": "+ norm=vllm_bi",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 75985,
+     "frac_differ": 0.9977677105902436,
+     "max_abs_dlogp": 0.24100303649902344,
+     "tokens_B1": 15231,
+     "differ_B1": 15197,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9910937547683716
+     }
+    },
+    {
+     "step": "+ rope_table=vllm",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 75985,
+     "frac_differ": 0.9977677105902436,
+     "max_abs_dlogp": 0.24100303649902344,
+     "tokens_B1": 15231,
+     "differ_B1": 15197,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9910937547683716
+     }
+    },
+    {
+     "step": "+ rope=vllm_cuda",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 75985,
+     "frac_differ": 0.9977677105902436,
+     "max_abs_dlogp": 0.24100303649902344,
+     "tokens_B1": 15231,
+     "differ_B1": 15197,
+     "first_layer_diff": {
+      "first_layer": 0,
+      "tensor": "stream after attention",
+      "elem_eq": 0.9910937547683716
+     }
+    },
+    {
+     "step": "+ attn=fa2_split1",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 43110,
+     "frac_differ": 0.5660823320858774,
+     "max_abs_dlogp": 0.00041961669921875,
+     "tokens_B1": 15231,
+     "differ_B1": 8622,
+     "first_layer_diff": {
+      "first_layer": null,
+      "tensor": "all layers, final norm and logits equal"
+     }
+    },
+    {
+     "step": "+ act=vllm_cuda",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 43110,
+     "frac_differ": 0.5660823320858774,
+     "max_abs_dlogp": 0.00041961669921875,
+     "tokens_B1": 15231,
+     "differ_B1": 8622,
+     "first_layer_diff": {
+      "first_layer": null,
+      "tensor": "all layers, final norm and logits equal"
+     }
+    },
+    {
+     "step": "+ lm_head=vllm_bi",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 42515,
+     "frac_differ": 0.5582693191517301,
+     "max_abs_dlogp": 1.9073486328125e-06,
+     "tokens_B1": 15231,
+     "differ_B1": 8503,
+     "first_layer_diff": {
+      "first_layer": null,
+      "tensor": "all layers, final norm and logits equal"
+     }
+    },
+    {
+     "step": "+ logsoftmax=vllm_bi",
+     "sequences": 320,
+     "tokens": 76155,
+     "differ": 0,
+     "frac_differ": 0.0,
+     "max_abs_dlogp": 0.0,
+     "tokens_B1": 15231,
+     "differ_B1": 0,
+     "first_layer_diff": {
+      "first_layer": null,
+      "tensor": "all layers, final norm and logits equal"
+     }
+    }
+   ]
+  },
+  "leave_one_out": {
+   "eager": [
+    {
+     "revert": "norm=hf",
+     "differ": 75328,
+     "tokens": 76155,
+     "differ_B1": 14710,
+     "max_abs_dlogp": 0.7343907356262207
+    },
+    {
+     "revert": "gemm=cublas_sep",
+     "differ": 75902,
+     "tokens": 76155,
+     "differ_B1": 15226,
+     "max_abs_dlogp": 0.6329669952392578
+    },
+    {
+     "revert": "rope_table=hf",
+     "differ": 65520,
+     "tokens": 76155,
+     "differ_B1": 6851,
+     "max_abs_dlogp": 0.7343907356262207
+    },
+    {
+     "revert": "rope=hf",
+     "differ": 64285,
+     "tokens": 76155,
+     "differ_B1": 5616,
+     "max_abs_dlogp": 0.7343907356262207
+    },
+    {
+     "revert": "attn=sdpa",
+     "differ": 76104,
+     "tokens": 76155,
+     "differ_B1": 15201,
+     "max_abs_dlogp": 0.7343907356262207
+    },
+    {
+     "revert": "act=torch",
+     "differ": 64285,
+     "tokens": 76155,
+     "differ_B1": 5616,
+     "max_abs_dlogp": 0.7343907356262207
+    }
+   ],
+   "bi_eager": [
+    {
+     "revert": "norm=hf",
+     "differ": 76155,
+     "tokens": 76155,
+     "differ_B1": 15231,
+     "max_abs_dlogp": 0.4465517997741699
+    },
+    {
+     "revert": "gemm=cublas_sep",
+     "differ": 76155,
+     "tokens": 76155,
+     "differ_B1": 15231,
+     "max_abs_dlogp": 0.7124462127685547
+    },
+    {
+     "revert": "rope_table=hf",
+     "differ": 11819,
+     "tokens": 76155,
+     "differ_B1": 3035,
+     "max_abs_dlogp": 0.15546274185180664
+    },
+    {
+     "revert": "rope=hf",
+     "differ": 2527,
+     "tokens": 76155,
+     "differ_B1": 1319,
+     "max_abs_dlogp": 0.004045248031616211
+    },
+    {
+     "revert": "attn=sdpa",
+     "differ": 75585,
+     "tokens": 76155,
+     "differ_B1": 15117,
+     "max_abs_dlogp": 0.24100303649902344
+    },
+    {
+     "revert": "act=torch",
+     "differ": 2527,
+     "tokens": 76155,
+     "differ_B1": 1319,
+     "max_abs_dlogp": 0.004045248031616211
+    },
+    {
+     "revert": "logsoftmax=torch",
+     "differ": 43182,
+     "tokens": 76155,
+     "differ_B1": 8694,
+     "max_abs_dlogp": 0.004045248031616211
+    }
+   ],
+   "bi_eager_lmhead": [
+    {
+     "revert": "norm=hf",
+     "differ": 76155,
+     "tokens": 76155,
+     "differ_B1": 15231,
+     "max_abs_dlogp": 0.4465517997741699
+    },
+    {
+     "revert": "gemm=cublas_sep",
+     "differ": 76155,
+     "tokens": 76155,
+     "differ_B1": 15231,
+     "max_abs_dlogp": 0.7124462127685547
+    },
+    {
+     "revert": "rope_table=hf",
+     "differ": 9470,
+     "tokens": 76155,
+     "differ_B1": 1894,
+     "max_abs_dlogp": 0.15546274185180664
+    },
+    {
+     "revert": "rope=hf",
+     "differ": 0,
+     "tokens": 76155,
+     "differ_B1": 0,
+     "max_abs_dlogp": 0.0
+    },
+    {
+     "revert": "attn=sdpa",
+     "differ": 75585,
+     "tokens": 76155,
+     "differ_B1": 15117,
+     "max_abs_dlogp": 0.24100303649902344
+    },
+    {
+     "revert": "act=torch",
+     "differ": 0,
+     "tokens": 76155,
+     "differ_B1": 0,
+     "max_abs_dlogp": 0.0
+    },
+    {
+     "revert": "lm_head=cublas",
+     "differ": 1510,
+     "tokens": 76155,
+     "differ_B1": 302,
+     "max_abs_dlogp": 0.00041961669921875
+    },
+    {
+     "revert": "logsoftmax=torch",
+     "differ": 42515,
+     "tokens": 76155,
+     "differ_B1": 8503,
+     "max_abs_dlogp": 1.9073486328125e-06
+    }
+   ]
+  }
+ }
+}

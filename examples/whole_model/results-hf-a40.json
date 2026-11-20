@@ -1,0 +1,290 @@
+{
+ "schema": "bi-results-v1",
+ "example": "whole_model_hf",
+ "quick": false,
+ "argv": [
+  "hf_check.py",
+  "--json",
+  "results-hf-a40.json"
+ ],
+ "env": {
+  "python": "3.10.13",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A40",
+    "sm": "86",
+    "memory_gb": 44.3,
+    "sm_count": 84
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "550.144.03"
+ },
+ "counts": {
+  "ok": 0,
+  "regression": 0,
+  "changed": 0,
+  "info": 8
+ },
+ "checks": [
+  {
+   "name": "fp32: state dict keys equal HF's and load with strict=True",
+   "impl": "model.py",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "keys": 75
+   }
+  },
+  {
+   "name": "fp32: RoPE cos/sin table equals the rotary_emb output of HF bitwise (T=512)",
+   "impl": "model.py",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "differing": 0,
+    "of": 65536
+   }
+  },
+  {
+   "name": "bf16: state dict keys equal HF's and load with strict=True",
+   "impl": "model.py",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "keys": 75
+   }
+  },
+  {
+   "name": "export_hf() then from_pretrained(): every weight equals the state dict bitwise",
+   "impl": "model.py",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "files": [
+     "config.json",
+     "model.safetensors"
+    ]
+   }
+  },
+  {
+   "name": "bf16: RoPE cos/sin table equals the rotary_emb output of HF bitwise (T=512)",
+   "impl": "model.py",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "differing": 0,
+    "of": 65536
+   }
+  },
+  {
+   "name": "bf16: RoPE cos/sin table equals the rotary_emb output of HF cast with .to(bfloat16) bitwise (T=512)",
+   "impl": "model.py",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "differing": 34296,
+    "of": 65536
+   }
+  },
+  {
+   "name": "Qwen2 fp32: config_from_hf gives qkv_bias, tied embeddings, eps 1e-06, theta 1000000.0; load_hf_state_dict fills every parameter",
+   "impl": "model.py",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "params": 50
+   }
+  },
+  {
+   "name": "Qwen2 bf16: config_from_hf gives qkv_bias, tied embeddings, eps 1e-06, theta 1000000.0; load_hf_state_dict fills every parameter",
+   "impl": "model.py",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "params": 50
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "fp32 prefill B=4 T=512: max |logit - HF logit|",
+   "value": 0.0,
+   "unit": "logit",
+   "impl": "stock",
+   "max_abs": 0.0,
+   "mean_abs": 0.0,
+   "ref_abs_max": 27.510650634765625,
+   "ref_std": 4.543212890625,
+   "elements": 65536000,
+   "bitwise_equal_elements": 65536000
+  },
+  {
+   "name": "fp32 cached decode 128 steps: max |logit - HF logit|",
+   "value": 0.0,
+   "unit": "logit",
+   "impl": "stock",
+   "max_abs": 0.0,
+   "mean_abs": 0.0,
+   "ref_abs_max": 23.036235809326172,
+   "ref_std": 4.542376518249512,
+   "elements": 4096000,
+   "bitwise_equal_elements": 4096000
+  },
+  {
+   "name": "fp32: RoPE table entries that differ between CPU and GPU cos/sin",
+   "value": 49304,
+   "unit": "elements",
+   "impl": "model.py",
+   "of": 262144
+  },
+  {
+   "name": "bf16 HF cast with .to(bfloat16) against HF from_pretrained: max |logit diff| (inv_freq torch.bfloat16 against torch.float32)",
+   "value": 0.40625,
+   "unit": "logit",
+   "impl": "hf",
+   "max_abs": 0.40625,
+   "mean_abs": 0.055389463901519775,
+   "ref_abs_max": 27.5,
+   "ref_std": 4.542437553405762,
+   "elements": 65536000,
+   "bitwise_equal_elements": 7638001
+  },
+  {
+   "name": "bf16 prefill B=4 T=512: max |logit - HF logit|",
+   "value": 0.0,
+   "unit": "logit",
+   "impl": "stock",
+   "max_abs": 0.0,
+   "mean_abs": 0.0,
+   "ref_abs_max": 27.5,
+   "ref_std": 4.542437553405762,
+   "elements": 65536000,
+   "bitwise_equal_elements": 65536000
+  },
+  {
+   "name": "bf16 prefill B=4 T=512: max |logit - HF logit|",
+   "value": 0.34375,
+   "unit": "logit",
+   "impl": "bi",
+   "max_abs": 0.34375,
+   "mean_abs": 0.04689398407936096,
+   "ref_abs_max": 27.5,
+   "ref_std": 4.542437553405762,
+   "elements": 65536000,
+   "bitwise_equal_elements": 8801129
+  },
+  {
+   "name": "bf16 cached decode 128 steps: max |logit - HF logit|",
+   "value": 0.0,
+   "unit": "logit",
+   "impl": "stock",
+   "max_abs": 0.0,
+   "mean_abs": 0.0,
+   "ref_abs_max": 23.0,
+   "ref_std": 4.541494369506836,
+   "elements": 4096000,
+   "bitwise_equal_elements": 4096000
+  },
+  {
+   "name": "bf16: RoPE table entries that differ between CPU and GPU cos/sin",
+   "value": 2,
+   "unit": "elements",
+   "impl": "model.py",
+   "of": 262144
+  },
+  {
+   "name": "Qwen2 fp32 prefill B=2 T=256 (4 layers, vocab 151936): max |logit - HF logit|",
+   "value": 0.0,
+   "unit": "logit",
+   "impl": "stock",
+   "max_abs": 0.0,
+   "mean_abs": 0.0,
+   "ref_abs_max": 3.4333598613739014,
+   "ref_std": 0.5980081558227539,
+   "elements": 77791232,
+   "bitwise_equal_elements": 77791232
+  },
+  {
+   "name": "Qwen2 fp32 cached decode 32 steps vs HF prefill: max |logit diff|",
+   "value": 5.4836273193359375e-06,
+   "unit": "logit",
+   "impl": "stock",
+   "max_abs": 5.4836273193359375e-06,
+   "mean_abs": 6.495592401734029e-07,
+   "ref_abs_max": 3.230487585067749,
+   "ref_std": 0.5986382365226746,
+   "elements": 4861952,
+   "bitwise_equal_elements": 93947
+  },
+  {
+   "name": "Qwen2 bf16 prefill B=2 T=256 (4 layers, vocab 151936): max |logit - HF logit|",
+   "value": 0.0,
+   "unit": "logit",
+   "impl": "stock",
+   "max_abs": 0.0,
+   "mean_abs": 0.0,
+   "ref_abs_max": 3.421875,
+   "ref_std": 0.5979990363121033,
+   "elements": 77791232,
+   "bitwise_equal_elements": 77791232
+  },
+  {
+   "name": "Qwen2 bf16 prefill B=2 T=256 (4 layers, vocab 151936): max |logit - HF logit|",
+   "value": 0.03125,
+   "unit": "logit",
+   "impl": "bi",
+   "max_abs": 0.03125,
+   "mean_abs": 0.004210922867059708,
+   "ref_abs_max": 3.421875,
+   "ref_std": 0.5979990363121033,
+   "elements": 77791232,
+   "bitwise_equal_elements": 14833431
+  },
+  {
+   "name": "Qwen2 bf16 cached decode 32 steps vs HF prefill: max |logit diff|",
+   "value": 0.03125,
+   "unit": "logit",
+   "impl": "stock",
+   "max_abs": 0.03125,
+   "mean_abs": 0.0043683238327503204,
+   "ref_abs_max": 3.21875,
+   "ref_std": 0.5986283421516418,
+   "elements": 4861952,
+   "bitwise_equal_elements": 897879
+  }
+ ],
+ "extra": {
+  "transformers": "4.49.0",
+  "hf_attn_implementation_fp32": "sdpa",
+  "export_files": [
+   "config.json",
+   "model.safetensors"
+  ],
+  "inv_freq_dtype": {
+   "from_pretrained": "torch.float32",
+   "cast_with_to": "torch.bfloat16"
+  },
+  "hf_attn_implementation_bf16": "sdpa"
+ }
+}

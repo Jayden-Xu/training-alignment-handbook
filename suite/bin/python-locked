@@ -1,0 +1,9 @@
+#!/bin/bash
+# The interpreter handed to multi-launch drivers (examples/*/run_all.sh) by tools/bi_suite.py.
+# Every launch takes the suite's lock for itself and releases it when it ends, so other jobs on a
+# shared machine can run between two launches. Without BI_SUITE_LOCK it is just the interpreter.
+PY=${BI_SUITE_PYTHON:-python}
+if [ -n "${BI_SUITE_LOCK:-}" ]; then
+  exec flock "$BI_SUITE_LOCK" "$PY" "$@"
+fi
+exec "$PY" "$@"

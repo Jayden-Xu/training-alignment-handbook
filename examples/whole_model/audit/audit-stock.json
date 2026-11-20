@@ -1,0 +1,9501 @@
+{
+ "schema": "bi-audit-v1",
+ "name": "stock model.py dense, 2 layers, rows of 16 tokens",
+ "env": {
+  "torch": "2.5.1+cu121",
+  "device": "NVIDIA A40"
+ },
+ "batch_size": 34,
+ "target_row": 0,
+ "row_shapes": [
+  "[16]"
+ ],
+ "sizes": [
+  2,
+  3,
+  4,
+  8,
+  9,
+  16,
+  17,
+  33
+ ],
+ "positions": [
+  "first",
+  "middle",
+  "last"
+ ],
+ "fillers": [
+  "recorded"
+ ],
+ "backward_inventory": true,
+ "warnings": [],
+ "first_divergence": {
+  "first": {
+   "module": "model.layers.0.self_attn.q_proj",
+   "call": 0,
+   "output_differs": true,
+   "fraction": 0.41326904296875,
+   "inputs_equal": true,
+   "leaf": true
+  },
+  "modules_compared": 35,
+  "modules_differing": 33,
+  "origins": [
+   {
+    "module": "model.layers.0.self_attn.q_proj",
+    "call": 0,
+    "output_differs": true,
+    "fraction": 0.41326904296875,
+    "inputs_equal": true,
+    "leaf": true
+   },
+   {
+    "module": "model.layers.0.self_attn.k_proj",
+    "call": 0,
+    "output_differs": true,
+    "fraction": 0.2587890625,
+    "inputs_equal": true,
+    "leaf": true
+   },
+   {
+    "module": "model.layers.0.self_attn.v_proj",
+    "call": 0,
+    "output_differs": true,
+    "fraction": 0.2578125,
+    "inputs_equal": true,
+    "leaf": true
+   }
+  ]
+ },
+ "inventory": [
+  {
+   "class": "attention",
+   "title": "Softmax attention",
+   "default_risk": "high: SDPA changed a sequence from batch 3 and between prefill and decode (A40)",
+   "ops": {
+    "aten::_scaled_dot_product_flash_attention": 2
+   },
+   "backward_ops": {
+    "aten::_scaled_dot_product_flash_attention_backward": 2
+   },
+   "modules": 2
+  },
+  {
+   "class": "gemm",
+   "title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "ops": {
+    "aten::mm": 15
+   },
+   "backward_ops": {
+    "aten::mm": 30
+   },
+   "modules": 15
+  },
+  {
+   "class": "bmm",
+   "title": "Batched or grouped GEMM",
+   "default_risk": "high: bmm runs other kernels than mm and varies with the piece count",
+   "ops": {
+    "aten::bmm": 3
+   },
+   "backward_ops": {},
+   "modules": 1
+  },
+  {
+   "class": "scatter",
+   "title": "Scatter-add / combine",
+   "default_risk": "high: float atomics break run-to-run determinism",
+   "ops": {},
+   "backward_ops": {
+    "aten::scatter_add": 1,
+    "aten::embedding_dense_backward": 1
+   },
+   "modules": 2
+  },
+  {
+   "class": "rowwise",
+   "title": "Row-wise reduction",
+   "default_risk": "medium: torch's sum/mean changes its tree below 16 rows (fp32 variance of a 1024-wide row differed from 8 rows, 4096-wide from 2); softmax and log_softmax passed",
+   "ops": {
+    "aten::mean": 5,
+    "aten::_log_softmax": 1,
+    "aten::sum": 1
+   },
+   "backward_ops": {
+    "aten::_log_softmax_backward_data": 1,
+    "aten::sum": 14
+   },
+   "modules": 9
+  },
+  {
+   "class": "elementwise",
+   "title": "Elementwise",
+   "default_risk": "none expected: one element at a time",
+   "ops": {
+    "aten::pow": 6,
+    "aten::add": 13,
+    "aten::rsqrt": 5,
+    "aten::mul": 21,
+    "aten::div": 1,
+    "aten::reciprocal": 1,
+    "aten::cos": 3,
+    "aten::sin": 3,
+    "aten::neg": 5,
+    "aten::silu": 2
+   },
+   "backward_ops": {
+    "aten::neg": 5,
+    "aten::slice_backward": 18,
+    "aten::mul": 52,
+    "aten::pow": 10,
+    "aten::div": 5,
+    "aten::add": 23,
+    "aten::silu_backward": 2
+   },
+   "modules": 21
+  },
+  {
+   "class": "cast",
+   "title": "Cast (rounding point)",
+   "default_risk": "none for batch invariance; a rounding point across engines",
+   "ops": {
+    "aten::_to_copy": 29
+   },
+   "backward_ops": {
+    "aten::_to_copy": 11
+   },
+   "modules": 8
+  },
+  {
+   "class": "move",
+   "title": "Data movement",
+   "default_risk": "none: exact",
+   "ops": {
+    "aten::arange": 3,
+    "aten::expand": 11,
+    "aten::embedding": 1,
+    "aten::detach": 8,
+    "aten::t": 15,
+    "aten::view": 29,
+    "aten::_unsafe_view": 22,
+    "aten::unsqueeze": 21,
+    "aten::slice": 25,
+    "aten::transpose": 11,
+    "aten::select": 3,
+    "aten::cat": 7,
+    "aten::index": 4,
+    "aten::clone": 8,
+    "aten::gather": 1,
+    "aten::squeeze": 1
+   },
+   "backward_ops": {
+    "aten::ones_like": 1,
+    "aten::expand": 6,
+    "aten::unsqueeze": 1,
+    "aten::new_zeros": 1,
+    "aten::detach": 50,
+    "aten::view": 45,
+    "aten::t": 60,
+    "aten::transpose": 8,
+    "aten::squeeze": 4,
+    "aten::slice": 8,
+    "aten::clone": 2,
+    "aten::_unsafe_view": 2
+   },
+   "modules": 31
+  }
+ ],
+ "modules": [
+  {
+   "module": "model.embed_tokens",
+   "call": 0,
+   "type": "Embedding",
+   "leaf": true,
+   "class": "move",
+   "class_title": "Data movement",
+   "default_risk": "none: exact",
+   "recipe": "",
+   "ops": [
+    {
+     "op": "aten::embedding",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        32000,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16
+       ],
+       "int64"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::embedding_dense_backward",
+     "class": "scatter",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16
+       ],
+       "int64"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32000,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        32000,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32000,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.0.input_layernorm",
+   "call": 0,
+   "type": "RMSNorm",
+   "leaf": true,
+   "class": "rowwise",
+   "class_title": "Row-wise reduction",
+   "default_risk": "medium: torch's sum/mean changes its tree below 16 rows (fp32 variance of a 1024-wide row differed from 8 rows, 4096-wide from 2); softmax and log_softmax passed",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#1-row-wise-reductions-rmsnorm-layernorm-softmax-log_softmax-row-sums-cross-entropy",
+   "ops": [
+    {
+     "op": "aten::mean",
+     "class": "rowwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::rsqrt",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::sum",
+     "class": "rowwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::div",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": true,
+     "count": 8,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 3,
+     "in": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::expand",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.0.self_attn.q_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.41326904296875,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6771,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.0.self_attn.k_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        256,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    4,
+    33
+   ],
+   "first_failing_size": 4,
+   "max_fraction": 0.413330078125,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 1693,
+    "of": 4096
+   },
+   "inside_first_size": 4,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.0.self_attn.v_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        256,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    4,
+    33
+   ],
+   "first_failing_size": 4,
+   "max_fraction": 0.408935546875,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 1675,
+    "of": 4096
+   },
+   "inside_first_size": 4,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.0.self_attn.rope",
+   "call": 0,
+   "type": "RoPE",
+   "leaf": true,
+   "class": "bmm",
+   "class_title": "Batched or grouped GEMM",
+   "default_risk": "high: bmm runs other kernels than mm and varies with the piece count",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#3-batched-and-grouped-gemm-moe-experts-bmm-vs-mm",
+   "ops": [
+    {
+     "op": "aten::bmm",
+     "class": "bmm",
+     "backward": false,
+     "count": 3,
+     "in": [
+      [
+       [
+        1,
+        32,
+        1
+       ],
+       "float32"
+      ],
+      [
+       [
+        1,
+        1,
+        2048
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        32,
+        2048
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::cos",
+     "class": "elementwise",
+     "backward": false,
+     "count": 3,
+     "in": [
+      [
+       [
+        2048,
+        64
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        2048,
+        64
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::div",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": false,
+     "count": 5,
+     "in": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::neg",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        32
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        32
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::reciprocal",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::sin",
+     "class": "elementwise",
+     "backward": false,
+     "count": 3,
+     "in": [
+      [
+       [
+        2048,
+        64
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        2048,
+        64
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": false,
+     "count": 18,
+     "in": [
+      [
+       [
+        32
+       ],
+       "int64"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 3,
+     "in": [
+      [
+       [
+        1,
+        32,
+        2048
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        32,
+        2048
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::arange",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [],
+     "out": [
+      [
+       [
+        32
+       ],
+       "int64"
+      ]
+     ]
+    },
+    {
+     "op": "aten::cat",
+     "class": "move",
+     "backward": false,
+     "count": 5,
+     "in": [],
+     "out": [
+      [
+       [
+        2048,
+        64
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::expand",
+     "class": "move",
+     "backward": false,
+     "count": 6,
+     "in": [
+      [
+       [
+        1,
+        32,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        32,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::index",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        2048,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::select",
+     "class": "move",
+     "backward": false,
+     "count": 3,
+     "in": [
+      [
+       [
+        1,
+        2048,
+        32
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        2048,
+        32
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice",
+     "class": "move",
+     "backward": false,
+     "count": 10,
+     "in": [
+      [
+       [
+        1,
+        32
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        32
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::transpose",
+     "class": "move",
+     "backward": false,
+     "count": 3,
+     "in": [
+      [
+       [
+        1,
+        32,
+        2048
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        2048,
+        32
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::unsqueeze",
+     "class": "move",
+     "backward": false,
+     "count": 14,
+     "in": [
+      [
+       [
+        32
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        32
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 6,
+     "in": [
+      [
+       [
+        1,
+        32,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        32,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::neg",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        32
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        32
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice_backward",
+     "class": "elementwise",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        32
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        32
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.0.self_attn.core",
+   "call": 0,
+   "type": "AttnCore",
+   "leaf": true,
+   "class": "attention",
+   "class_title": "Softmax attention",
+   "default_risk": "high: SDPA changed a sequence from batch 3 and between prefill and decode (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#4-softmax-attention-prefill-decode-chunked-prefill-paged-kv",
+   "ops": [
+    {
+     "op": "aten::_scaled_dot_product_flash_attention",
+     "class": "attention",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16
+       ],
+       "float32"
+      ],
+      [
+       [],
+       "int64"
+      ],
+      [
+       [],
+       "int64"
+      ],
+      [
+       [
+        0
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::clone",
+     "class": "move",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::expand",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        1,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice",
+     "class": "move",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::transpose",
+     "class": "move",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::unsqueeze",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        1,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_scaled_dot_product_flash_attention_backward",
+     "class": "attention",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16
+       ],
+       "float32"
+      ],
+      [
+       [],
+       "int64"
+      ],
+      [
+       [],
+       "int64"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::sum",
+     "class": "rowwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        1,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice_backward",
+     "class": "elementwise",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::clone",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::squeeze",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        1,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::transpose",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.0.self_attn.o_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 3,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.407958984375,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6684,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.0.self_attn",
+   "call": 0,
+   "type": "Attention",
+   "leaf": false,
+   "class": "container",
+   "class_title": "Container",
+   "default_risk": "see its children and its own ops",
+   "recipe": "",
+   "ops": [
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.6881103515625,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6771,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.0.post_attention_layernorm",
+   "call": 0,
+   "type": "RMSNorm",
+   "leaf": true,
+   "class": "rowwise",
+   "class_title": "Row-wise reduction",
+   "default_risk": "medium: torch's sum/mean changes its tree below 16 rows (fp32 variance of a 1024-wide row differed from 8 rows, 4096-wide from 2); softmax and log_softmax passed",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#1-row-wise-reductions-rmsnorm-layernorm-softmax-log_softmax-row-sums-cross-entropy",
+   "ops": [
+    {
+     "op": "aten::mean",
+     "class": "rowwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::rsqrt",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::sum",
+     "class": "rowwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::div",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": true,
+     "count": 8,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 3,
+     "in": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::expand",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.0.mlp.gate_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        3584,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.39109584263392855,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 16,
+    "of": 57344
+   },
+   "inside_first_size": 2,
+   "notes": [],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.0.mlp.up_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        3584,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.39217703683035715,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 18,
+    "of": 57344
+   },
+   "inside_first_size": 2,
+   "notes": [],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.0.mlp.act",
+   "call": 0,
+   "type": "SiluMul",
+   "leaf": true,
+   "class": "elementwise",
+   "class_title": "Elementwise",
+   "default_risk": "none expected: one element at a time",
+   "recipe": "",
+   "ops": [
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::silu",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::silu_backward",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.0.mlp.down_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.490234375,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6603,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.0.mlp",
+   "call": 0,
+   "type": "MLP",
+   "leaf": false,
+   "class": "container",
+   "class_title": "Container",
+   "default_risk": "see its children and its own ops",
+   "recipe": "",
+   "ops": [],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.697021484375,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 16,
+    "of": 57344
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.0",
+   "call": 0,
+   "type": "Block",
+   "leaf": false,
+   "class": "container",
+   "class_title": "Container",
+   "default_risk": "see its children and its own ops",
+   "recipe": "",
+   "ops": [
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.6259765625,
+   "inside": {
+    "op_index": 10,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6771,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1.input_layernorm",
+   "call": 0,
+   "type": "RMSNorm",
+   "leaf": true,
+   "class": "rowwise",
+   "class_title": "Row-wise reduction",
+   "default_risk": "medium: torch's sum/mean changes its tree below 16 rows (fp32 variance of a 1024-wide row differed from 8 rows, 4096-wide from 2); softmax and log_softmax passed",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#1-row-wise-reductions-rmsnorm-layernorm-softmax-log_softmax-row-sums-cross-entropy",
+   "ops": [
+    {
+     "op": "aten::mean",
+     "class": "rowwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::rsqrt",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::sum",
+     "class": "rowwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::div",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": true,
+     "count": 8,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 3,
+     "in": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::expand",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.1.self_attn.q_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.40191650390625,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6585,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1.self_attn.k_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        256,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    4,
+    33
+   ],
+   "first_failing_size": 4,
+   "max_fraction": 0.42138671875,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 1726,
+    "of": 4096
+   },
+   "inside_first_size": 4,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1.self_attn.v_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        256,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        256,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    4,
+    33
+   ],
+   "first_failing_size": 4,
+   "max_fraction": 0.417724609375,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 1711,
+    "of": 4096
+   },
+   "inside_first_size": 4,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1.self_attn.rope",
+   "call": 0,
+   "type": "RoPE",
+   "leaf": true,
+   "class": "elementwise",
+   "class_title": "Elementwise",
+   "default_risk": "none expected: one element at a time",
+   "recipe": "",
+   "ops": [
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::neg",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        32
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        32
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::cat",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::index",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        2048,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice",
+     "class": "move",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        32
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::unsqueeze",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::neg",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        32
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        32
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice_backward",
+     "class": "elementwise",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        32
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        32
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.1.self_attn.core",
+   "call": 0,
+   "type": "AttnCore",
+   "leaf": true,
+   "class": "attention",
+   "class_title": "Softmax attention",
+   "default_risk": "high: SDPA changed a sequence from batch 3 and between prefill and decode (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#4-softmax-attention-prefill-decode-chunked-prefill-paged-kv",
+   "ops": [
+    {
+     "op": "aten::_scaled_dot_product_flash_attention",
+     "class": "attention",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16
+       ],
+       "float32"
+      ],
+      [
+       [],
+       "int64"
+      ],
+      [
+       [],
+       "int64"
+      ],
+      [
+       [
+        0
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::clone",
+     "class": "move",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::expand",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        1,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice",
+     "class": "move",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::transpose",
+     "class": "move",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::unsqueeze",
+     "class": "move",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        1,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_scaled_dot_product_flash_attention_backward",
+     "class": "attention",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16
+       ],
+       "float32"
+      ],
+      [
+       [],
+       "int64"
+      ],
+      [
+       [],
+       "int64"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::sum",
+     "class": "rowwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        1,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::slice_backward",
+     "class": "elementwise",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        256
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::clone",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        4,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::squeeze",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        4,
+        1,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::transpose",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        4,
+        4,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.1.self_attn.o_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 3,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.40142822265625,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6576,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1.self_attn",
+   "call": 0,
+   "type": "Attention",
+   "leaf": false,
+   "class": "container",
+   "class_title": "Container",
+   "default_risk": "see its children and its own ops",
+   "recipe": "",
+   "ops": [
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 4,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        16,
+        64
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.66510009765625,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6585,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1.post_attention_layernorm",
+   "call": 0,
+   "type": "RMSNorm",
+   "leaf": true,
+   "class": "rowwise",
+   "class_title": "Row-wise reduction",
+   "default_risk": "medium: torch's sum/mean changes its tree below 16 rows (fp32 variance of a 1024-wide row differed from 8 rows, 4096-wide from 2); softmax and log_softmax passed",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#1-row-wise-reductions-rmsnorm-layernorm-softmax-log_softmax-row-sums-cross-entropy",
+   "ops": [
+    {
+     "op": "aten::mean",
+     "class": "rowwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::rsqrt",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::sum",
+     "class": "rowwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::div",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": true,
+     "count": 8,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 3,
+     "in": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::expand",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.1.mlp.gate_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        3584,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.38926478794642855,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 22,
+    "of": 57344
+   },
+   "inside_first_size": 2,
+   "notes": [],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1.mlp.up_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        3584,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.39144461495535715,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 29,
+    "of": 57344
+   },
+   "inside_first_size": 2,
+   "notes": [],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1.mlp.act",
+   "call": 0,
+   "type": "SiluMul",
+   "leaf": true,
+   "class": "elementwise",
+   "class_title": "Elementwise",
+   "default_risk": "none expected: one element at a time",
+   "recipe": "",
+   "ops": [
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::silu",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::silu_backward",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model.layers.1.mlp.down_proj",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        3584,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        3584
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.49542236328125,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6655,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1.mlp",
+   "call": 0,
+   "type": "MLP",
+   "leaf": false,
+   "class": "container",
+   "class_title": "Container",
+   "default_risk": "see its children and its own ops",
+   "recipe": "",
+   "ops": [],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.7000732421875,
+   "inside": {
+    "op_index": 2,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 22,
+    "of": 57344
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.layers.1",
+   "call": 0,
+   "type": "Block",
+   "leaf": false,
+   "class": "container",
+   "class_title": "Container",
+   "default_risk": "see its children and its own ops",
+   "recipe": "",
+   "ops": [
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.5750732421875,
+   "inside": {
+    "op_index": 10,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6585,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "model.norm",
+   "call": 0,
+   "type": "RMSNorm",
+   "leaf": true,
+   "class": "rowwise",
+   "class_title": "Row-wise reduction",
+   "default_risk": "medium: torch's sum/mean changes its tree below 16 rows (fp32 variance of a 1024-wide row differed from 8 rows, 4096-wide from 2); softmax and log_softmax passed",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#1-row-wise-reductions-rmsnorm-layernorm-softmax-log_softmax-row-sums-cross-entropy",
+   "ops": [
+    {
+     "op": "aten::mean",
+     "class": "rowwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::rsqrt",
+     "class": "elementwise",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": false,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::sum",
+     "class": "rowwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::add",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ],
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::div",
+     "class": "elementwise",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mul",
+     "class": "elementwise",
+     "backward": true,
+     "count": 8,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::pow",
+     "class": "elementwise",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_to_copy",
+     "class": "cast",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 3,
+     "in": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::expand",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1
+       ],
+       "float32"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "float32"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 1,
+     "in": [
+      [
+       [
+        1,
+        1,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "model",
+   "call": 0,
+   "type": "Backbone",
+   "leaf": false,
+   "class": "container",
+   "class_title": "Container",
+   "default_risk": "see its children and its own ops",
+   "recipe": "",
+   "ops": [
+    {
+     "op": "aten::arange",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [],
+     "out": [
+      [
+       [
+        16
+       ],
+       "int64"
+      ]
+     ]
+    },
+    {
+     "op": "aten::expand",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        16
+       ],
+       "int64"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16
+       ],
+       "int64"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.71075439453125,
+   "inside": {
+    "op_index": 13,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6771,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  },
+  {
+   "module": "lm_head",
+   "call": 0,
+   "type": "Linear",
+   "leaf": true,
+   "class": "gemm",
+   "class_title": "Dense GEMM",
+   "default_risk": "high: cuBLAS bf16 rows changed from M = 31, per shape (A40)",
+   "recipe": "../../../skills/batch-invariant-kernel/references/operator-recipes.md#2-dense-gemm-bf16fp16",
+   "ops": [
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        1024,
+        32000
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        32000
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::_unsafe_view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        544,
+        32000
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        34,
+        16,
+        32000
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        32000,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        1024,
+        32000
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": false,
+     "count": 1,
+     "in": [
+      [
+       [
+        34,
+        16,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::mm",
+     "class": "gemm",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        32000,
+        544
+       ],
+       "bfloat16"
+      ],
+      [
+       [
+        544,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32000,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::detach",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        32000,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32000,
+        1024
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::t",
+     "class": "move",
+     "backward": true,
+     "count": 4,
+     "in": [
+      [
+       [
+        544,
+        32000
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        32000,
+        544
+       ],
+       "bfloat16"
+      ]
+     ]
+    },
+    {
+     "op": "aten::view",
+     "class": "move",
+     "backward": true,
+     "count": 2,
+     "in": [
+      [
+       [
+        34,
+        16,
+        32000
+       ],
+       "bfloat16"
+      ]
+     ],
+     "out": [
+      [
+       [
+        544,
+        32000
+       ],
+       "bfloat16"
+      ]
+     ]
+    }
+   ],
+   "comparisons": 24,
+   "failing_sizes": [],
+   "first_failing_size": null,
+   "max_fraction": 0.0,
+   "inside": null,
+   "inside_first_size": null,
+   "notes": [],
+   "verdict": "no difference"
+  },
+  {
+   "module": "(root)",
+   "call": 0,
+   "type": "WholeModel",
+   "leaf": false,
+   "class": "container",
+   "class_title": "Container",
+   "default_risk": "see its children and its own ops",
+   "recipe": "",
+   "ops": [],
+   "comparisons": 24,
+   "failing_sizes": [
+    2,
+    3,
+    4,
+    8,
+    9,
+    16,
+    17,
+    33
+   ],
+   "first_failing_size": 2,
+   "max_fraction": 0.793822265625,
+   "inside": {
+    "op_index": 13,
+    "op": "aten::mm",
+    "class": "gemm",
+    "dtype": "bfloat16",
+    "mismatched_elements": 6771,
+    "of": 16384
+   },
+   "inside_first_size": 2,
+   "notes": [
+    "alone differs from the recorded batch output"
+   ],
+   "verdict": "variant"
+  }
+ ],
+ "summary": {
+  "no difference": 13,
+  "variant": 22
+ }
+}

@@ -1,0 +1,1490 @@
+{
+ "schema": "bi-results-v1",
+ "example": "cross_engine",
+ "quick": false,
+ "argv": [
+  "cross_engine.py",
+  "--trainer-only",
+  "--workdir",
+  "~/bi-check-l4/wf_maia",
+  "--compare-trainer",
+  "~/bi-check-l4/wf/trainer-torch210.pt",
+  "--json",
+  "~/bi-check-l4/wf/results-A16-torch251.json"
+ ],
+ "env": {
+  "python": "3.11.14",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "535.288.01"
+ },
+ "counts": {
+  "ok": 16,
+  "regression": 0,
+  "changed": 0,
+  "info": 53
+ },
+ "checks": [
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "default",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "default",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14197,
+    "logprob_differ": 11826,
+    "max_abs_dlogp": 0.35508155822753906
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "default",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 21,
+    "logprobs": 14407,
+    "logprob_differ": 13965,
+    "max_abs_dlogp": 0.40848827362060547
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "default",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 23,
+    "logprobs": 14305,
+    "logprob_differ": 13673,
+    "max_abs_dlogp": 0.40848827362060547
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "eager",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14256,
+    "logprob_differ": 11408,
+    "max_abs_dlogp": 0.3854808807373047
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 31,
+    "logprobs": 14017,
+    "logprob_differ": 13568,
+    "max_abs_dlogp": 0.45335960388183594
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 31,
+    "logprobs": 14000,
+    "logprob_differ": 13167,
+    "max_abs_dlogp": 0.45335960388183594
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "bi",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "bi",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1133,
+    "max_abs_dlogp": 0.004860281944274902
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "bi",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1133,
+    "max_abs_dlogp": 0.004860281944274902
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "bi",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1133,
+    "max_abs_dlogp": 0.004860281944274902
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "bi_eager",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "bi_eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1116,
+    "max_abs_dlogp": 0.004045248031616211
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "bi_eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1116,
+    "max_abs_dlogp": 0.004045248031616211
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "bi_eager",
+   "level": "L2",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1116,
+    "max_abs_dlogp": 0.004045248031616211
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "bi_eager_lmhead",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "bi_eager_lmhead",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "bi_eager_lmhead",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "bi_eager_lmhead",
+   "level": "L2",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "triton",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "triton",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 23,
+    "logprobs": 14340,
+    "logprob_differ": 11977,
+    "max_abs_dlogp": 0.420623779296875
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "triton",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 22,
+    "logprobs": 14365,
+    "logprob_differ": 13918,
+    "max_abs_dlogp": 0.45263099670410156
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "triton",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 25,
+    "logprobs": 14261,
+    "logprob_differ": 13625,
+    "max_abs_dlogp": 0.2999911308288574
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "flashinfer",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "flashinfer",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 14,
+    "logprobs": 14676,
+    "logprob_differ": 12312,
+    "max_abs_dlogp": 0.3252525329589844
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "flashinfer",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 27,
+    "logprobs": 14144,
+    "logprob_differ": 13698,
+    "max_abs_dlogp": 0.4845237731933594
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "flashinfer",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 19,
+    "logprobs": 14440,
+    "logprob_differ": 13806,
+    "max_abs_dlogp": 0.4845237731933594
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "flex",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "flex",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14320,
+    "logprob_differ": 11957,
+    "max_abs_dlogp": 0.4551124572753906
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "flex",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 25,
+    "logprobs": 14244,
+    "logprob_differ": 13798,
+    "max_abs_dlogp": 0.3678922653198242
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "flex",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14296,
+    "logprob_differ": 13658,
+    "max_abs_dlogp": 0.3678922653198242
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "bi_triton_eager",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "bi_triton_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1137,
+    "max_abs_dlogp": 0.001767873764038086
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "bi_triton_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1137,
+    "max_abs_dlogp": 0.001767873764038086
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "bi_triton_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1137,
+    "max_abs_dlogp": 0.001767873764038086
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "v063_default",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "v063_default",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14331,
+    "logprob_differ": 5157,
+    "max_abs_dlogp": 0.3854808807373047
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "v063_default",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 27,
+    "logprobs": 14147,
+    "logprob_differ": 10741,
+    "max_abs_dlogp": 0.4638381004333496
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "v063_default",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14215,
+    "logprob_differ": 8649,
+    "max_abs_dlogp": 0.684208869934082
+   }
+  },
+  {
+   "name": "engine L1: batch 64 twice",
+   "impl": "v063_eager",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 4",
+   "impl": "v063_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14331,
+    "logprob_differ": 5157,
+    "max_abs_dlogp": 0.3854808807373047
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 16",
+   "impl": "v063_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 27,
+    "logprobs": 14147,
+    "logprob_differ": 10741,
+    "max_abs_dlogp": 0.4638381004333496
+   }
+  },
+  {
+   "name": "engine L2: alone vs batch 64",
+   "impl": "v063_eager",
+   "level": "L2",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14215,
+    "logprob_differ": 8649,
+    "max_abs_dlogp": 0.684208869934082
+   }
+  },
+  {
+   "name": "forward_matched(REFERENCE) == model.py stock prefill, bitwise",
+   "impl": "trainer",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine default: realized-token logprobs, all batches",
+   "impl": "default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76150,
+    "frac_differ": 0.9999343444291248,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine default: realized-token logprobs, all batches",
+   "impl": "default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76152,
+    "frac_differ": 0.9999606066574749,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine eager: realized-token logprobs, all batches",
+   "impl": "eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76121,
+    "frac_differ": 0.9995535421180487,
+    "max_abs_dlogp": 0.6821527481079102,
+    "tokens_B1": 15231,
+    "differ_B1": 15219
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine eager: realized-token logprobs, all batches",
+   "impl": "eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76060,
+    "frac_differ": 0.9987525441533714,
+    "max_abs_dlogp": 0.7343907356262207,
+    "tokens_B1": 15231,
+    "differ_B1": 15192
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine bi: realized-token logprobs, all batches",
+   "impl": "bi",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.1381454467773438,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine bi: realized-token logprobs, all batches",
+   "impl": "bi",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.1381454467773438,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine bi_eager: realized-token logprobs, all batches",
+   "impl": "bi_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.7400445938110352,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine bi_eager: realized-token logprobs, all batches",
+   "impl": "bi_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.6019706726074219,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine bi_eager_lmhead: realized-token logprobs, all batches",
+   "impl": "bi_eager_lmhead",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.7400445938110352,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine bi_eager_lmhead: realized-token logprobs, all batches",
+   "impl": "bi_eager_lmhead",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.6019706726074219,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine triton: realized-token logprobs, all batches",
+   "impl": "triton",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76154,
+    "frac_differ": 0.999986868885825,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine triton: realized-token logprobs, all batches",
+   "impl": "triton",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76151,
+    "frac_differ": 0.9999474755432999,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine flashinfer: realized-token logprobs, all batches",
+   "impl": "flashinfer",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine flashinfer: realized-token logprobs, all batches",
+   "impl": "flashinfer",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76151,
+    "frac_differ": 0.9999474755432999,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine flex: realized-token logprobs, all batches",
+   "impl": "flex",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76153,
+    "frac_differ": 0.9999737377716499,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine flex: realized-token logprobs, all batches",
+   "impl": "flex",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 1.2833127975463867,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine bi_triton_eager: realized-token logprobs, all batches",
+   "impl": "bi_triton_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.7400445938110352,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine bi_triton_eager: realized-token logprobs, all batches",
+   "impl": "bi_triton_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76155,
+    "frac_differ": 1.0,
+    "max_abs_dlogp": 0.7128562927246094,
+    "tokens_B1": 15231,
+    "differ_B1": 15231
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine v063_default: realized-token logprobs, all batches",
+   "impl": "v063_default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76102,
+    "frac_differ": 0.999304050948723,
+    "max_abs_dlogp": 0.7116756439208984,
+    "tokens_B1": 15231,
+    "differ_B1": 15219
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine v063_default: realized-token logprobs, all batches",
+   "impl": "v063_default",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 75917,
+    "frac_differ": 0.996874794826341,
+    "max_abs_dlogp": 0.7343907356262207,
+    "tokens_B1": 15231,
+    "differ_B1": 15172
+   }
+  },
+  {
+   "name": "L4 trainer model.py stock vs engine v063_eager: realized-token logprobs, all batches",
+   "impl": "v063_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 76102,
+    "frac_differ": 0.999304050948723,
+    "max_abs_dlogp": 0.7116756439208984,
+    "tokens_B1": 15231,
+    "differ_B1": 15219
+   }
+  },
+  {
+   "name": "L4 trainer model.py bi vs engine v063_eager: realized-token logprobs, all batches",
+   "impl": "v063_eager",
+   "level": "L4",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "sequences": 320,
+    "tokens": 76155,
+    "differ": 75917,
+    "frac_differ": 0.996874794826341,
+    "max_abs_dlogp": 0.7343907356262207,
+    "tokens_B1": 15231,
+    "differ_B1": 15172
+   }
+  },
+  {
+   "name": "trainer model.py stock: torch 2.5.1+cu121 vs 2.10.0+cu128, realized logprobs bitwise",
+   "impl": "model.py stock",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "tokens": 15231,
+    "differ": 14548
+   }
+  },
+  {
+   "name": "trainer model.py bi: torch 2.5.1+cu121 vs 2.10.0+cu128, realized logprobs bitwise",
+   "impl": "model.py bi",
+   "level": "other",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "tokens": 15231,
+    "differ": 0
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "engine runs wall time (0 when records were reused)",
+   "value": 0.5,
+   "unit": "s"
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 138.8,
+   "unit": "tok/s",
+   "impl": "default",
+   "median_s": 0.922
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 944.1,
+   "unit": "tok/s",
+   "impl": "default",
+   "median_s": 1.085
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 3399.1,
+   "unit": "tok/s",
+   "impl": "default",
+   "median_s": 2.41
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 83.5,
+   "unit": "tok/s",
+   "impl": "eager",
+   "median_s": 1.534
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 601.8,
+   "unit": "tok/s",
+   "impl": "eager",
+   "median_s": 1.702
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 3804.3,
+   "unit": "tok/s",
+   "impl": "eager",
+   "median_s": 2.153
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 53.9,
+   "unit": "tok/s",
+   "impl": "bi",
+   "median_s": 2.376
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 375.1,
+   "unit": "tok/s",
+   "impl": "bi",
+   "median_s": 2.73
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 3285.6,
+   "unit": "tok/s",
+   "impl": "bi",
+   "median_s": 2.493
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 62.9,
+   "unit": "tok/s",
+   "impl": "bi_eager",
+   "median_s": 2.035
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 471.0,
+   "unit": "tok/s",
+   "impl": "bi_eager",
+   "median_s": 2.174
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 2894.7,
+   "unit": "tok/s",
+   "impl": "bi_eager",
+   "median_s": 2.83
+  },
+  {
+   "name": "vLLM output throughput B=1",
+   "value": 65.8,
+   "unit": "tok/s",
+   "impl": "bi_eager_lmhead",
+   "median_s": 1.944
+  },
+  {
+   "name": "vLLM output throughput B=8",
+   "value": 487.0,
+   "unit": "tok/s",
+   "impl": "bi_eager_lmhead",
+   "median_s": 2.103
+  },
+  {
+   "name": "vLLM output throughput B=64",
+   "value": 2960.0,
+   "unit": "tok/s",
+   "impl": "bi_eager_lmhead",
+   "median_s": 2.768
+  },
+  {
+   "name": "trainer forward+logprobs T=512: model.py stock",
+   "value": 70.22,
+   "unit": "ms",
+   "impl": "trainer"
+  },
+  {
+   "name": "trainer forward+logprobs T=512: model.py bi",
+   "value": 71.7,
+   "unit": "ms",
+   "impl": "trainer"
+  }
+ ],
+ "extra": {
+  "engines": {
+   "default": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 17.8
+   },
+   "eager": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 7.3
+   },
+   "bi": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 52.1
+   },
+   "bi_eager": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 5.9
+   },
+   "bi_eager_lmhead": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 4.7
+   },
+   "triton": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "TritonAttentionImpl",
+    "init_s": 27.8
+   },
+   "flashinfer": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashInferImpl",
+    "init_s": 13.4
+   },
+   "flex": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlexAttentionImpl",
+    "init_s": 20.7
+   },
+   "bi_triton_eager": {
+    "vllm": "0.19.1",
+    "torch": "2.10.0+cu128",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "TritonAttentionImpl",
+    "init_s": 8.9
+   },
+   "v063_default": {
+    "vllm": "0.6.3.post1",
+    "torch": "2.4.0+cu121",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 39.1
+   },
+   "v063_eager": {
+    "vllm": "0.6.3.post1",
+    "torch": "2.4.0+cu121",
+    "gpu": "NVIDIA A16",
+    "attn_backend": "FlashAttentionImpl",
+    "init_s": 14.5
+   }
+  },
+  "engine_vs_engine_B1": {
+   "default vs eager": {
+    "prompts": 64,
+    "token_seq_differ": 23,
+    "logprobs": 14342,
+    "logprob_differ": 14342,
+    "max_abs_dlogp": 0.8323092460632324
+   },
+   "default vs bi": {
+    "prompts": 64,
+    "token_seq_differ": 31,
+    "logprobs": 13982,
+    "logprob_differ": 13982,
+    "max_abs_dlogp": 0.5505456924438477
+   },
+   "bi vs bi_eager": {
+    "prompts": 64,
+    "token_seq_differ": 30,
+    "logprobs": 14020,
+    "logprob_differ": 14020,
+    "max_abs_dlogp": 1.181218147277832
+   },
+   "bi_eager vs bi_eager_lmhead": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 1116,
+    "max_abs_dlogp": 0.004045248031616211
+   },
+   "eager vs triton": {
+    "prompts": 64,
+    "token_seq_differ": 28,
+    "logprobs": 14137,
+    "logprob_differ": 14137,
+    "max_abs_dlogp": 0.8323092460632324
+   },
+   "eager vs flashinfer": {
+    "prompts": 64,
+    "token_seq_differ": 18,
+    "logprobs": 14499,
+    "logprob_differ": 14499,
+    "max_abs_dlogp": 0.8323092460632324
+   },
+   "eager vs flex": {
+    "prompts": 64,
+    "token_seq_differ": 26,
+    "logprobs": 14219,
+    "logprob_differ": 14219,
+    "max_abs_dlogp": 0.8323092460632324
+   },
+   "bi_eager vs bi_triton_eager": {
+    "prompts": 64,
+    "token_seq_differ": 24,
+    "logprobs": 14292,
+    "logprob_differ": 14184,
+    "max_abs_dlogp": 0.3115081787109375
+   },
+   "eager vs v063_eager": {
+    "prompts": 64,
+    "token_seq_differ": 10,
+    "logprobs": 14805,
+    "logprob_differ": 10049,
+    "max_abs_dlogp": 0.23403453826904297
+   },
+   "default vs v063_default": {
+    "prompts": 64,
+    "token_seq_differ": 22,
+    "logprobs": 14397,
+    "logprob_differ": 14397,
+    "max_abs_dlogp": 0.7736620903015137
+   },
+   "v063_default vs v063_eager": {
+    "prompts": 64,
+    "token_seq_differ": 0,
+    "logprobs": 15231,
+    "logprob_differ": 0,
+    "max_abs_dlogp": 0.0
+   }
+  },
+  "kl": {
+   "default": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0011546885637023576,
+     "max_kl": 0.024444409943361348,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0009612657890626116,
+     "max_kl": 0.0077064899781700245,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "eager": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.001190605951065679,
+     "max_kl": 0.0345589280788692,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0008630436746960369,
+     "max_kl": 0.007510912434634517,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "triton": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0011172531552484926,
+     "max_kl": 0.013940489068003534,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0009657670106943322,
+     "max_kl": 0.0072706363685650505,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "flashinfer": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.001108223988872309,
+     "max_kl": 0.01933479931100717,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0010106547783769201,
+     "max_kl": 0.01855536766082056,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "flex": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.0013059574612744743,
+     "max_kl": 0.04169729050596803,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0009422200968866027,
+     "max_kl": 0.006468151781209457,
+     "logit_rows_bit_equal": 0
+    }
+   },
+   "v063_eager": {
+    "model.py stock": {
+     "positions": 192,
+     "mean_kl": 0.001190605951065679,
+     "max_kl": 0.0345589280788692,
+     "logit_rows_bit_equal": 0
+    },
+    "model.py bi": {
+     "positions": 192,
+     "mean_kl": 0.0008630436746960369,
+     "max_kl": 0.007510912434634517,
+     "logit_rows_bit_equal": 0
+    }
+   }
+  },
+  "kl_capture_reproduces_engine_logprobs": {
+   "default": true,
+   "eager": true,
+   "bi": false,
+   "bi_eager": false,
+   "bi_eager_lmhead": false,
+   "triton": true,
+   "flashinfer": true,
+   "flex": true,
+   "bi_triton_eager": false,
+   "v063_default": false,
+   "v063_eager": true
+  }
+ }
+}

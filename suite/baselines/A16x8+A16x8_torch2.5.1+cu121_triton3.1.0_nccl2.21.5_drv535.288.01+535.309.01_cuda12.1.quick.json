@@ -1,0 +1,2590 @@
+{
+ "entries": {
+  "collectives_tp_2node": {
+   "checks": {
+    "L1 | NCCL collectives [default] | 5 identical all-reduce and reduce-scatter calls, every rank": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | NCCL collectives [ring-ll128] | 5 identical all-reduce and reduce-scatter calls, every rank": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | NCCL collectives [ring-ll] | 5 identical all-reduce and reduce-scatter calls, every rank": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | NCCL collectives [ring-simple] | 5 identical all-reduce and reduce-scatter calls, every rank": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | NCCL collectives [tree-ll] | 5 identical all-reduce and reduce-scatter calls, every rank": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | NCCL collectives [tree-simple] | 5 identical all-reduce and reduce-scatter calls, every rank": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | NCCL collectives [tree] | 5 identical all-reduce and reduce-scatter calls, every rank": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | lt16_tree TP 16 [default] | the same batch, 5 runs": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | lt16_tree TP 16 [tree] | the same batch, 5 runs": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | lt16_treeh TP 16 [default] | the same batch, 5 runs": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | lt16_treeh TP 16 [tree] | the same batch, 5 runs": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | row_parallel TP 16 [default] | the same batch, 5 runs": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | row_parallel TP 16 [tree] | the same batch, 5 runs": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [default] | all-reduce bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 16,
+      "failing_calls": 27
+     }
+    },
+    "L2 | NCCL all-reduce [default] | all-reduce bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 8,
+      "failing_calls": 18
+     }
+    },
+    "L2 | NCCL all-reduce [default] | all-reduce fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 16,
+      "failing_calls": 22
+     }
+    },
+    "L2 | NCCL all-reduce [default] | all-reduce fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 10,
+      "failing_calls": 21
+     }
+    },
+    "L2 | NCCL all-reduce [ring-ll128] | all-reduce bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 21,
+      "failing_calls": 27
+     }
+    },
+    "L2 | NCCL all-reduce [ring-ll128] | all-reduce bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 5,
+      "failing_calls": 8
+     }
+    },
+    "L2 | NCCL all-reduce [ring-ll128] | all-reduce fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 21,
+      "failing_calls": 24
+     }
+    },
+    "L2 | NCCL all-reduce [ring-ll128] | all-reduce fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 6,
+      "failing_calls": 10
+     }
+    },
+    "L2 | NCCL all-reduce [ring-ll] | all-reduce bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 16,
+      "failing_calls": 27
+     }
+    },
+    "L2 | NCCL all-reduce [ring-ll] | all-reduce bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 13,
+      "failing_calls": 23
+     }
+    },
+    "L2 | NCCL all-reduce [ring-ll] | all-reduce fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 14,
+      "failing_calls": 22
+     }
+    },
+    "L2 | NCCL all-reduce [ring-ll] | all-reduce fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 13,
+      "failing_calls": 24
+     }
+    },
+    "L2 | NCCL all-reduce [ring-simple] | all-reduce bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 17,
+      "failing_calls": 27
+     }
+    },
+    "L2 | NCCL all-reduce [ring-simple] | all-reduce bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 8,
+      "failing_calls": 12
+     }
+    },
+    "L2 | NCCL all-reduce [ring-simple] | all-reduce fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 18,
+      "failing_calls": 24
+     }
+    },
+    "L2 | NCCL all-reduce [ring-simple] | all-reduce fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "distinct_results": 10,
+      "failing_calls": 14
+     }
+    },
+    "L2 | NCCL all-reduce [tree-ll] | all-reduce bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree-ll] | all-reduce bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree-ll] | all-reduce fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree-ll] | all-reduce fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree-simple] | all-reduce bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree-simple] | all-reduce bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree-simple] | all-reduce fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree-simple] | all-reduce fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree] | all-reduce bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree] | all-reduce bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree] | all-reduce fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL all-reduce [tree] | all-reduce fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [default] | reduce-scatter bf16, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [default] | reduce-scatter bf16: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [default] | reduce-scatter fp32, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [default] | reduce-scatter fp32: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [ring-ll128] | reduce-scatter bf16, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [ring-ll128] | reduce-scatter bf16: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [ring-ll128] | reduce-scatter fp32, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [ring-ll128] | reduce-scatter fp32: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [ring-ll] | reduce-scatter bf16, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [ring-ll] | reduce-scatter bf16: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [ring-ll] | reduce-scatter fp32, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [ring-ll] | reduce-scatter fp32: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [ring-simple] | reduce-scatter bf16, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [ring-simple] | reduce-scatter bf16: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [ring-simple] | reduce-scatter fp32, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [ring-simple] | reduce-scatter fp32: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [tree-ll] | reduce-scatter bf16, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [tree-ll] | reduce-scatter bf16: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [tree-ll] | reduce-scatter fp32, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [tree-ll] | reduce-scatter fp32: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [tree-simple] | reduce-scatter bf16, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [tree-simple] | reduce-scatter bf16: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [tree-simple] | reduce-scatter fp32, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [tree-simple] | reduce-scatter fp32: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [tree] | reduce-scatter bf16, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [tree] | reduce-scatter bf16: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | NCCL reduce-scatter [tree] | reduce-scatter fp32, a slice kept by one rank alone vs inside larger chunks": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | NCCL reduce-scatter [tree] | reduce-scatter fp32: the same bits whichever rank keeps the slice": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "owners_that_differ_from_owner_0": 15
+     }
+    },
+    "L2 | col_parallel TP 16 [default] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | col_parallel TP 16 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback (all-gather or all-to-all): fp32 sum in rank order | bf16, a 4x4096 slice: one result across every NCCL setting and message size": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback (all-gather or all-to-all): fp32 sum in rank order | bf16, a 512-element slice: one result across every NCCL setting and message size": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback (all-gather or all-to-all): fp32 sum in rank order | fp32, a 4x4096 slice: one result across every NCCL setting and message size": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback (all-gather or all-to-all): fp32 sum in rank order | fp32, a 512-element slice: one result across every NCCL setting and message size": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [default] | reduce-scatter bf16: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [default] | reduce-scatter fp32: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [ring-ll128] | reduce-scatter bf16: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [ring-ll128] | reduce-scatter fp32: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [ring-ll] | reduce-scatter bf16: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [ring-ll] | reduce-scatter fp32: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [ring-simple] | reduce-scatter bf16: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [ring-simple] | reduce-scatter fp32: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [tree-ll] | reduce-scatter bf16: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [tree-ll] | reduce-scatter fp32: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [tree-simple] | reduce-scatter bf16: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [tree-simple] | reduce-scatter fp32: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [tree] | reduce-scatter bf16: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback reduce-scatter: all-to-all, fp32 sum in rank order [tree] | reduce-scatter fp32: alone vs inside larger chunks, and the same bits whichever rank keeps the slice": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [default] | bf16, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [default] | bf16, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [default] | fp32, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [default] | fp32, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-ll128] | bf16, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-ll128] | bf16, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-ll128] | fp32, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-ll128] | fp32, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-ll] | bf16, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-ll] | bf16, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-ll] | fp32, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-ll] | fp32, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-simple] | bf16, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-simple] | bf16, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-simple] | fp32, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [ring-simple] | fp32, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree-ll] | bf16, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree-ll] | bf16, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree-ll] | fp32, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree-ll] | fp32, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree-simple] | bf16, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree-simple] | bf16, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree-simple] | fp32, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree-simple] | fp32, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree] | bf16, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree] | bf16, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree] | fp32, a 4x4096 slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fallback: fp32 sum in rank order [tree] | fp32, a 512-element slice alone vs inside messages of many sizes; all-gather and all-to-all forms agree and equal an fp32 rank-order sum": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | lt16_tree TP 1 [default] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | lt16_tree TP 1 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | lt16_tree TP 16 [default] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | lt16_tree TP 16 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | lt16_tree TP 8 [default] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | lt16_tree TP 8 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | lt16_treeh TP 16 [default] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | lt16_treeh TP 16 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | row_fallback TP 16 [default] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | row_fallback TP 16 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | row_fbhier TP 16 [default] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | row_fbhier TP 16 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | row_parallel TP 16 [default] | a row alone vs inside batches": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "failed": 66,
+      "failing_sizes": [
+       2,
+       3,
+       4,
+       7,
+       8,
+       15,
+       16,
+       31,
+       32,
+       63,
+       64
+      ]
+     }
+    },
+    "L2 | row_parallel TP 16 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | row_parallel TP 8 [default] | a row alone vs inside batches": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "failed": 66,
+      "failing_sizes": [
+       2,
+       3,
+       4,
+       7,
+       8,
+       15,
+       16,
+       31,
+       32,
+       63,
+       64
+      ]
+     }
+    },
+    "L2 | row_parallel TP 8 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | row_sp TP 16 [default] | a row alone vs inside batches": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "failed": 44,
+      "failing_sizes": [
+       2,
+       3,
+       4,
+       7,
+       8,
+       15,
+       16,
+       31,
+       32,
+       63,
+       64
+      ]
+     }
+    },
+    "L2 | row_sp TP 16 [tree] | a row alone vs inside batches": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "failed": 44,
+      "failing_sizes": [
+       2,
+       3,
+       4,
+       7,
+       8,
+       15,
+       16,
+       31,
+       32,
+       63,
+       64
+      ]
+     }
+    },
+    "L2 | two-level fallback: fp32 sum in rank order | bf16, a 4x4096 slice: one result across every NCCL setting and message size": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: fp32 sum in rank order | bf16, a 512-element slice: one result across every NCCL setting and message size": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: fp32 sum in rank order | fp32, a 4x4096 slice: one result across every NCCL setting and message size": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: fp32 sum in rank order | fp32, a 512-element slice: one result across every NCCL setting and message size": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [default] | bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [default] | bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [default] | fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [default] | fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-ll128] | bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-ll128] | bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-ll128] | fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-ll128] | fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-ll] | bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-ll] | bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-ll] | fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-ll] | fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-simple] | bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-simple] | bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-simple] | fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [ring-simple] | fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree-ll] | bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree-ll] | bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree-ll] | fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree-ll] | fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree-simple] | bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree-simple] | bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree-simple] | fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree-simple] | fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree] | bf16, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree] | bf16, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree] | fp32, a 4x4096 slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | two-level fallback: node sums, then node 0 + node 1 [tree] | fp32, a 512-element slice alone vs inside messages of many sizes": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | unsharded TP 1 [default] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | unsharded TP 1 [tree] | a row alone vs inside batches": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | col_parallel [default] | the same bits as the unsharded GEMM at every TP degree": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | col_parallel [tree] | the same bits as the unsharded GEMM at every TP degree": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | lt16_tree [default] | the same bits at every TP degree (logical TP)": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | lt16_tree [tree] | the same bits at every TP degree (logical TP)": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | lt16_treeh [default] | the same bits at every TP degree (logical TP)": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | lt16_treeh [tree] | the same bits at every TP degree (logical TP)": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | lt8_2d [default] | the same bits as the 8-chunk scheme at TP 1 (chunks split along N)": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | lt8_2d [tree] | the same bits as the 8-chunk scheme at TP 1 (chunks split along N)": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | lt8_splitk [default] | the same bits as the 8-chunk scheme at TP 1 (chunks split along K)": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": {
+       "M=1 tp16": 0,
+       "M=256 tp16": 349
+      }
+     }
+    },
+    "L5 | lt8_splitk [tree] | the same bits as the 8-chunk scheme at TP 1 (chunks split along K)": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": {
+       "M=1 tp16": 0,
+       "M=256 tp16": 349
+      }
+     }
+    },
+    "L5 | lt8_tree [default] | the same bits at every TP degree (logical TP)": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | lt8_tree [tree] | the same bits at every TP degree (logical TP)": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | mm_one_config_f32 [default] | splitting a chunk's K range over two ranks keeps its fp32 partial": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": 14936008
+     }
+    },
+    "L5 | mm_one_config_f32 [default] | splitting a chunk's N columns over two ranks keeps its fp32 partial": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | mm_one_config_f32 [tree] | splitting a chunk's K range over two ranks keeps its fp32 partial": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": 14936008
+     }
+    },
+    "L5 | mm_one_config_f32 [tree] | splitting a chunk's N columns over two ranks keeps its fp32 partial": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | row_fallback [default] | the same bits as the unsharded GEMM at every TP degree": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": {
+       "M=1 tp16": 1681,
+       "M=256 tp16": 441342
+      }
+     }
+    },
+    "L5 | row_fallback [tree] | the same bits as the unsharded GEMM at every TP degree": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": {
+       "M=1 tp16": 1681,
+       "M=256 tp16": 441342
+      }
+     }
+    },
+    "L5 | row_fbhier [default] | the same bits as the unsharded GEMM at every TP degree": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": {
+       "M=1 tp16": 1681,
+       "M=256 tp16": 441342
+      }
+     }
+    },
+    "L5 | row_fbhier [tree] | the same bits as the unsharded GEMM at every TP degree": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": {
+       "M=1 tp16": 1681,
+       "M=256 tp16": 441342
+      }
+     }
+    },
+    "L5 | row_parallel [default] | the same bits as the unsharded GEMM at every TP degree": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": {
+       "M=1 tp16": 2781,
+       "M=1 tp2": 1500,
+       "M=1 tp4": 2069,
+       "M=1 tp8": 2460,
+       "M=256 tp16": 706777,
+       "M=256 tp2": 393571,
+       "M=256 tp4": 524402,
+       "M=256 tp8": 621184
+      }
+     }
+    },
+    "L5 | row_parallel [tree] | the same bits as the unsharded GEMM at every TP degree": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": {
+       "M=1 tp16": 2626,
+       "M=1 tp2": 1500,
+       "M=1 tp4": 2035,
+       "M=1 tp8": 2471,
+       "M=256 tp16": 663736,
+       "M=256 tp2": 393571,
+       "M=256 tp4": 524541,
+       "M=256 tp8": 620860
+      }
+     }
+    },
+    "other | NCCL all-reduce [default] | all-reduce bf16, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [default] | all-reduce bf16, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [default] | all-reduce fp32, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [default] | all-reduce fp32, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-ll128] | all-reduce bf16, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-ll128] | all-reduce bf16, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-ll128] | all-reduce fp32, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-ll128] | all-reduce fp32, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-ll] | all-reduce bf16, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-ll] | all-reduce bf16, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-ll] | all-reduce fp32, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-ll] | all-reduce fp32, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-simple] | all-reduce bf16, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-simple] | all-reduce bf16, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-simple] | all-reduce fp32, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [ring-simple] | all-reduce fp32, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree-ll] | all-reduce bf16, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree-ll] | all-reduce bf16, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree-ll] | all-reduce fp32, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree-ll] | all-reduce fp32, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree-simple] | all-reduce bf16, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree-simple] | all-reduce bf16, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree-simple] | all-reduce fp32, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree-simple] | all-reduce fp32, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree] | all-reduce bf16, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree] | all-reduce bf16, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree] | all-reduce fp32, a 4x4096 slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | NCCL all-reduce [tree] | all-reduce fp32, a 512-element slice: every result element equals one sequential or tree order": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | mm_one_config_f32 [default] | the fp32-output GEMM, rounded to bf16, equals mm_one_config": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | mm_one_config_f32 [tree] | the fp32-output GEMM, rounded to bf16, equals mm_one_config": {
+     "expect": "pass",
+     "passed": true
+    }
+   },
+   "measurements": {
+    "TP linear M16/col_parallel/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 0.3227
+    },
+    "TP linear M16/col_parallel/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 0.3101
+    },
+    "TP linear M16/lt16_tree/tp1 | impl=[default]": {
+     "unit": "ms",
+     "value": 0.7062
+    },
+    "TP linear M16/lt16_tree/tp1 | impl=[tree]": {
+     "unit": "ms",
+     "value": 0.7059
+    },
+    "TP linear M16/lt16_tree/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 1.7268
+    },
+    "TP linear M16/lt16_tree/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 1.9084
+    },
+    "TP linear M16/lt16_tree/tp8 | impl=[default]": {
+     "unit": "ms",
+     "value": 0.4952
+    },
+    "TP linear M16/lt16_tree/tp8 | impl=[tree]": {
+     "unit": "ms",
+     "value": 0.4898
+    },
+    "TP linear M16/lt16_treeh/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 0.6687
+    },
+    "TP linear M16/lt16_treeh/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 0.7499
+    },
+    "TP linear M16/lt8_2d/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 1.4169
+    },
+    "TP linear M16/lt8_2d/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 1.4615
+    },
+    "TP linear M16/lt8_tree/tp8 | impl=[default]": {
+     "unit": "ms",
+     "value": 0.4286
+    },
+    "TP linear M16/lt8_tree/tp8 | impl=[tree]": {
+     "unit": "ms",
+     "value": 0.409
+    },
+    "TP linear M16/row_fallback/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 1.3281
+    },
+    "TP linear M16/row_fallback/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 1.2903
+    },
+    "TP linear M16/row_fbhier/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 0.6336
+    },
+    "TP linear M16/row_fbhier/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 0.7234
+    },
+    "TP linear M16/row_parallel/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 0.7125
+    },
+    "TP linear M16/row_parallel/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 0.5473
+    },
+    "TP linear M16/row_parallel/tp8 | impl=[default]": {
+     "unit": "ms",
+     "value": 0.2236
+    },
+    "TP linear M16/row_parallel/tp8 | impl=[tree]": {
+     "unit": "ms",
+     "value": 0.1847
+    },
+    "TP linear M16/unsharded/tp1 | impl=[default]": {
+     "unit": "ms",
+     "value": 0.2882
+    },
+    "TP linear M16/unsharded/tp1 | impl=[tree]": {
+     "unit": "ms",
+     "value": 0.287
+    },
+    "TP linear M512/col_parallel/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 2.0729
+    },
+    "TP linear M512/col_parallel/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 1.9492
+    },
+    "TP linear M512/lt16_tree/tp1 | impl=[default]": {
+     "unit": "ms",
+     "value": 3.9852
+    },
+    "TP linear M512/lt16_tree/tp1 | impl=[tree]": {
+     "unit": "ms",
+     "value": 3.9741
+    },
+    "TP linear M512/lt16_tree/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 14.4839
+    },
+    "TP linear M512/lt16_tree/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 14.2118
+    },
+    "TP linear M512/lt16_tree/tp8 | impl=[default]": {
+     "unit": "ms",
+     "value": 3.4952
+    },
+    "TP linear M512/lt16_tree/tp8 | impl=[tree]": {
+     "unit": "ms",
+     "value": 3.5028
+    },
+    "TP linear M512/lt16_treeh/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 6.5139
+    },
+    "TP linear M512/lt16_treeh/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 6.6566
+    },
+    "TP linear M512/lt8_2d/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 22.5704
+    },
+    "TP linear M512/lt8_2d/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 23.0994
+    },
+    "TP linear M512/lt8_tree/tp8 | impl=[default]": {
+     "unit": "ms",
+     "value": 3.3211
+    },
+    "TP linear M512/lt8_tree/tp8 | impl=[tree]": {
+     "unit": "ms",
+     "value": 3.3219
+    },
+    "TP linear M512/row_fallback/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 8.5303
+    },
+    "TP linear M512/row_fallback/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 8.3128
+    },
+    "TP linear M512/row_fbhier/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 5.3534
+    },
+    "TP linear M512/row_fbhier/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 5.522
+    },
+    "TP linear M512/row_parallel/tp16 | impl=[default]": {
+     "unit": "ms",
+     "value": 3.3492
+    },
+    "TP linear M512/row_parallel/tp16 | impl=[tree]": {
+     "unit": "ms",
+     "value": 5.2794
+    },
+    "TP linear M512/row_parallel/tp8 | impl=[default]": {
+     "unit": "ms",
+     "value": 1.9452
+    },
+    "TP linear M512/row_parallel/tp8 | impl=[tree]": {
+     "unit": "ms",
+     "value": 3.9416
+    },
+    "TP linear M512/unsharded/tp1 | impl=[default]": {
+     "unit": "ms",
+     "value": 1.2924
+    },
+    "TP linear M512/unsharded/tp1 | impl=[tree]": {
+     "unit": "ms",
+     "value": 1.2922
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=allreduce [default]": {
+     "unit": "ms",
+     "value": 1.5533
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=allreduce [tree]": {
+     "unit": "ms",
+     "value": 3.3222
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=clone_only [default]": {
+     "unit": "ms",
+     "value": 0.0132
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=clone_only [tree]": {
+     "unit": "ms",
+     "value": 0.0146
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=fallback_a2a_sum_gather [default]": {
+     "unit": "ms",
+     "value": 3.6214
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=fallback_a2a_sum_gather [tree]": {
+     "unit": "ms",
+     "value": 2.8476
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=fallback_gather_sum [default]": {
+     "unit": "ms",
+     "value": 8.5296
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=fallback_gather_sum [tree]": {
+     "unit": "ms",
+     "value": 8.1725
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=fallback_hier [default]": {
+     "unit": "ms",
+     "value": 1.6107
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=fallback_hier [tree]": {
+     "unit": "ms",
+     "value": 1.769
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=reduce_scatter [default]": {
+     "unit": "ms",
+     "value": 0.6314
+    },
+    "collective, bf16 1048576 bytes, 16 ranks | impl=reduce_scatter [tree]": {
+     "unit": "ms",
+     "value": 0.9158
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=allreduce [default]": {
+     "unit": "ms",
+     "value": 11.6585
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=allreduce [tree]": {
+     "unit": "ms",
+     "value": 16.391
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=clone_only [default]": {
+     "unit": "ms",
+     "value": 0.2156
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=clone_only [tree]": {
+     "unit": "ms",
+     "value": 0.2168
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=fallback_a2a_sum_gather [default]": {
+     "unit": "ms",
+     "value": 30.3529
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=fallback_a2a_sum_gather [tree]": {
+     "unit": "ms",
+     "value": 109.8641
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=fallback_gather_sum [default]": {
+     "unit": "ms",
+     "value": 101.7082
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=fallback_gather_sum [tree]": {
+     "unit": "ms",
+     "value": 96.1471
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=fallback_hier [default]": {
+     "unit": "ms",
+     "value": 20.1653
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=fallback_hier [tree]": {
+     "unit": "ms",
+     "value": 23.119
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=reduce_scatter [default]": {
+     "unit": "ms",
+     "value": 5.5762
+    },
+    "collective, bf16 16777216 bytes, 16 ranks | impl=reduce_scatter [tree]": {
+     "unit": "ms",
+     "value": 8.2753
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=col_parallel/tp16 [default]": {
+     "unit": "rel",
+     "value": 0.0016623799559880245
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=col_parallel/tp16 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623799559880245
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp1 [default]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp1 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp16 [default]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp16 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp2 [default]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp2 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp4 [default]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp4 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp8 [default]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_tree/tp8 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_treeh/tp16 [default]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt16_treeh/tp16 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt8_2d/tp16 [default]": {
+     "unit": "rel",
+     "value": 0.0016623719068126648
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt8_2d/tp16 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623719068126648
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt8_splitk/tp16 [default]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt8_splitk/tp16 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623718532040033
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt8_tree/tp1 [default]": {
+     "unit": "rel",
+     "value": 0.0016623719068126648
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt8_tree/tp1 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623719068126648
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt8_tree/tp8 [default]": {
+     "unit": "rel",
+     "value": 0.0016623719068126648
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=lt8_tree/tp8 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623719068126648
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_fallback/tp16 [default]": {
+     "unit": "rel",
+     "value": 0.002354323980700194
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_fallback/tp16 [tree]": {
+     "unit": "rel",
+     "value": 0.002354323980700194
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_fbhier/tp16 [default]": {
+     "unit": "rel",
+     "value": 0.002354323980700194
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_fbhier/tp16 [tree]": {
+     "unit": "rel",
+     "value": 0.002354323980700194
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_parallel/tp16 [default]": {
+     "unit": "rel",
+     "value": 0.005301625442553284
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_parallel/tp16 [tree]": {
+     "unit": "rel",
+     "value": 0.0044257529073865095
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_parallel/tp2 [default]": {
+     "unit": "rel",
+     "value": 0.0024510221169214237
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_parallel/tp2 [tree]": {
+     "unit": "rel",
+     "value": 0.0024510221169214237
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_parallel/tp4 [default]": {
+     "unit": "rel",
+     "value": 0.0031517307411363547
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_parallel/tp4 [tree]": {
+     "unit": "rel",
+     "value": 0.003150176859257717
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_parallel/tp8 [default]": {
+     "unit": "rel",
+     "value": 0.00403874546252822
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=row_parallel/tp8 [tree]": {
+     "unit": "rel",
+     "value": 0.004037930347323332
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=unsharded/tp1 [default]": {
+     "unit": "rel",
+     "value": 0.0016623799559880245
+    },
+    "relative Frobenius error vs fp64, M=256 | impl=unsharded/tp1 [tree]": {
+     "unit": "rel",
+     "value": 0.0016623799559880245
+    }
+   },
+   "seconds": 186.0
+  },
+  "moe_ep_2node": {
+   "checks": {
+    "L1 | arrival_atomic | E=32 top-3: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "info",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": 685
+     }
+    },
+    "L1 | arrival_atomic | E=32 top-3: the same global batch, 5 runs, at EP 16": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L1 | arrival_atomic | E=32 top-4: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "info",
+     "passed": false,
+     "signature": {
+      "mismatched_elements": 3745
+     }
+    },
+    "L1 | arrival_atomic | E=32 top-4: the same global batch, 5 runs, at EP 16": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L1 | arrival_det | E=32 top-3: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | arrival_det | E=32 top-3: the same global batch, 5 runs, at EP 16": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | arrival_det | E=32 top-4: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | arrival_det | E=32 top-4: the same global batch, 5 runs, at EP 16": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | capacity | E=32 top-3: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | capacity | E=32 top-3: the same global batch, 5 runs, at EP 16": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | capacity | E=32 top-4: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | capacity | E=32 top-4: the same global batch, 5 runs, at EP 16": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | fixed_slot | E=32 top-3: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | fixed_slot | E=32 top-3: the same global batch, 5 runs, at EP 16": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | fixed_slot | E=32 top-4: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | fixed_slot | E=32 top-4: the same global batch, 5 runs, at EP 16": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | fixed_slot_torch | E=32 top-3: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | fixed_slot_torch | E=32 top-3: the same global batch, 5 runs, at EP 16": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | fixed_slot_torch | E=32 top-4: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | fixed_slot_torch | E=32 top-4: the same global batch, 5 runs, at EP 16": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | rank_partial | E=32 top-3: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | rank_partial | E=32 top-3: the same global batch, 5 runs, at EP 16": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | rank_partial | E=32 top-4: EP 1 on rank 0 equals the EP 1 dump of the one-node run": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | rank_partial | E=32 top-4: the same global batch, 5 runs, at EP 16": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | arrival_atomic | E=32 top-4: a probe group alone vs with co-batched tokens on its rank, on other ranks or both, at EP 16": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | arrival_det | E=32 top-4: a probe group alone vs with co-batched tokens on its rank, on other ranks or both, at EP 16": {
+     "expect": "info",
+     "passed": true
+    },
+    "L2 | capacity | E=32 top-4: a probe group alone vs with co-batched tokens on its rank, on other ranks or both, at EP 16": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "failed": 30
+     }
+    },
+    "L2 | fixed_slot | E=32 top-4: a probe group alone vs with co-batched tokens on its rank, on other ranks or both, at EP 16": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | fixed_slot_torch | E=32 top-4: a probe group alone vs with co-batched tokens on its rank, on other ranks or both, at EP 16": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | rank_partial | E=32 top-4: a probe group alone vs with co-batched tokens on its rank, on other ranks or both, at EP 16": {
+     "expect": "info",
+     "passed": true
+    },
+    "L5 | arrival_atomic | E=32 top-3: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "info",
+     "passed": false
+    },
+    "L5 | arrival_atomic | E=32 top-4: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "info",
+     "passed": false
+    },
+    "L5 | arrival_det | E=32 top-3: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "info",
+     "passed": true
+    },
+    "L5 | arrival_det | E=32 top-4: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "info",
+     "passed": true
+    },
+    "L5 | capacity | E=32 top-3: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "max_mismatched_elements_per_layout": {
+       "ep1": 294099,
+       "ep16": 737548,
+       "ep2": 388045,
+       "ep2_x": 388045,
+       "ep4": 473878,
+       "ep8_node": 578167,
+       "ep8_x": 578167
+      }
+     }
+    },
+    "L5 | capacity | E=32 top-4: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "max_mismatched_elements_per_layout": {
+       "ep1": 316556,
+       "ep16": 763549,
+       "ep2": 385840,
+       "ep2_x": 385840,
+       "ep4": 477682,
+       "ep8_node": 569622,
+       "ep8_x": 569622
+      }
+     }
+    },
+    "L5 | fixed_slot | E=32 top-3: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | fixed_slot | E=32 top-4: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | fixed_slot_torch | E=32 top-3: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | fixed_slot_torch | E=32 top-4: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | rank_partial | E=32 top-3: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "max_mismatched_elements_per_layout": {
+       "ep1": 0,
+       "ep16": 33,
+       "ep2": 27,
+       "ep2_x": 27,
+       "ep4": 30,
+       "ep8_node": 31,
+       "ep8_x": 31
+      }
+     }
+    },
+    "L5 | rank_partial | E=32 top-4: the same bits as EP 1 on rank 0 in every layout (EP 1 to 16, inside a node or across two), group and sharding": {
+     "expect": "fail",
+     "passed": false,
+     "signature": {
+      "max_mismatched_elements_per_layout": {
+       "ep1": 0,
+       "ep16": 60,
+       "ep2": 41,
+       "ep2_x": 41,
+       "ep4": 53,
+       "ep8_node": 62,
+       "ep8_x": 62
+      }
+     }
+    },
+    "L5 | router (one-config GEMM, softmax, stable top-k) | E=32 top-3: router ids equal in every layout, group and sharding": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | router (one-config GEMM, softmax, stable top-k) | E=32 top-4: router ids equal in every layout, group and sharding": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | two-node launch | ranks 0-7 run on one node and ranks 8-15 on another": {
+     "expect": "pass",
+     "passed": true
+    }
+   },
+   "measurements": {},
+   "seconds": 31.8
+  },
+  "training_dp_2node": {
+   "checks": {
+    "L1 | e2e_stock_ddp | stock loop at d=16: a second run gives the same weights [default]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | e2e_stock_ddp | stock loop at d=16: restarting from state_dicts after 5 steps gives the weights of the uninterrupted run [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L1 | logical_shards | logical shards: repeats give the same gradient (small, 16 sequences) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | logical_shards | logical shards: repeats give the same gradient (small, 64 sequences) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | nccl_allreduce | repeats: the same message reduced again gives the same bits (small, d=16) [default]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | nccl_allreduce | repeats: the same message reduced again gives the same bits (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | nccl_allreduce | repeats: the same message reduced again gives the same bits (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | nccl_reduce_scatter | repeats: the same reduce-scatter gives the same bits (small, d=16) [default]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | nccl_reduce_scatter | repeats: the same reduce-scatter gives the same bits (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | nccl_reduce_scatter | repeats: the same reduce-scatter gives the same bits (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | ordered_allreduce | repeats: the same message reduced again gives the same bits (small, d=16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | ordered_allreduce | repeats: the same message reduced again gives the same bits (small, d=16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | ordered_allreduce | repeats: the same message reduced again gives the same bits (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | ordered_reduce_scatter | repeats: the same reduce-scatter gives the same bits (small, d=16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | ordered_reduce_scatter | repeats: the same reduce-scatter gives the same bits (small, d=16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | ordered_reduce_scatter | repeats: the same reduce-scatter gives the same bits (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | shard_backward | a shard's gradient and loss repeat bit for bit on every rank (small) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L1 | torch_ddp | torch DDP: iterations 2 to 3 repeat bit for bit (small, d=16) [default]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | torch_ddp | torch DDP: iterations 2 to 3 repeat bit for bit (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | torch_ddp | torch DDP: iterations 2 to 3 repeat bit for bit (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": true
+    },
+    "L1 | torch_ddp | torch DDP: the first iteration and the second give the same gradient for the same input (small, d=16) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L1 | torch_ddp | torch DDP: the first iteration and the second give the same gradient for the same input (small, d=16) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L1 | torch_ddp | torch DDP: the first iteration and the second give the same gradient for the same input (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | logical_shards+ordered_reduce_scatter | logical shards with the ordered reduce-scatter under shifted layouts equal the d=1 gradient (small, d=16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | logical_shards+ordered_reduce_scatter | logical shards with the ordered reduce-scatter under shifted layouts equal the d=1 gradient (small, d=16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | logical_shards+ordered_reduce_scatter | logical shards with the ordered reduce-scatter under shifted layouts equal the d=1 gradient (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | nccl_allreduce | packing: a parameter's averaged gradient does not depend on the bucket layout (small, d=16) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | nccl_allreduce | packing: a parameter's averaged gradient does not depend on the bucket layout (small, d=16) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | nccl_allreduce | packing: a parameter's averaged gradient does not depend on the bucket layout (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | nccl_reduce_scatter | layout: a parameter's reduced gradient does not depend on which rank owns it (small, d=16) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | nccl_reduce_scatter | layout: a parameter's reduced gradient does not depend on which rank owns it (small, d=16) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | nccl_reduce_scatter | layout: a parameter's reduced gradient does not depend on which rank owns it (small, d=16) [tree]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | ordered_allreduce | packing: a parameter's averaged gradient does not depend on the bucket layout (small, d=16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | ordered_allreduce | packing: a parameter's averaged gradient does not depend on the bucket layout (small, d=16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | ordered_allreduce | packing: a parameter's averaged gradient does not depend on the bucket layout (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | ordered_reduce_scatter | layout: a parameter's reduced gradient does not depend on which rank owns it (small, d=16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | ordered_reduce_scatter | layout: a parameter's reduced gradient does not depend on which rank owns it (small, d=16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | ordered_reduce_scatter | layout: a parameter's reduced gradient does not depend on which rank owns it (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | sharded_norm_stock | grad-norm, sharded the FSDP way: padding in front of the flat vector does not change it (d=16) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | sharded_norm_stock | grad-norm, sharded the FSDP way: padding in front of the flat vector does not change it (d=16) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | sharded_norm_stock | grad-norm, sharded the FSDP way: padding in front of the flat vector does not change it (d=16) [tree]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | torch_ddp | torch DDP: bucket_cap_mb does not change the gradient (small, d=16) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | torch_ddp | torch DDP: bucket_cap_mb does not change the gradient (small, d=16) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L2 | torch_ddp | torch DDP: bucket_cap_mb does not change the gradient (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | torch_ddp+ordered_hook | torch DDP with the ordered comm hook: first iteration, later ones and every bucket_cap_mb equal the ordered all-reduce (small, d=16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | torch_ddp+ordered_hook | torch DDP with the ordered comm hook: first iteration, later ones and every bucket_cap_mb equal the ordered all-reduce (small, d=16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L2 | torch_ddp+ordered_hook | torch DDP with the ordered comm hook: first iteration, later ones and every bucket_cap_mb equal the ordered all-reduce (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | batched+ordered_allreduce | degree: the averaged gradient of the same 16 sequences equals the d=1 gradient (small) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | batched+ordered_allreduce | degree: the averaged gradient of the same 16 sequences equals the d=1 gradient (small) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | batched+ordered_allreduce | degree: the averaged gradient of the same 16 sequences equals the d=1 gradient (small) [tree]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | e2e_dp | end to end: weights, AdamW state, losses and grad-norms after 10 steps equal the d=1 run [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | e2e_elastic | elastic resume: 5 steps at d8, checkpoint file, 5 steps at d16 equal 10 steps at d=1 (and so at every degree that passed above) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | e2e_fsdp | end to end: weights, AdamW state, losses and grad-norms after 10 steps equal the d=1 run [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | e2e_stock_ddp | stock loop (torch DDP, clip_grad_norm_, AdamW): weights after 10 steps equal the d=1 run [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | logical_norm | logical norm from block-aligned slices equals the norm of the whole vector at every degree [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | logical_norm | logical norm from block-aligned slices equals the norm of the whole vector at every degree [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | logical_norm | logical norm from block-aligned slices equals the norm of the whole vector at every degree [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | logical_shards | logical shards, strided assignment (rank r holds shards r, r+d, ...), leaves sent unreduced: equals d=1 (small) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | logical_shards | logical shards: the gradient at every degree and placement equals d=1 (small, 16 sequences) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | logical_shards | logical shards: the gradient at every degree and placement equals d=1 (small, 64 sequences) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | logical_shards+nccl_allreduce | logical shards with an NCCL all-reduce across ranks equal d=1, at three or more ranks (small) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | logical_shards+nccl_reduce_scatter | logical shards with an NCCL reduce-scatter across ranks equal d=1, at three or more ranks (small) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | logical_shards+nccl_reduce_scatter | logical shards with an NCCL reduce-scatter across ranks equal d=1, at three or more ranks (small) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | logical_shards+nccl_reduce_scatter | logical shards with an NCCL reduce-scatter across ranks equal d=1, at three or more ranks (small) [tree]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | logical_shards+ordered_reduce_scatter | logical shards with the ordered reduce-scatter: the gathered slices equal the d=1 gradient (small) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | logical_shards+ordered_reduce_scatter | logical shards with the ordered reduce-scatter: the gathered slices equal the d=1 gradient (small) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | logical_shards+ordered_reduce_scatter | logical shards with the ordered reduce-scatter: the gathered slices equal the d=1 gradient (small) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | loss_mean_ordered | logical shards: the loss mean at every degree and placement equals d=1 (small, 16 sequences) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | loss_mean_ordered | logical shards: the loss mean at every degree and placement equals d=1 (small, 64 sequences) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | loss_mean_stock | degree: the loss mean (per-rank mean, all-reduce, divide by d) equals the d=1 loss (small) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | loss_mean_stock | degree: the loss mean (per-rank mean, all-reduce, divide by d) equals the d=1 loss (small) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | loss_mean_stock | degree: the loss mean (per-rank mean, all-reduce, divide by d) equals the d=1 loss (small) [tree]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | nccl_reduce_scatter | degree: the reduce-scattered gradient of the same 16 sequences equals the d=1 gradient (small) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | nccl_reduce_scatter | degree: the reduce-scattered gradient of the same 16 sequences equals the d=1 gradient (small) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | nccl_reduce_scatter | degree: the reduce-scattered gradient of the same 16 sequences equals the d=1 gradient (small) [tree]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | shard_backward | a shard's gradient and loss are the same bits on all 16 ranks (small) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "L5 | sharded_norm_stock | grad-norm, sharded the FSDP way (local sum of squares, NCCL all-reduce): equals the d=1 norm [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | sharded_norm_stock | grad-norm, sharded the FSDP way (local sum of squares, NCCL all-reduce): equals the d=1 norm [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | sharded_norm_stock | grad-norm, sharded the FSDP way (local sum of squares, NCCL all-reduce): equals the d=1 norm [tree]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | strided_presum+ordered_allreduce | strided shards pre-summed per rank, then the ordered tree across ranks, equal d=1 (small) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | torch_ddp | degree: the averaged gradient of the same 16 sequences equals the d=1 gradient (small) [default]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | torch_ddp | degree: the averaged gradient of the same 16 sequences equals the d=1 gradient (small) [ring]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "L5 | torch_ddp | degree: the averaged gradient of the same 16 sequences equals the d=1 gradient (small) [tree]": {
+     "expect": "fail",
+     "passed": false
+    },
+    "other | all_gather | all-gather is a bit-exact copy (d16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather is a bit-exact copy (d16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather is a bit-exact copy (d16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather is a bit-exact copy (d4) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather is a bit-exact copy (d4) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather is a bit-exact copy (d4) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather is a bit-exact copy (d8x) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather is a bit-exact copy (d8x) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather is a bit-exact copy (d8x) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather of the parameter slices returns the parameters bit for bit (small) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather of the parameter slices returns the parameters bit for bit (small) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_gather | all-gather of the parameter slices returns the parameters bit for bit (small) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_to_all | all-to-all is a bit-exact copy (d16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_to_all | all-to-all is a bit-exact copy (d16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_to_all | all-to-all is a bit-exact copy (d16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_to_all | all-to-all is a bit-exact copy (d4) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_to_all | all-to-all is a bit-exact copy (d4) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_to_all | all-to-all is a bit-exact copy (d4) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_to_all | all-to-all is a bit-exact copy (d8x) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_to_all | all-to-all is a bit-exact copy (d8x) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | all_to_all | all-to-all is a bit-exact copy (d8x) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | broadcast | broadcast is a bit-exact copy (d16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | broadcast | broadcast is a bit-exact copy (d16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | broadcast | broadcast is a bit-exact copy (d16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | broadcast | broadcast is a bit-exact copy (d4) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | broadcast | broadcast is a bit-exact copy (d4) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | broadcast | broadcast is a bit-exact copy (d4) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | broadcast | broadcast is a bit-exact copy (d8x) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | broadcast | broadcast is a bit-exact copy (d8x) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | broadcast | broadcast is a bit-exact copy (d8x) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | driver | launch finished [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | driver | launch finished [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | driver | launch finished [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | e2e_dp | the stock loop at d=1 and the logical-shard loop give the same weights [default]": {
+     "expect": "info",
+     "passed": false
+    },
+    "other | logical_shards | logical shards at d=1 give the bits of one batched backward over the 16 sequences (small) [default]": {
+     "expect": "info",
+     "passed": false
+    },
+    "other | logical_shards | logical shards: all ranks hold the same gradient (small, 16 sequences) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | logical_shards | logical shards: all ranks hold the same gradient (small, 64 sequences) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | nccl_allreduce | all ranks hold the same reduced gradient (small, d=16) [default]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_allreduce | all ranks hold the same reduced gradient (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_allreduce | all ranks hold the same reduced gradient (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_allreduce | order diagnostic: every element equals a sequential ring or tree order (small, d=16) [default]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_allreduce | order diagnostic: every element equals a sequential ring or tree order (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_allreduce | order diagnostic: every element equals a sequential ring or tree order (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_allreduce | the packing emulation with DDP's bucket layout equals torch DDP (small, d=16) [default]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_allreduce | the packing emulation with DDP's bucket layout equals torch DDP (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_allreduce | the packing emulation with DDP's bucket layout equals torch DDP (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_reduce_scatter | NCCL reduce-scatter equals NCCL all-reduce on the same inputs (small, d=16) [default]": {
+     "expect": "info",
+     "passed": false
+    },
+    "other | nccl_reduce_scatter | NCCL reduce-scatter equals NCCL all-reduce on the same inputs (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": false
+    },
+    "other | nccl_reduce_scatter | NCCL reduce-scatter equals NCCL all-reduce on the same inputs (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": false
+    },
+    "other | nccl_reduce_scatter | NCCL reduce-scatter equals the rank-order sum 0..d-1 (small, d=16) [default]": {
+     "expect": "info",
+     "passed": false
+    },
+    "other | nccl_reduce_scatter | NCCL reduce-scatter equals the rank-order sum 0..d-1 (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": false
+    },
+    "other | nccl_reduce_scatter | NCCL reduce-scatter equals the rank-order sum 0..d-1 (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": false
+    },
+    "other | nccl_reduce_scatter | order diagnostic: the slice kept by rank j is summed from rank j+1 around the ring (small, d=16) [default]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_reduce_scatter | order diagnostic: the slice kept by rank j is summed from rank j+1 around the ring (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_reduce_scatter | order diagnostic: the slice kept by rank j is summed from rank j+1 around the ring (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_reduce_scatter | reduce-scatter: elements that keep their owner keep their bits under every layout (small, d=16) [default]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_reduce_scatter | reduce-scatter: elements that keep their owner keep their bits under every layout (small, d=16) [ring]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | nccl_reduce_scatter | reduce-scatter: elements that keep their owner keep their bits under every layout (small, d=16) [tree]": {
+     "expect": "info",
+     "passed": true
+    },
+    "other | ordered_allreduce | all ranks hold the same reduced gradient (small, d=16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | ordered_allreduce | all ranks hold the same reduced gradient (small, d=16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | ordered_allreduce | all ranks hold the same reduced gradient (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | ordered_reduce_scatter | the ordered reduce-scatter, gathered, equals the ordered all-reduce (small, d=16) [default]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | ordered_reduce_scatter | the ordered reduce-scatter, gathered, equals the ordered all-reduce (small, d=16) [ring]": {
+     "expect": "pass",
+     "passed": true
+    },
+    "other | ordered_reduce_scatter | the ordered reduce-scatter, gathered, equals the ordered all-reduce (small, d=16) [tree]": {
+     "expect": "pass",
+     "passed": true
+    }
+   },
+   "measurements": {
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=all_gather | nccl=default | ratio_to_nccl=None": {
+     "unit": "ms",
+     "value": 5.085
+    },
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=clone | nccl=default | ratio_to_nccl=None": {
+     "unit": "ms",
+     "value": 0.25113
+    },
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=nccl_allreduce | nccl=default | ratio_to_nccl=1.0": {
+     "unit": "ms",
+     "value": 8.7681
+    },
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=nccl_reduce_scatter | nccl=default | ratio_to_nccl=1.0": {
+     "unit": "ms",
+     "value": 4.5194
+    },
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=ordered_allreduce | nccl=default | ratio_to_nccl=2.885": {
+     "unit": "ms",
+     "value": 25.293
+    },
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=ordered_allreduce_2level | nccl=default | ratio_to_nccl=1.218": {
+     "unit": "ms",
+     "value": 10.679
+    },
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=ordered_allreduce_tree | nccl=default | ratio_to_nccl=3.227": {
+     "unit": "ms",
+     "value": 28.292
+    },
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=ordered_reduce_scatter | nccl=default | ratio_to_nccl=4.104": {
+     "unit": "ms",
+     "value": 18.55
+    },
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=ordered_reduce_scatter_2level | nccl=default | ratio_to_nccl=1.276": {
+     "unit": "ms",
+     "value": 5.7659
+    },
+    "collective on one fp32 message | bytes=12845056 | degree=16 | impl=ordered_reduce_scatter_tree | nccl=default | ratio_to_nccl=4.127": {
+     "unit": "ms",
+     "value": 18.652
+    },
+    "grad-norm error against an fp64 sum, relative | degree=1 | impl=sharded_norm_stock | nccl=default | vector=gradient, 16 sequences": {
+     "unit": "rel",
+     "value": 2.0963e-08
+    },
+    "grad-norm error against an fp64 sum, relative | degree=1 | impl=sharded_norm_stock | nccl=default | vector=gradient, 64 sequences": {
+     "unit": "rel",
+     "value": 4.5097e-09
+    },
+    "grad-norm error against an fp64 sum, relative | degree=1 | impl=sharded_norm_stock | nccl=default | vector=initial weights": {
+     "unit": "rel",
+     "value": 3.0671e-08
+    },
+    "grad-norm error against an fp64 sum, relative | degree=1 | impl=sharded_norm_stock | nccl=ring | vector=gradient, 16 sequences": {
+     "unit": "rel",
+     "value": 2.0963e-08
+    },
+    "grad-norm error against an fp64 sum, relative | degree=1 | impl=sharded_norm_stock | nccl=ring | vector=gradient, 64 sequences": {
+     "unit": "rel",
+     "value": 4.5097e-09
+    },
+    "grad-norm error against an fp64 sum, relative | degree=1 | impl=sharded_norm_stock | nccl=ring | vector=initial weights": {
+     "unit": "rel",
+     "value": 3.0671e-08
+    },
+    "grad-norm error against an fp64 sum, relative | degree=1 | impl=sharded_norm_stock | nccl=tree | vector=gradient, 16 sequences": {
+     "unit": "rel",
+     "value": 2.0963e-08
+    },
+    "grad-norm error against an fp64 sum, relative | degree=1 | impl=sharded_norm_stock | nccl=tree | vector=gradient, 64 sequences": {
+     "unit": "rel",
+     "value": 4.5097e-09
+    },
+    "grad-norm error against an fp64 sum, relative | degree=1 | impl=sharded_norm_stock | nccl=tree | vector=initial weights": {
+     "unit": "rel",
+     "value": 3.0671e-08
+    },
+    "grad-norm error against an fp64 sum, relative | impl=logical_norm | nccl=default | vector=gradient, 16 sequences": {
+     "unit": "rel",
+     "value": 1.35e-16
+    },
+    "grad-norm error against an fp64 sum, relative | impl=logical_norm | nccl=default | vector=gradient, 64 sequences": {
+     "unit": "rel",
+     "value": 0.0
+    },
+    "grad-norm error against an fp64 sum, relative | impl=logical_norm | nccl=default | vector=initial weights": {
+     "unit": "rel",
+     "value": 0.0
+    },
+    "grad-norm error against an fp64 sum, relative | impl=logical_norm | nccl=ring | vector=gradient, 16 sequences": {
+     "unit": "rel",
+     "value": 1.35e-16
+    },
+    "grad-norm error against an fp64 sum, relative | impl=logical_norm | nccl=ring | vector=gradient, 64 sequences": {
+     "unit": "rel",
+     "value": 0.0
+    },
+    "grad-norm error against an fp64 sum, relative | impl=logical_norm | nccl=ring | vector=initial weights": {
+     "unit": "rel",
+     "value": 0.0
+    },
+    "grad-norm error against an fp64 sum, relative | impl=logical_norm | nccl=tree | vector=gradient, 16 sequences": {
+     "unit": "rel",
+     "value": 1.35e-16
+    },
+    "grad-norm error against an fp64 sum, relative | impl=logical_norm | nccl=tree | vector=gradient, 64 sequences": {
+     "unit": "rel",
+     "value": 0.0
+    },
+    "grad-norm error against an fp64 sum, relative | impl=logical_norm | nccl=tree | vector=initial weights": {
+     "unit": "rel",
+     "value": 0.0
+    },
+    "grad-norm of the full vector, one GPU | elements=3276800 | impl=logical_norm | nccl=default": {
+     "unit": "ms",
+     "value": 1.3419
+    },
+    "grad-norm of the full vector, one GPU | elements=3276800 | impl=torch.linalg.vector_norm | nccl=default": {
+     "unit": "ms",
+     "value": 0.097895
+    },
+    "gradient error against fp64, relative Frobenius | degree=1 | impl=one_batched_backward | max_abs=3.5617019916722725e-08 | nccl=default": {
+     "unit": "rel",
+     "value": 7.1298e-07
+    },
+    "gradient error against fp64, relative Frobenius | degree=16 | impl=torch_ddp | max_abs=3.4347375571768674e-08 | nccl=default": {
+     "unit": "rel",
+     "value": 4.9563e-07
+    },
+    "gradient error against fp64, relative Frobenius | degree=any | impl=logical_shards | max_abs=3.4114544928114804e-08 | nccl=default": {
+     "unit": "rel",
+     "value": 4.9314e-07
+    },
+    "gradient of one global batch, all ranks | degree=1 | impl=backward_then_nccl_allreduce | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=0.983 | sequences=16": {
+     "unit": "ms",
+     "value": 30.478
+    },
+    "gradient of one global batch, all ranks | degree=1 | impl=logical_shards | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=15.854 | sequences=16": {
+     "unit": "ms",
+     "value": 491.37
+    },
+    "gradient of one global batch, all ranks | degree=1 | impl=logical_shards+ordered_reduce_scatter | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=10.675 | sequences=16": {
+     "unit": "ms",
+     "value": 330.86
+    },
+    "gradient of one global batch, all ranks | degree=1 | impl=logical_shards: backward passes only | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=15.833 | sequences=16": {
+     "unit": "ms",
+     "value": 490.71
+    },
+    "gradient of one global batch, all ranks | degree=1 | impl=torch_ddp | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=1.0 | sequences=16": {
+     "unit": "ms",
+     "value": 30.993
+    },
+    "gradient of one global batch, all ranks | degree=16 | impl=backward_then_nccl_allreduce | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=0.893 | sequences=16": {
+     "unit": "ms",
+     "value": 42.316
+    },
+    "gradient of one global batch, all ranks | degree=16 | impl=logical_shards | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=1.062 | sequences=16": {
+     "unit": "ms",
+     "value": 50.308
+    },
+    "gradient of one global batch, all ranks | degree=16 | impl=logical_shards+ordered_reduce_scatter | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=1.13 | sequences=16": {
+     "unit": "ms",
+     "value": 53.519
+    },
+    "gradient of one global batch, all ranks | degree=16 | impl=logical_shards: backward passes only | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=0.678 | sequences=16": {
+     "unit": "ms",
+     "value": 32.123
+    },
+    "gradient of one global batch, all ranks | degree=16 | impl=logical_shards_2level | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=0.93 | sequences=16": {
+     "unit": "ms",
+     "value": 44.039
+    },
+    "gradient of one global batch, all ranks | degree=16 | impl=torch_ddp | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=1.0 | sequences=16": {
+     "unit": "ms",
+     "value": 47.377
+    },
+    "gradient of one global batch, all ranks | degree=16 | impl=torch_ddp+ordered_hook | model=small | nccl=default | parameters=3257856 | ratio_to_torch_ddp=1.034 | sequences=16": {
+     "unit": "ms",
+     "value": 48.98
+    }
+   },
+   "seconds": 151.7
+  }
+ },
+ "key": {
+  "cuda_build": "12.1",
+  "driver": "535.288.01 + 535.309.01",
+  "gpu": "NVIDIA A16 x8 + NVIDIA A16 x8",
+  "nccl": "2.21.5",
+  "nodes": 2,
+  "torch": "2.5.1+cu121",
+  "triton": "3.1.0"
+ },
+ "mode": "quick",
+ "note": "Verdicts and measurements of one reviewed run of tools/bi_suite.py on this stack. Record a new one with --record-baseline; do not edit by hand.",
+ "recorded": "2026-11-19",
+ "schema": "bi-suite-baseline-v1"
+}

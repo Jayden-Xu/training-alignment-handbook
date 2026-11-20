@@ -1,0 +1,1826 @@
+{
+ "schema": "bi-results-v1",
+ "example": "data_alignment",
+ "quick": false,
+ "argv": [
+  "data_alignment.py",
+  "--opguard-root",
+  "~/bi-check-opguard/OpGuard",
+  "--opguard-python",
+  "~/miniconda3/envs/torchdbg/bin/python",
+  "--json",
+  "results-cpu.json"
+ ],
+ "env": {
+  "python": "3.10.13",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [],
+  "triton": "3.1.0",
+  "driver": "550.144.03"
+ },
+ "counts": {
+  "ok": 27,
+  "regression": 0,
+  "changed": 0,
+  "info": 2
+ },
+ "checks": [
+  {
+   "name": "selftest: 18/18 cases",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": []
+  },
+  {
+   "name": "opguard_bridge fingerprint selftest: 104/104",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "identical: the same loader built twice is equal",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 128,
+     "differ": 0,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {},
+    "meta_diff": [],
+    "first": null
+   }
+  },
+  {
+   "name": "identical: map-style dataset, 0 vs 2 workers, equal",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 128,
+     "differ": 0,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {},
+    "meta_diff": [],
+    "first": null
+   }
+  },
+  {
+   "name": "workers: sample-sharded IterableDataset, 0 vs 2 workers: detected, class order",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 0,
+     "differ": 128,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "order": 128
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "order",
+     "detail": {
+      "scope": "across steps",
+      "suspect_documents_found_in_reference_at": [
+       [
+        1,
+        0,
+        0
+       ]
+      ],
+      "reference_documents_found_in_suspect_at": [
+       [
+        1,
+        0,
+        0
+       ]
+      ],
+      "step_offset": 1,
+      "suspect_repeats_its_own_steps": []
+     }
+    }
+   }
+  },
+  {
+   "name": "workers fix: batch-sharded IterableDataset, 0 vs 2 and 0 vs 3 workers, equal",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": [
+    {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    },
+    {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    }
+   ]
+  },
+  {
+   "name": "workers fix: equals the single-process order of the planted loader",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 128,
+     "differ": 0,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {},
+    "meta_diff": [],
+    "first": null
+   }
+  },
+  {
+   "name": "dp_size: DistributedSampler DP 2 vs DP 4, per rank: detected, class order (samples moved across ranks)",
+   "impl": "data_fingerprint",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 128,
+     "suspect": 256,
+     "equal": 0,
+     "differ": 256,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "order": 128,
+     "missing": 128
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "order",
+     "detail": {
+      "scope": "across ranks, same step",
+      "suspect_documents_found_in_reference_at": [],
+      "reference_documents_found_in_suspect_at": [
+       [
+        0,
+        0,
+        2
+       ]
+      ],
+      "step_offset": null,
+      "suspect_repeats_its_own_steps": []
+     }
+    }
+   }
+  },
+  {
+   "name": "dp_size: DistributedSampler DP 2 vs DP 4, per step (ranks merged): same samples, order inside the batch",
+   "impl": "data_fingerprint",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 64,
+     "suspect": 64,
+     "equal": 0,
+     "differ": 64,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "order": 64
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": "all",
+     "field": "input_ids",
+     "class": "order",
+     "detail": {
+      "scope": "inside the batch",
+      "suspect_row_from_reference_row": [
+       0,
+       2,
+       4,
+       6,
+       1,
+       3,
+       5,
+       7
+      ],
+      "other_fields_follow": true
+     }
+    }
+   }
+  },
+  {
+   "name": "dp_size fix: contiguous-slice sampler, DP 2 vs DP 4, per step (ranks merged) equal",
+   "impl": "data_fingerprint",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "records": {
+     "reference": 64,
+     "suspect": 64,
+     "equal": 64,
+     "differ": 0,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {},
+    "meta_diff": [],
+    "first": null
+   }
+  },
+  {
+   "name": "dp_size fix: per rank still differs (a rank holds another slice at another DP size)",
+   "impl": "data_fingerprint",
+   "level": "L5",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 128,
+     "suspect": 256,
+     "equal": 0,
+     "differ": 256,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "order": 128,
+     "missing": 128
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "order",
+     "detail": {
+      "scope": "across ranks, same step",
+      "suspect_documents_found_in_reference_at": [],
+      "reference_documents_found_in_suspect_at": [
+       [
+        0,
+        0,
+        1
+       ]
+      ],
+      "step_offset": null,
+      "suspect_repeats_its_own_steps": []
+     }
+    }
+   }
+  },
+  {
+   "name": "resume: restart without the sampler state: detected at the resume step, class order (replay)",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 4,
+     "differ": 124,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "order": 120,
+     "samples": 4
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 4,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "order",
+     "detail": {
+      "scope": "across steps",
+      "suspect_documents_found_in_reference_at": [
+       [
+        0,
+        0,
+        0
+       ]
+      ],
+      "reference_documents_found_in_suspect_at": [
+       [
+        8,
+        0,
+        0
+       ]
+      ],
+      "step_offset": -4,
+      "suspect_repeats_its_own_steps": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "resume fix: consumed samples saved with the checkpoint and restored (2 workers): equal",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 128,
+     "differ": 0,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {},
+    "meta_diff": [],
+    "first": null
+   }
+  },
+  {
+   "name": "resume: the sampler's own position ran 16 samples ahead of training (2 workers prefetching)",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": {
+    "ahead_samples": 16,
+    "consumed": 16
+   }
+  },
+  {
+   "name": "shuffle buffer: seed from the process RNG, one extra draw: detected, class order",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 0,
+     "differ": 128,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "order": 128
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "order",
+     "detail": {
+      "scope": "across steps",
+      "suspect_documents_found_in_reference_at": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        4,
+        0,
+        0
+       ],
+       [
+        5,
+        0,
+        0
+       ],
+       [
+        9,
+        0,
+        0
+       ]
+      ],
+      "reference_documents_found_in_suspect_at": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        2,
+        0,
+        0
+       ],
+       [
+        7,
+        0,
+        0
+       ]
+      ],
+      "step_offset": null,
+      "suspect_repeats_its_own_steps": []
+     }
+    }
+   }
+  },
+  {
+   "name": "shuffle buffer fix: buffer seeded from (seed, epoch, worker): equal",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 128,
+     "differ": 0,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {},
+    "meta_diff": [],
+    "first": null
+   }
+  },
+  {
+   "name": "shuffle buffer fix: loader given its own generator: equal",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 128,
+     "differ": 0,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {},
+    "meta_diff": [],
+    "first": null
+   }
+  },
+  {
+   "name": "packing: padded vs packed rows of the same documents: detected, class packing (structure where the rows coincide)",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 85,
+     "suspect": 85,
+     "equal": 0,
+     "differ": 85,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "packing": 83,
+     "structure": 2
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "packing",
+     "detail": {
+      "documents": 6,
+      "shape_reference": [
+       6,
+       32
+      ],
+      "shape_suspect": [
+       3,
+       32
+      ],
+      "fields_differ": {
+       "only_reference": [],
+       "only_suspect": [
+        "position_ids"
+       ],
+       "dtype": {}
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "packing: positions reset per document vs not: detected, class masks (field position_ids)",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 85,
+     "suspect": 85,
+     "equal": 2,
+     "differ": 83,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "masks": 83
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "position_ids",
+     "class": "masks",
+     "detail": {
+      "fields": [
+       "position_ids"
+      ],
+      "rows": {
+       "position_ids": [
+        0,
+        1,
+        2
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "packing: EOS label masked: detected, class masks (field labels)",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 85,
+     "suspect": 85,
+     "equal": 0,
+     "differ": 85,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "masks": 85
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "labels",
+     "class": "masks",
+     "detail": {
+      "fields": [
+       "labels"
+      ],
+      "rows": {
+       "labels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "packing fix: the same collate on both sides: equal",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "records": {
+     "reference": 85,
+     "suspect": 85,
+     "equal": 85,
+     "differ": 0,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {},
+    "meta_diff": [],
+    "first": null
+   }
+  },
+  {
+   "name": "tokenizer: lowercase normalizer: batches differ, class samples; header names the tokenizer: True",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 0,
+     "differ": 128,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "samples": 128
+    },
+    "meta_diff": [
+     "tokenizer"
+    ],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "samples",
+     "detail": {
+      "documents_reference": 4,
+      "documents_suspect": 4,
+      "reference_only": 4,
+      "suspect_only": 4,
+      "hint": "same document lengths, different token ids: a vocabulary, normalizer or data-source change, or a different shuffle of equal-length documents"
+     }
+    }
+   }
+  },
+  {
+   "name": "tokenizer: BOS added by the post-processor: batches differ, class samples; header names the tokenizer: True",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 0,
+     "differ": 128,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "samples": 128
+    },
+    "meta_diff": [
+     "tokenizer"
+    ],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "samples",
+     "detail": {
+      "documents_reference": 4,
+      "documents_suspect": 4,
+      "reference_only": 4,
+      "suspect_only": 4,
+      "hint": "every document is 1 token(s) longer in the suspect: a special token added or removed; compare the tokenizer fingerprints and call arguments"
+     }
+    }
+   }
+  },
+  {
+   "name": "tokenizer: add_special_tokens=False at the call, recorded: batches differ, class samples; header names the tokenizer: True",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 0,
+     "differ": 128,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "samples": 128
+    },
+    "meta_diff": [
+     "tokenizer"
+    ],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "samples",
+     "detail": {
+      "documents_reference": 4,
+      "documents_suspect": 4,
+      "reference_only": 4,
+      "suspect_only": 4,
+      "hint": "every document is 1 token(s) shorter in the suspect: a special token added or removed; compare the tokenizer fingerprints and call arguments"
+     }
+    }
+   }
+  },
+  {
+   "name": "tokenizer: add_special_tokens=False at the call, not recorded: batches differ, class samples; header names the tokenizer: False",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 0,
+     "differ": 128,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {
+     "samples": 128
+    },
+    "meta_diff": [],
+    "first": {
+     "step": 0,
+     "micro": 0,
+     "rank": 0,
+     "field": "input_ids",
+     "class": "samples",
+     "detail": {
+      "documents_reference": 4,
+      "documents_suspect": 4,
+      "reference_only": 4,
+      "suspect_only": 4,
+      "hint": "every document is 1 token(s) shorter in the suspect: a special token added or removed; compare the tokenizer fingerprints and call arguments"
+     }
+    }
+   }
+  },
+  {
+   "name": "tokenizer fix: the same definition and call arguments (rebuilt): equal",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "records": {
+     "reference": 128,
+     "suspect": 128,
+     "equal": 128,
+     "differ": 0,
+     "replaced_reference": 0,
+     "replaced_suspect": 0
+    },
+    "classes": {},
+    "meta_diff": [],
+    "first": null
+   }
+  },
+  {
+   "name": "opguard: harness first_diff on the planted resume pair names data.input_ids at the tool's step",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "planted": {
+     "diverged": true,
+     "fn": "<data.input_ids>",
+     "counter": 13,
+     "step_from_counter": 4,
+     "diff_fields": [
+      "outputs"
+     ],
+     "status_counts": {
+      "run1": {
+       "ok": 12,
+       "diff": 372
+      },
+      "run2": {
+       "ok": 12,
+       "diff": 372
+      }
+     },
+     "seconds": 3.2
+    },
+    "fixed": {
+     "diverged": false,
+     "fn": null,
+     "counter": null,
+     "step_from_counter": null,
+     "diff_fields": null,
+     "status_counts": {
+      "run1": {
+       "ok": 384
+      },
+      "run2": {
+       "ok": 384
+      }
+     },
+     "seconds": 2.9
+    },
+    "live_vs_export": {
+     "diverged": false,
+     "fn": null,
+     "counter": null,
+     "step_from_counter": null,
+     "diff_fields": null,
+     "status_counts": {
+      "run1": {
+       "ok": 384
+      },
+      "run2": {
+       "ok": 384
+      }
+     },
+     "seconds": 2.9
+    }
+   }
+  },
+  {
+   "name": "opguard: the fixed resume pair has no differing event",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "planted": {
+     "diverged": true,
+     "fn": "<data.input_ids>",
+     "counter": 13,
+     "step_from_counter": 4,
+     "diff_fields": [
+      "outputs"
+     ],
+     "status_counts": {
+      "run1": {
+       "ok": 12,
+       "diff": 372
+      },
+      "run2": {
+       "ok": 12,
+       "diff": 372
+      }
+     },
+     "seconds": 3.2
+    },
+    "fixed": {
+     "diverged": false,
+     "fn": null,
+     "counter": null,
+     "step_from_counter": null,
+     "diff_fields": null,
+     "status_counts": {
+      "run1": {
+       "ok": 384
+      },
+      "run2": {
+       "ok": 384
+      }
+     },
+     "seconds": 2.9
+    },
+    "live_vs_export": {
+     "diverged": false,
+     "fn": null,
+     "counter": null,
+     "step_from_counter": null,
+     "diff_fields": null,
+     "status_counts": {
+      "run1": {
+       "ok": 384
+      },
+      "run2": {
+       "ok": 384
+      }
+     },
+     "seconds": 2.9
+    }
+   }
+  },
+  {
+   "name": "opguard: Recorder(opguard=...) while running and export() afterwards: no differing event",
+   "impl": "data_fingerprint",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "planted": {
+     "diverged": true,
+     "fn": "<data.input_ids>",
+     "counter": 13,
+     "step_from_counter": 4,
+     "diff_fields": [
+      "outputs"
+     ],
+     "status_counts": {
+      "run1": {
+       "ok": 12,
+       "diff": 372
+      },
+      "run2": {
+       "ok": 12,
+       "diff": 372
+      }
+     },
+     "seconds": 3.2
+    },
+    "fixed": {
+     "diverged": false,
+     "fn": null,
+     "counter": null,
+     "step_from_counter": null,
+     "diff_fields": null,
+     "status_counts": {
+      "run1": {
+       "ok": 384
+      },
+      "run2": {
+       "ok": 384
+      }
+     },
+     "seconds": 2.9
+    },
+    "live_vs_export": {
+     "diverged": false,
+     "fn": null,
+     "counter": null,
+     "step_from_counter": null,
+     "diff_fields": null,
+     "status_counts": {
+      "run1": {
+       "ok": 384
+      },
+      "run2": {
+       "ok": 384
+      }
+     },
+     "seconds": 2.9
+    }
+   }
+  }
+ ],
+ "measurements": [
+  {
+   "name": "record one batch 8x4096 int64, 4 fields, segments at every position reset",
+   "value": 7.27,
+   "unit": "ms",
+   "impl": "data_fingerprint"
+  },
+  {
+   "name": "compare, per record",
+   "value": 0.16,
+   "unit": "ms",
+   "impl": "data_fingerprint"
+  },
+  {
+   "name": "documents in the corpus",
+   "value": 512,
+   "unit": "documents",
+   "impl": "data_fingerprint"
+  }
+ ],
+ "extra": {
+  "cases": {
+   "identical": {
+    "rebuilt": {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    },
+    "map_style_0_vs_2_workers": {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    }
+   },
+   "workers": {
+    "planted": {
+     "equal": false,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 0,
+      "differ": 128,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "order": 128
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "order",
+      "detail": {
+       "scope": "across steps",
+       "suspect_documents_found_in_reference_at": [
+        [
+         1,
+         0,
+         0
+        ]
+       ],
+       "reference_documents_found_in_suspect_at": [
+        [
+         1,
+         0,
+         0
+        ]
+       ],
+       "step_offset": 1,
+       "suspect_repeats_its_own_steps": []
+      }
+     }
+    },
+    "fix_0_vs_2": {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    },
+    "fix_0_vs_3": {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    },
+    "fix_equals_single_process": {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    }
+   },
+   "dp_size": {
+    "distributed_per_rank": {
+     "equal": false,
+     "records": {
+      "reference": 128,
+      "suspect": 256,
+      "equal": 0,
+      "differ": 256,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "order": 128,
+      "missing": 128
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "order",
+      "detail": {
+       "scope": "across ranks, same step",
+       "suspect_documents_found_in_reference_at": [],
+       "reference_documents_found_in_suspect_at": [
+        [
+         0,
+         0,
+         2
+        ]
+       ],
+       "step_offset": null,
+       "suspect_repeats_its_own_steps": []
+      }
+     }
+    },
+    "distributed_global": {
+     "equal": false,
+     "records": {
+      "reference": 64,
+      "suspect": 64,
+      "equal": 0,
+      "differ": 64,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "order": 64
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": "all",
+      "field": "input_ids",
+      "class": "order",
+      "detail": {
+       "scope": "inside the batch",
+       "suspect_row_from_reference_row": [
+        0,
+        2,
+        4,
+        6,
+        1,
+        3,
+        5,
+        7
+       ],
+       "other_fields_follow": true
+      }
+     }
+    },
+    "contiguous_global": {
+     "equal": true,
+     "records": {
+      "reference": 64,
+      "suspect": 64,
+      "equal": 64,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    },
+    "contiguous_per_rank": {
+     "equal": false,
+     "records": {
+      "reference": 128,
+      "suspect": 256,
+      "equal": 0,
+      "differ": 256,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "order": 128,
+      "missing": 128
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "order",
+      "detail": {
+       "scope": "across ranks, same step",
+       "suspect_documents_found_in_reference_at": [],
+       "reference_documents_found_in_suspect_at": [
+        [
+         0,
+         0,
+         1
+        ]
+       ],
+       "step_offset": null,
+       "suspect_repeats_its_own_steps": []
+      }
+     }
+    }
+   },
+   "resume": {
+    "planted": {
+     "equal": false,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 4,
+      "differ": 124,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "order": 120,
+      "samples": 4
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 4,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "order",
+      "detail": {
+       "scope": "across steps",
+       "suspect_documents_found_in_reference_at": [
+        [
+         0,
+         0,
+         0
+        ]
+       ],
+       "reference_documents_found_in_suspect_at": [
+        [
+         8,
+         0,
+         0
+        ]
+       ],
+       "step_offset": -4,
+       "suspect_repeats_its_own_steps": [
+        0
+       ]
+      }
+     }
+    },
+    "fix": {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    },
+    "fix_state": {
+     "seed": 0,
+     "epoch": 0,
+     "pos": 16
+    },
+    "sampler_position_ahead_with_2_workers": 16
+   },
+   "shuffle_buffer": {
+    "planted": {
+     "equal": false,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 0,
+      "differ": 128,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "order": 128
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "order",
+      "detail": {
+       "scope": "across steps",
+       "suspect_documents_found_in_reference_at": [
+        [
+         1,
+         0,
+         0
+        ],
+        [
+         4,
+         0,
+         0
+        ],
+        [
+         5,
+         0,
+         0
+        ],
+        [
+         9,
+         0,
+         0
+        ]
+       ],
+       "reference_documents_found_in_suspect_at": [
+        [
+         1,
+         0,
+         0
+        ],
+        [
+         2,
+         0,
+         0
+        ],
+        [
+         7,
+         0,
+         0
+        ]
+       ],
+       "step_offset": null,
+       "suspect_repeats_its_own_steps": []
+      }
+     }
+    },
+    "fix_explicit_seed": {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    },
+    "fix_loader_generator": {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    }
+   },
+   "packing": {
+    "pad_vs_pack": {
+     "equal": false,
+     "records": {
+      "reference": 85,
+      "suspect": 85,
+      "equal": 0,
+      "differ": 85,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "packing": 83,
+      "structure": 2
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "packing",
+      "detail": {
+       "documents": 6,
+       "shape_reference": [
+        6,
+        32
+       ],
+       "shape_suspect": [
+        3,
+        32
+       ],
+       "fields_differ": {
+        "only_reference": [],
+        "only_suspect": [
+         "position_ids"
+        ],
+        "dtype": {}
+       }
+      }
+     }
+    },
+    "positions_reset_vs_not": {
+     "equal": false,
+     "records": {
+      "reference": 85,
+      "suspect": 85,
+      "equal": 2,
+      "differ": 83,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "masks": 83
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "position_ids",
+      "class": "masks",
+      "detail": {
+       "fields": [
+        "position_ids"
+       ],
+       "rows": {
+        "position_ids": [
+         0,
+         1,
+         2
+        ]
+       }
+      }
+     }
+    },
+    "eos_label_masked": {
+     "equal": false,
+     "records": {
+      "reference": 85,
+      "suspect": 85,
+      "equal": 0,
+      "differ": 85,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "masks": 85
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "labels",
+      "class": "masks",
+      "detail": {
+       "fields": [
+        "labels"
+       ],
+       "rows": {
+        "labels": [
+         0,
+         1,
+         2,
+         3,
+         4,
+         5
+        ]
+       }
+      }
+     }
+    },
+    "fix_same_collate": {
+     "equal": true,
+     "records": {
+      "reference": 85,
+      "suspect": 85,
+      "equal": 85,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    }
+   },
+   "tokenizer": {
+    "lowercase normalizer": {
+     "equal": false,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 0,
+      "differ": 128,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "samples": 128
+     },
+     "meta_diff": [
+      "tokenizer"
+     ],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "samples",
+      "detail": {
+       "documents_reference": 4,
+       "documents_suspect": 4,
+       "reference_only": 4,
+       "suspect_only": 4,
+       "hint": "same document lengths, different token ids: a vocabulary, normalizer or data-source change, or a different shuffle of equal-length documents"
+      }
+     }
+    },
+    "BOS added by the post-processor": {
+     "equal": false,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 0,
+      "differ": 128,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "samples": 128
+     },
+     "meta_diff": [
+      "tokenizer"
+     ],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "samples",
+      "detail": {
+       "documents_reference": 4,
+       "documents_suspect": 4,
+       "reference_only": 4,
+       "suspect_only": 4,
+       "hint": "every document is 1 token(s) longer in the suspect: a special token added or removed; compare the tokenizer fingerprints and call arguments"
+      }
+     }
+    },
+    "add_special_tokens=False at the call, recorded": {
+     "equal": false,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 0,
+      "differ": 128,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "samples": 128
+     },
+     "meta_diff": [
+      "tokenizer"
+     ],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "samples",
+      "detail": {
+       "documents_reference": 4,
+       "documents_suspect": 4,
+       "reference_only": 4,
+       "suspect_only": 4,
+       "hint": "every document is 1 token(s) shorter in the suspect: a special token added or removed; compare the tokenizer fingerprints and call arguments"
+      }
+     }
+    },
+    "add_special_tokens=False at the call, not recorded": {
+     "equal": false,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 0,
+      "differ": 128,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {
+      "samples": 128
+     },
+     "meta_diff": [],
+     "first": {
+      "step": 0,
+      "micro": 0,
+      "rank": 0,
+      "field": "input_ids",
+      "class": "samples",
+      "detail": {
+       "documents_reference": 4,
+       "documents_suspect": 4,
+       "reference_only": 4,
+       "suspect_only": 4,
+       "hint": "every document is 1 token(s) shorter in the suspect: a special token added or removed; compare the tokenizer fingerprints and call arguments"
+      }
+     }
+    },
+    "fix_same_definition_and_call": {
+     "equal": true,
+     "records": {
+      "reference": 128,
+      "suspect": 128,
+      "equal": 128,
+      "differ": 0,
+      "replaced_reference": 0,
+      "replaced_suspect": 0
+     },
+     "classes": {},
+     "meta_diff": [],
+     "first": null
+    }
+   },
+   "opguard": {
+    "planted": {
+     "diverged": true,
+     "fn": "<data.input_ids>",
+     "counter": 13,
+     "step_from_counter": 4,
+     "diff_fields": [
+      "outputs"
+     ],
+     "status_counts": {
+      "run1": {
+       "ok": 12,
+       "diff": 372
+      },
+      "run2": {
+       "ok": 12,
+       "diff": 372
+      }
+     },
+     "seconds": 3.2
+    },
+    "fixed": {
+     "diverged": false,
+     "fn": null,
+     "counter": null,
+     "step_from_counter": null,
+     "diff_fields": null,
+     "status_counts": {
+      "run1": {
+       "ok": 384
+      },
+      "run2": {
+       "ok": 384
+      }
+     },
+     "seconds": 2.9
+    },
+    "live_vs_export": {
+     "diverged": false,
+     "fn": null,
+     "counter": null,
+     "step_from_counter": null,
+     "diff_fields": null,
+     "status_counts": {
+      "run1": {
+       "ok": 384
+      },
+      "run2": {
+       "ok": 384
+      }
+     },
+     "seconds": 2.9
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,895 @@
+{
+ "device": "NVIDIA A40",
+ "torch": "2.5.1+cu121",
+ "triton": "3.1.0",
+ "attention": {
+  "sdpa_L3": {
+   "name": "sdpa L3 modes",
+   "passed": false,
+   "checked": 5,
+   "failures": [
+    {
+     "mode": "decode vs prefill",
+     "index": [
+      0,
+      0,
+      128,
+      66
+     ],
+     "a": 0.05224609375,
+     "b": 0.052490234375,
+     "mismatched_elements": 26864,
+     "of": 262144
+    },
+    {
+     "mode": "chunk-7 vs prefill",
+     "index": [
+      0,
+      0,
+      128,
+      66
+     ],
+     "a": 0.05224609375,
+     "b": 0.052490234375,
+     "mismatched_elements": 26864,
+     "of": 262144
+    },
+    {
+     "mode": "chunk-16 vs prefill",
+     "index": [
+      0,
+      0,
+      128,
+      66
+     ],
+     "a": 0.05224609375,
+     "b": 0.052490234375,
+     "mismatched_elements": 26864,
+     "of": 262144
+    },
+    {
+     "mode": "chunk-64 vs prefill",
+     "index": [
+      0,
+      0,
+      128,
+      66
+     ],
+     "a": 0.05224609375,
+     "b": 0.052490234375,
+     "mismatched_elements": 26864,
+     "of": 262144
+    },
+    {
+     "mode": "chunk-100 vs prefill",
+     "index": [
+      0,
+      0,
+      64,
+      40
+     ],
+     "a": 0.03662109375,
+     "b": 0.036865234375,
+     "mismatched_elements": 33031,
+     "of": 262144
+    }
+   ],
+   "summary": "sdpa L3 modes: FAIL 5/5 failing modes ['chunk-100 vs prefill', 'chunk-16 vs prefill', 'chunk-64 vs prefill', 'chunk-7 vs prefill', 'decode vs prefill']"
+  },
+  "sdpa_L2": {
+   "checked": 8,
+   "failures": [
+    {
+     "batch": 3,
+     "position": 0,
+     "index": [
+      0,
+      64,
+      40
+     ],
+     "a": 0.03662109375,
+     "b": 0.036865234375,
+     "mismatched_elements": 46146,
+     "of": 262144
+    },
+    {
+     "batch": 3,
+     "position": 2,
+     "index": [
+      0,
+      64,
+      40
+     ],
+     "a": 0.03662109375,
+     "b": 0.036865234375,
+     "mismatched_elements": 46146,
+     "of": 262144
+    },
+    {
+     "batch": 8,
+     "position": 0,
+     "index": [
+      0,
+      64,
+      40
+     ],
+     "a": 0.03662109375,
+     "b": 0.036865234375,
+     "mismatched_elements": 46146,
+     "of": 262144
+    },
+    {
+     "batch": 8,
+     "position": 7,
+     "index": [
+      0,
+      64,
+      40
+     ],
+     "a": 0.03662109375,
+     "b": 0.036865234375,
+     "mismatched_elements": 46146,
+     "of": 262144
+    },
+    {
+     "batch": 16,
+     "position": 0,
+     "index": [
+      0,
+      64,
+      40
+     ],
+     "a": 0.03662109375,
+     "b": 0.036865234375,
+     "mismatched_elements": 46146,
+     "of": 262144
+    }
+   ],
+   "passed": false
+  },
+  "fixed_blocks_L3": {
+   "name": "fixed_blocks L3 modes",
+   "passed": true,
+   "checked": 5,
+   "failures": [],
+   "summary": "fixed_blocks L3 modes: PASS (5 comparisons)"
+  },
+  "fixed_blocks_L2": {
+   "checked": 8,
+   "failures": [],
+   "passed": true
+  },
+  "vs_fp32": {
+   "sdpa": 0.009227991104125977,
+   "fixed_blocks": 0.009227991104125977
+  },
+  "ms": {
+   "prefill_B4_T2048": {
+    "sdpa": 0.3802776336669922,
+    "fixed_blocks": 0.6183028221130371
+   },
+   "decode_B16_KV2048": {
+    "sdpa": 0.23381710052490234,
+    "fixed_blocks": 0.1892685890197754
+   }
+  }
+ },
+ "fp8_scales": {
+  "per_tensor_dynamic": {
+   "name": "fp8 per_tensor_dynamic",
+   "passed": false,
+   "checked": 164,
+   "failures": [
+    {
+     "row": 0,
+     "size": 2,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 963,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 2,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7109375,
+     "mismatched_elements": 977,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 2,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7734375,
+     "mismatched_elements": 965,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 3,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      1
+     ],
+     "a": 0.2265625,
+     "b": 0.212890625,
+     "mismatched_elements": 986,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 3,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      1
+     ],
+     "a": 0.2265625,
+     "b": 0.2314453125,
+     "mismatched_elements": 988,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 3,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.765625,
+     "mismatched_elements": 978,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 8,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.734375,
+     "mismatched_elements": 980,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 8,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.71875,
+     "mismatched_elements": 981,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 8,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      1
+     ],
+     "a": 0.2265625,
+     "b": 0.232421875,
+     "mismatched_elements": 911,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 8,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 976,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 16,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 962,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 16,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7421875,
+     "mismatched_elements": 975,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 16,
+     "position": "middle",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.71875,
+     "mismatched_elements": 950,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 16,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 987,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 16,
+     "position": "last",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7421875,
+     "mismatched_elements": 983,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 16,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.734375,
+     "mismatched_elements": 974,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 31,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7578125,
+     "mismatched_elements": 979,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 31,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.703125,
+     "mismatched_elements": 983,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 31,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.703125,
+     "mismatched_elements": 983,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 31,
+     "position": "last",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 957,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 31,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7578125,
+     "mismatched_elements": 974,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 32,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.734375,
+     "mismatched_elements": 981,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 32,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.71875,
+     "mismatched_elements": 955,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 32,
+     "position": "middle",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.6796875,
+     "mismatched_elements": 979,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 32,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7421875,
+     "mismatched_elements": 975,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 32,
+     "position": "last",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.734375,
+     "mismatched_elements": 980,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 32,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7109375,
+     "mismatched_elements": 987,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 64,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7109375,
+     "mismatched_elements": 983,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 64,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.71875,
+     "mismatched_elements": 981,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 64,
+     "position": "middle",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7109375,
+     "mismatched_elements": 974,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 64,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 986,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 64,
+     "position": "last",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7578125,
+     "mismatched_elements": 979,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 64,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.71875,
+     "mismatched_elements": 955,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 128,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 969,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 128,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 981,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 128,
+     "position": "middle",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.71875,
+     "mismatched_elements": 972,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 128,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.6875,
+     "mismatched_elements": 976,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 128,
+     "position": "last",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 975,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 128,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 966,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 256,
+     "position": "first",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.734375,
+     "mismatched_elements": 972,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 256,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.703125,
+     "mismatched_elements": 975,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 256,
+     "position": "middle",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.734375,
+     "mismatched_elements": 972,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 256,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7109375,
+     "mismatched_elements": 981,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 256,
+     "position": "last",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.7265625,
+     "mismatched_elements": 969,
+     "of": 1024
+    },
+    {
+     "row": 0,
+     "size": 256,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 1.75,
+     "b": 1.6953125,
+     "mismatched_elements": 985,
+     "of": 1024
+    },
+    {
+     "row": 1,
+     "size": 2,
+     "position": "first",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 0.6640625,
+     "b": 0.66796875,
+     "mismatched_elements": 975,
+     "of": 1024
+    },
+    {
+     "row": 1,
+     "size": 2,
+     "position": "middle",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 0.6640625,
+     "b": 0.6484375,
+     "mismatched_elements": 983,
+     "of": 1024
+    },
+    {
+     "row": 1,
+     "size": 2,
+     "position": "middle",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 0.6640625,
+     "b": 0.63671875,
+     "mismatched_elements": 988,
+     "of": 1024
+    },
+    {
+     "row": 1,
+     "size": 2,
+     "position": "last",
+     "filler": "random",
+     "index": [
+      0
+     ],
+     "a": 0.6640625,
+     "b": 0.6484375,
+     "mismatched_elements": 985,
+     "of": 1024
+    },
+    {
+     "row": 1,
+     "size": 2,
+     "position": "last",
+     "filler": "large",
+     "index": [
+      0
+     ],
+     "a": 0.6640625,
+     "b": 0.640625,
+     "mismatched_elements": 980,
+     "of": 1024
+    }
+   ],
+   "summary": "fp8 per_tensor_dynamic: FAIL 98/164 failing batch sizes [2, 3, 8, 16, 31, 32, 64, 128, 256]",
+   "fillers_failing": [
+    "large",
+    "random"
+   ]
+  },
+  "per_token": {
+   "name": "fp8 per_token",
+   "passed": true,
+   "checked": 164,
+   "failures": [],
+   "summary": "fp8 per_token: PASS (164 comparisons)",
+   "fillers_failing": []
+  },
+  "per_block_1x128": {
+   "name": "fp8 per_block_1x128",
+   "passed": true,
+   "checked": 164,
+   "failures": [],
+   "summary": "fp8 per_block_1x128: PASS (164 comparisons)",
+   "fillers_failing": []
+  }
+ },
+ "linear_attention": {
+  "name": "linear attention modes",
+  "passed": false,
+  "checked": 2,
+  "failures": [
+   {
+    "mode": "chunk-16 vs recurrent",
+    "index": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "a": -0.0039294408634305,
+    "b": -0.003929439932107925,
+    "mismatched_elements": 27631,
+    "of": 32768
+   },
+   {
+    "mode": "chunk-64 vs recurrent",
+    "index": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "a": -0.0039294408634305,
+    "b": -0.003929443191736937,
+    "mismatched_elements": 28770,
+    "of": 32768
+   }
+  ],
+  "summary": "linear attention modes: FAIL 2/2 failing modes ['chunk-16 vs recurrent', 'chunk-64 vs recurrent']",
+  "max_abs_vs_fp64": {
+   "recurrent": 8.140588309002439e-08,
+   "chunk-16": 5.439974451459939e-08
+  }
+ }
+}

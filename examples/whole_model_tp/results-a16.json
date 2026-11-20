@@ -1,0 +1,1886 @@
+{
+ "schema": "bi-results-v1",
+ "example": "whole_model_tp",
+ "quick": false,
+ "argv": [
+  "--merge",
+  "parts/tp.json",
+  "parts/modes.json",
+  "parts/disagg.json",
+  "parts/cost.json",
+  "parts/x16.json"
+ ],
+ "env": {
+  "python": "3.11.14",
+  "torch": "2.5.1+cu121",
+  "cuda_build": "12.1",
+  "cudnn": 90100,
+  "nccl": "2.21.5",
+  "gpus": [
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   },
+   {
+    "name": "NVIDIA A16",
+    "sm": "86",
+    "memory_gb": 14.5,
+    "sm_count": 10
+   }
+  ],
+  "triton": "3.1.0",
+  "driver": "535.288.01"
+ },
+ "counts": {
+  "ok": 55,
+  "regression": 0,
+  "changed": 0,
+  "info": 13
+ },
+ "checks": [
+  {
+   "name": "inv TP=1 against model.py's bi forward (logical TP C=16 is not a plain GEMM), logits B=4 T=160",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_logits": 17347504,
+    "of": 20480000
+   }
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=2 vs TP=1",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 4,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 640,
+    "covered": true,
+    "degree": 2,
+    "full_logp_mismatched": 0,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=2: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=4 vs TP=1",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 4,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 640,
+    "covered": true,
+    "degree": 4,
+    "full_logp_mismatched": 0,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=4: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=8 vs TP=1",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 4,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 640,
+    "covered": true,
+    "degree": 8,
+    "full_logp_mismatched": 0,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=8: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "trainer forward TP=8, 3 runs: logits and log-probs",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "stock TP=1 (sharding code, one rank) equals model.py's stock forward, logits B=4 T=160",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=2 vs TP=1",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 4,
+    "runs_differing": 4,
+    "frac_logits_differ": 0.87491953125,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.22149276733398438,
+    "max_abs_dlogit": 0.37109375,
+    "kl_mean": 0.002341846210931004,
+    "kl_max": 0.007819171053207816,
+    "tokens": 640,
+    "covered": true,
+    "degree": 2,
+    "full_logp_mismatched": 20479982,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=2: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "index": [
+     0,
+     0,
+     11169
+    ],
+    "a": -1.6903477907180786,
+    "b": -1.6903479099273682,
+    "mismatched_elements": 658813,
+    "of": 20480000
+   }
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=4 vs TP=1",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 4,
+    "runs_differing": 4,
+    "frac_logits_differ": 0.8789908203125,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.24955463409423828,
+    "max_abs_dlogit": 0.359375,
+    "kl_mean": 0.0024247383466012365,
+    "kl_max": 0.009162103883499969,
+    "tokens": 640,
+    "covered": true,
+    "degree": 4,
+    "full_logp_mismatched": 20479979,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=4: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "index": [
+     0,
+     0,
+     11169
+    ],
+    "a": -1.7878847122192383,
+    "b": -1.7878845930099487,
+    "mismatched_elements": 1181665,
+    "of": 20480000
+   }
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=8 vs TP=1",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 4,
+    "runs_differing": 4,
+    "frac_logits_differ": 0.88479130859375,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.3130683898925781,
+    "max_abs_dlogit": 0.40625,
+    "kl_mean": 0.0026908888533387996,
+    "kl_max": 0.015525272538479656,
+    "tokens": 640,
+    "covered": true,
+    "degree": 8,
+    "full_logp_mismatched": 20479994,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=8: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "index": [
+     0,
+     0,
+     622
+    ],
+    "a": -7.671584129333496,
+    "b": -7.671584606170654,
+    "mismatched_elements": 973504,
+    "of": 20480000
+   }
+  },
+  {
+   "name": "trainer forward TP=8, 3 runs: logits and log-probs",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "engine at TP=2: decode, one token per step, in a changing batch vs TP=1 trainer forward (T=160)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 1,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 160,
+    "covered": true,
+    "degree": 2,
+    "batch_sizes_seen": [
+     1,
+     2,
+     3,
+     5,
+     8,
+     9,
+     15,
+     16,
+     17,
+     32,
+     33
+    ],
+    "engine_steps": 160
+   }
+  },
+  {
+   "name": "engine at TP=2: chunked prefill, chunk 64, in a changing batch vs TP=1 trainer forward (T=160)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 1,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 160,
+    "covered": true,
+    "degree": 2,
+    "batch_sizes_seen": [
+     1,
+     3,
+     8,
+     10,
+     15,
+     16
+    ],
+    "engine_steps": 6
+   }
+  },
+  {
+   "name": "engine at TP=2: chunked prefill, chunk 7, alone vs TP=1 trainer forward (T=160)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 1,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 160,
+    "covered": true,
+    "degree": 2,
+    "batch_sizes_seen": [
+     1
+    ],
+    "engine_steps": 23
+   }
+  },
+  {
+   "name": "engine at TP=4: decode, one token per step, in a changing batch vs TP=1 trainer forward (T=160)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 1,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 160,
+    "covered": true,
+    "degree": 4,
+    "batch_sizes_seen": [
+     1,
+     2,
+     3,
+     5,
+     8,
+     9,
+     15,
+     16,
+     17,
+     32,
+     33
+    ],
+    "engine_steps": 160
+   }
+  },
+  {
+   "name": "engine at TP=4: chunked prefill, chunk 64, in a changing batch vs TP=1 trainer forward (T=160)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 1,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 160,
+    "covered": true,
+    "degree": 4,
+    "batch_sizes_seen": [
+     1,
+     3,
+     8,
+     10,
+     15,
+     16
+    ],
+    "engine_steps": 6
+   }
+  },
+  {
+   "name": "engine at TP=4: chunked prefill, chunk 7, alone vs TP=1 trainer forward (T=160)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 1,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 160,
+    "covered": true,
+    "degree": 4,
+    "batch_sizes_seen": [
+     1
+    ],
+    "engine_steps": 23
+   }
+  },
+  {
+   "name": "engine at TP=2: decode, one token per step, in a changing batch vs TP=1 trainer forward (T=160)",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 1,
+    "runs_differing": 1,
+    "frac_logits_differ": 0.8728337890625,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.18641281127929688,
+    "max_abs_dlogit": 0.34375,
+    "kl_mean": 0.0023023578071821533,
+    "kl_max": 0.007645688243414564,
+    "tokens": 160,
+    "covered": true,
+    "degree": 2,
+    "batch_sizes_seen": [
+     1,
+     2,
+     3,
+     5,
+     8,
+     9,
+     15,
+     16,
+     17,
+     32,
+     33
+    ],
+    "engine_steps": 160
+   }
+  },
+  {
+   "name": "engine at TP=4: decode, one token per step, in a changing batch vs TP=1 trainer forward (T=160)",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 1,
+    "runs_differing": 1,
+    "frac_logits_differ": 0.877609375,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.25133705139160156,
+    "max_abs_dlogit": 0.37109375,
+    "kl_mean": 0.0023602925842185008,
+    "kl_max": 0.012698216431400233,
+    "tokens": 160,
+    "covered": true,
+    "degree": 4,
+    "batch_sizes_seen": [
+     1,
+     2,
+     3,
+     5,
+     8,
+     9,
+     15,
+     16,
+     17,
+     32,
+     33
+    ],
+    "engine_steps": 160
+   }
+  },
+  {
+   "name": "prefill TP=1 -> decode TP=2: the KV cache received by the decode ranks is bitwise the prefill ranks' cache (re-sharded by head, NCCL send/recv)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha_k_prefill": "b30e14a2df299856",
+    "sha_k_decode": "b30e14a2df299856",
+    "sha_v_prefill": "d59bce73f4970b80",
+    "sha_v_decode": "d59bce73f4970b80",
+    "replicated_heads_equal": [
+     true,
+     true
+    ],
+    "bytes_sent": 3465216,
+    "transfer_ms_first_and_second": [
+     97.01,
+     1.85
+    ]
+   }
+  },
+  {
+   "name": "prefill TP=1 -> decode TP=2: prefill KV at TP=1 equals one-GPU prefill KV",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "prefill TP=1 -> decode TP=2: logits and realized logprobs of 3 requests (prompts [37, 64, 100], decode [40, 25, 33], shrinking batch) vs one-GPU prefill + decode",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 3,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 299,
+    "covered": true,
+    "prefill_tp": 1,
+    "decode_tp": 2
+   }
+  },
+  {
+   "name": "prefill TP=1 -> decode TP=2: vs the TP=1 trainer forward of each request",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 3,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 299,
+    "covered": true
+   }
+  },
+  {
+   "name": "prefill TP=2 -> decode TP=4: the KV cache received by the decode ranks is bitwise the prefill ranks' cache (re-sharded by head, NCCL send/recv)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha_k_prefill": "b30e14a2df299856",
+    "sha_k_decode": "b30e14a2df299856",
+    "sha_v_prefill": "d59bce73f4970b80",
+    "sha_v_decode": "d59bce73f4970b80",
+    "replicated_heads_equal": [
+     true,
+     true
+    ],
+    "bytes_sent": 3465216,
+    "transfer_ms_first_and_second": [
+     52.73,
+     1.25
+    ]
+   }
+  },
+  {
+   "name": "prefill TP=2 -> decode TP=4: prefill KV at TP=2 equals one-GPU prefill KV",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "prefill TP=2 -> decode TP=4: logits and realized logprobs of 3 requests (prompts [37, 64, 100], decode [40, 25, 33], shrinking batch) vs one-GPU prefill + decode",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 3,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 299,
+    "covered": true,
+    "prefill_tp": 2,
+    "decode_tp": 4
+   }
+  },
+  {
+   "name": "prefill TP=2 -> decode TP=4: vs the TP=1 trainer forward of each request",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 3,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 299,
+    "covered": true
+   }
+  },
+  {
+   "name": "prefill TP=4 -> decode TP=1: the KV cache received by the decode ranks is bitwise the prefill ranks' cache (re-sharded by head, NCCL send/recv)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha_k_prefill": "b30e14a2df299856",
+    "sha_k_decode": "b30e14a2df299856",
+    "sha_v_prefill": "d59bce73f4970b80",
+    "sha_v_decode": "d59bce73f4970b80",
+    "replicated_heads_equal": [
+     true,
+     true
+    ],
+    "bytes_sent": 3465216,
+    "transfer_ms_first_and_second": [
+     54.65,
+     1.44
+    ]
+   }
+  },
+  {
+   "name": "prefill TP=4 -> decode TP=1: prefill KV at TP=4 equals one-GPU prefill KV",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "prefill TP=4 -> decode TP=1: logits and realized logprobs of 3 requests (prompts [37, 64, 100], decode [40, 25, 33], shrinking batch) vs one-GPU prefill + decode",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 3,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 299,
+    "covered": true,
+    "prefill_tp": 4,
+    "decode_tp": 1
+   }
+  },
+  {
+   "name": "prefill TP=4 -> decode TP=1: vs the TP=1 trainer forward of each request",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 3,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 299,
+    "covered": true
+   }
+  },
+  {
+   "name": "prefill TP=8 -> decode TP=2: the KV cache received by the decode ranks is bitwise the prefill ranks' cache (re-sharded by head, NCCL send/recv)",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha_k_prefill": "b30e14a2df299856",
+    "sha_k_decode": "b30e14a2df299856",
+    "sha_v_prefill": "d59bce73f4970b80",
+    "sha_v_decode": "d59bce73f4970b80",
+    "replicated_heads_equal": [
+     true,
+     true
+    ],
+    "bytes_sent": 3465216,
+    "transfer_ms_first_and_second": [
+     42.46,
+     1.19
+    ]
+   }
+  },
+  {
+   "name": "prefill TP=8 -> decode TP=2: prefill KV at TP=8 equals one-GPU prefill KV",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "prefill TP=8 -> decode TP=2: logits and realized logprobs of 3 requests (prompts [37, 64, 100], decode [40, 25, 33], shrinking batch) vs one-GPU prefill + decode",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 3,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 299,
+    "covered": true,
+    "prefill_tp": 8,
+    "decode_tp": 2
+   }
+  },
+  {
+   "name": "prefill TP=8 -> decode TP=2: vs the TP=1 trainer forward of each request",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 3,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 299,
+    "covered": true
+   }
+  },
+  {
+   "name": "prefill TP=1 -> decode TP=2: the KV cache received by the decode ranks is bitwise the prefill ranks' cache (re-sharded by head, NCCL send/recv)",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha_k_prefill": "9cbb69b46b020f5a",
+    "sha_k_decode": "9cbb69b46b020f5a",
+    "sha_v_prefill": "875be8f57e3c1753",
+    "sha_v_decode": "875be8f57e3c1753",
+    "replicated_heads_equal": [
+     true,
+     true
+    ],
+    "bytes_sent": 3465216,
+    "transfer_ms_first_and_second": [
+     1.17,
+     1.07
+    ]
+   }
+  },
+  {
+   "name": "prefill TP=1 -> decode TP=2: prefill KV at TP=1 equals one-GPU prefill KV",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "prefill TP=1 -> decode TP=2: logits and realized logprobs of 3 requests (prompts [37, 64, 100], decode [40, 25, 33], shrinking batch) vs one-GPU prefill + decode",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 3,
+    "runs_differing": 3,
+    "frac_logits_differ": 0.2842263795986622,
+    "frac_tokens_any_logit_differs": 0.3277591973244147,
+    "frac_tokens_logprob_differs": 0.32094594594594594,
+    "max_abs_dlogprob": 0.162017822265625,
+    "max_abs_dlogit": 0.34375,
+    "kl_mean": 0.0006399299090353407,
+    "kl_max": 0.004569559865275869,
+    "tokens": 299,
+    "covered": true,
+    "prefill_tp": 1,
+    "decode_tp": 2
+   }
+  },
+  {
+   "name": "prefill TP=2 -> decode TP=4: the KV cache received by the decode ranks is bitwise the prefill ranks' cache (re-sharded by head, NCCL send/recv)",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha_k_prefill": "801a1efc9ba66fa7",
+    "sha_k_decode": "801a1efc9ba66fa7",
+    "sha_v_prefill": "67403b23b8cc86b8",
+    "sha_v_decode": "67403b23b8cc86b8",
+    "replicated_heads_equal": [
+     true,
+     true
+    ],
+    "bytes_sent": 3465216,
+    "transfer_ms_first_and_second": [
+     0.8,
+     0.7
+    ]
+   }
+  },
+  {
+   "name": "prefill TP=2 -> decode TP=4: prefill KV at TP=2 equals one-GPU prefill KV",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "prefill TP=2 -> decode TP=4: logits and realized logprobs of 3 requests (prompts [37, 64, 100], decode [40, 25, 33], shrinking batch) vs one-GPU prefill + decode",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 3,
+    "runs_differing": 3,
+    "frac_logits_differ": 0.883006897993311,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.23799514770507812,
+    "max_abs_dlogit": 0.375,
+    "kl_mean": 0.002627353845648118,
+    "kl_max": 0.006726712936279763,
+    "tokens": 299,
+    "covered": true,
+    "prefill_tp": 2,
+    "decode_tp": 4
+   }
+  },
+  {
+   "name": "prefill TP=4 -> decode TP=1: the KV cache received by the decode ranks is bitwise the prefill ranks' cache (re-sharded by head, NCCL send/recv)",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha_k_prefill": "59c890823a739260",
+    "sha_k_decode": "59c890823a739260",
+    "sha_v_prefill": "9b636b9e52c31109",
+    "sha_v_decode": "9b636b9e52c31109",
+    "replicated_heads_equal": [
+     true,
+     true
+    ],
+    "bytes_sent": 3465216,
+    "transfer_ms_first_and_second": [
+     1.02,
+     0.92
+    ]
+   }
+  },
+  {
+   "name": "prefill TP=4 -> decode TP=1: prefill KV at TP=4 equals one-GPU prefill KV",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "prefill TP=4 -> decode TP=1: logits and realized logprobs of 3 requests (prompts [37, 64, 100], decode [40, 25, 33], shrinking batch) vs one-GPU prefill + decode",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 3,
+    "runs_differing": 3,
+    "frac_logits_differ": 0.8844628971571906,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.2568817138671875,
+    "max_abs_dlogit": 0.37890625,
+    "kl_mean": 0.002756627578916173,
+    "kl_max": 0.013332913568823249,
+    "tokens": 299,
+    "covered": true,
+    "prefill_tp": 4,
+    "decode_tp": 1
+   }
+  },
+  {
+   "name": "prefill TP=8 -> decode TP=2: the KV cache received by the decode ranks is bitwise the prefill ranks' cache (re-sharded by head, NCCL send/recv)",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "sha_k_prefill": "877b5ee73fe67705",
+    "sha_k_decode": "877b5ee73fe67705",
+    "sha_v_prefill": "a234f6a8effa4f1e",
+    "sha_v_decode": "a234f6a8effa4f1e",
+    "replicated_heads_equal": [
+     true,
+     true
+    ],
+    "bytes_sent": 3465216,
+    "transfer_ms_first_and_second": [
+     0.9,
+     0.75
+    ]
+   }
+  },
+  {
+   "name": "prefill TP=8 -> decode TP=2: prefill KV at TP=8 equals one-GPU prefill KV",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": null
+  },
+  {
+   "name": "prefill TP=8 -> decode TP=2: logits and realized logprobs of 3 requests (prompts [37, 64, 100], decode [40, 25, 33], shrinking batch) vs one-GPU prefill + decode",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 3,
+    "runs_differing": 3,
+    "frac_logits_differ": 0.8904352006688964,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.3346843719482422,
+    "max_abs_dlogit": 0.4375,
+    "kl_mean": 0.002941940486006495,
+    "kl_max": 0.009666081395415235,
+    "tokens": 299,
+    "covered": true,
+    "prefill_tp": 8,
+    "decode_tp": 2
+   }
+  },
+  {
+   "name": "backward B=2 T=128: d(weighted sum of realized logprobs)/d(residual stream) at 9 points, TP=2 vs TP=1",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops), logical-TP input gradients",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "degree": 2,
+    "tensors_differing": [],
+    "worst_fraction": 0.0,
+    "grad_abs_max": 3.65625
+   }
+  },
+  {
+   "name": "backward B=2 T=128: d(weighted sum of realized logprobs)/d(residual stream) at 9 points, TP=4 vs TP=1",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops), logical-TP input gradients",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "degree": 4,
+    "tensors_differing": [],
+    "worst_fraction": 0.0,
+    "grad_abs_max": 3.65625
+   }
+  },
+  {
+   "name": "backward B=2 T=128: same, with the column-parallel input gradients summed by NCCL all-reduce (bf16 partials, Megatron's backward), TP=2 vs TP=1",
+   "impl": "inv forward, NCCL all-reduce backward",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "degree": 2,
+    "tensors_differing": [
+     "layer0 input",
+     "layer1 input",
+     "layer2 input",
+     "layer3 input",
+     "layer4 input",
+     "layer5 input",
+     "layer6 input",
+     "layer7 input",
+     "final norm input"
+    ]
+   }
+  },
+  {
+   "name": "backward B=2 T=128: same, with the column-parallel input gradients summed by NCCL all-reduce (bf16 partials, Megatron's backward), TP=4 vs TP=1",
+   "impl": "inv forward, NCCL all-reduce backward",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "degree": 4,
+    "tensors_differing": [
+     "layer0 input",
+     "layer1 input",
+     "layer2 input",
+     "layer3 input",
+     "layer4 input",
+     "layer5 input",
+     "layer6 input",
+     "layer7 input",
+     "final norm input"
+    ]
+   }
+  },
+  {
+   "name": "inv TP=1 against model.py's bi forward (logical TP C=16 is not a plain GEMM), logits B=4 T=160 [two nodes, world 16]",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "other",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "mismatched_logits": 17347504,
+    "of": 20480000
+   }
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=8 vs TP=1 [two nodes, world 16]",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 4,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 640,
+    "covered": true,
+    "degree": 8,
+    "full_logp_mismatched": 0,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=8: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits [two nodes, world 16]",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=16 vs TP=1 [two nodes, world 16]",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": {
+    "equal": true,
+    "runs": 4,
+    "runs_differing": 0,
+    "frac_logits_differ": 0.0,
+    "frac_tokens_any_logit_differs": 0.0,
+    "frac_tokens_logprob_differs": 0.0,
+    "max_abs_dlogprob": 0.0,
+    "max_abs_dlogit": 0.0,
+    "kl_mean": 0.0,
+    "kl_max": 0.0,
+    "tokens": 640,
+    "covered": true,
+    "degree": 16,
+    "full_logp_mismatched": 0,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=16: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits [two nodes, world 16]",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L5",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "trainer forward TP=16, 3 runs: logits and log-probs [two nodes, world 16]",
+   "impl": "logical TP C=16 + fixed-order vocab log_softmax (bi ops)",
+   "level": "L1",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "stock TP=1 (sharding code, one rank) equals model.py's stock forward, logits B=4 T=160 [two nodes, world 16]",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "other",
+   "expect": "pass",
+   "passed": true,
+   "status": "ok",
+   "detail": null
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=8 vs TP=1 [two nodes, world 16]",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 4,
+    "runs_differing": 4,
+    "frac_logits_differ": 0.88479130859375,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.3130683898925781,
+    "max_abs_dlogit": 0.40625,
+    "kl_mean": 0.0026908888533387996,
+    "kl_max": 0.015525272538479656,
+    "tokens": 640,
+    "covered": true,
+    "degree": 8,
+    "full_logp_mismatched": 20479994,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=8: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits [two nodes, world 16]",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "index": [
+     0,
+     0,
+     622
+    ],
+    "a": -7.671584129333496,
+    "b": -7.671584606170654,
+    "mismatched_elements": 973504,
+    "of": 20480000
+   }
+  },
+  {
+   "name": "trainer forward B=4 T=160: logits and realized logprobs (vocab-parallel log_softmax), TP=16 vs TP=1 [two nodes, world 16]",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "fail",
+   "passed": false,
+   "status": "ok",
+   "detail": {
+    "equal": false,
+    "runs": 4,
+    "runs_differing": 4,
+    "frac_logits_differ": 0.89251640625,
+    "frac_tokens_any_logit_differs": 1.0,
+    "frac_tokens_logprob_differs": 1.0,
+    "max_abs_dlogprob": 0.3427457809448242,
+    "max_abs_dlogit": 0.4375,
+    "kl_mean": 0.0029932445913339275,
+    "kl_max": 0.011703305265648488,
+    "tokens": 640,
+    "covered": true,
+    "degree": 16,
+    "full_logp_mismatched": 20479992,
+    "full_logp_elems": 20480000
+   }
+  },
+  {
+   "name": "TP=16: vocab-parallel log_softmax equals the one-GPU formula on the gathered logits [two nodes, world 16]",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L5",
+   "expect": "info",
+   "passed": false,
+   "status": "info",
+   "detail": {
+    "index": [
+     0,
+     1,
+     16
+    ],
+    "a": -9.2250394821167,
+    "b": -9.225038528442383,
+    "mismatched_elements": 1019483,
+    "of": 20480000
+   }
+  },
+  {
+   "name": "trainer forward TP=16, 3 runs: logits and log-probs [two nodes, world 16]",
+   "impl": "NCCL all-reduce (stock ops)",
+   "level": "L1",
+   "expect": "info",
+   "passed": true,
+   "status": "info",
+   "detail": null
+  }
+ ],
+ "measurements": [
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=1",
+   "value": 24658.5,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms": 83.055,
+   "degree": 1
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=1",
+   "value": 1061.4,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms_per_step": 15.075,
+   "degree": 1
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=1",
+   "value": 15441.8,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms": 132.627,
+   "degree": 1
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=1",
+   "value": 1524.9,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms_per_step": 10.493,
+   "degree": 1
+  },
+  {
+   "name": "prefill TP=1: inv time / stock time",
+   "value": 1.597,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 1
+  },
+  {
+   "name": "decode TP=1: inv time / stock time",
+   "value": 0.696,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 1
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=2",
+   "value": 34237.5,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms": 59.817,
+   "degree": 2
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=2",
+   "value": 1506.6,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms_per_step": 10.62,
+   "degree": 2
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=2",
+   "value": 22395.1,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms": 91.448,
+   "degree": 2
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=2",
+   "value": 853.3,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms_per_step": 18.751,
+   "degree": 2
+  },
+  {
+   "name": "prefill TP=2: inv time / stock time",
+   "value": 1.529,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 2
+  },
+  {
+   "name": "decode TP=2: inv time / stock time",
+   "value": 1.766,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 2
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=4",
+   "value": 41898.3,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms": 48.88,
+   "degree": 4
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=4",
+   "value": 1632.4,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms_per_step": 9.802,
+   "degree": 4
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=4",
+   "value": 27182.9,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms": 75.342,
+   "degree": 4
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=4",
+   "value": 845.6,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms_per_step": 18.922,
+   "degree": 4
+  },
+  {
+   "name": "prefill TP=4: inv time / stock time",
+   "value": 1.541,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 4
+  },
+  {
+   "name": "decode TP=4: inv time / stock time",
+   "value": 1.931,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 4
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=8",
+   "value": 41197.6,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms": 49.712,
+   "degree": 8
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=8",
+   "value": 1312.5,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms_per_step": 12.19,
+   "degree": 8
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=8",
+   "value": 28740.8,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms": 71.258,
+   "degree": 8
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=8",
+   "value": 847.0,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms_per_step": 18.89,
+   "degree": 8
+  },
+  {
+   "name": "prefill TP=8: inv time / stock time",
+   "value": 1.433,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 8
+  },
+  {
+   "name": "decode TP=8: inv time / stock time",
+   "value": 1.55,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 8
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=1",
+   "value": 24626.6,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms": 83.162,
+   "degree": 1,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=1",
+   "value": 1064.5,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms_per_step": 15.03,
+   "degree": 1,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=1",
+   "value": 15370.6,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms": 133.241,
+   "degree": 1,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=1",
+   "value": 1680.6,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms_per_step": 9.521,
+   "degree": 1,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "prefill TP=1: inv time / stock time",
+   "value": 1.602,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 1,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "decode TP=1: inv time / stock time",
+   "value": 0.633,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 1,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=8",
+   "value": 29237.9,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms": 70.046,
+   "degree": 8,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=8",
+   "value": 574.4,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms_per_step": 27.855,
+   "degree": 8,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=8",
+   "value": 20845.2,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms": 98.248,
+   "degree": 8,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=8",
+   "value": 563.6,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms_per_step": 28.39,
+   "degree": 8,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "prefill TP=8: inv time / stock time",
+   "value": 1.403,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 8,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "decode TP=8: inv time / stock time",
+   "value": 1.019,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 8,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=16",
+   "value": 26545.3,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms": 77.151,
+   "degree": 16,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=16",
+   "value": 242.1,
+   "unit": "tokens/s",
+   "impl": "stock",
+   "ms_per_step": 66.079,
+   "degree": 16,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "prefill B=4 T=512 (forward + vocab-parallel log_softmax), TP=16",
+   "value": 7746.8,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms": 264.366,
+   "degree": 16,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "decode B=16 context 512 (one step, logits gathered), TP=16",
+   "value": 304.0,
+   "unit": "tokens/s",
+   "impl": "inv",
+   "ms_per_step": 52.632,
+   "degree": 16,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "prefill TP=16: inv time / stock time",
+   "value": 3.427,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 16,
+   "run": "two nodes, world 16"
+  },
+  {
+   "name": "decode TP=16: inv time / stock time",
+   "value": 0.797,
+   "unit": "x",
+   "impl": "inv",
+   "degree": 16,
+   "run": "two nodes, world 16"
+  }
+ ],
+ "extra": {
+  "merged_from": [
+   {
+    "argv": [
+     "--only",
+     "tp",
+     "--json",
+     "parts/tp.json"
+    ],
+    "counts": {
+     "ok": 11,
+     "regression": 0,
+     "changed": 0,
+     "info": 5
+    },
+    "seconds": 11.6,
+    "world": 8
+   },
+   {
+    "argv": [
+     "--only",
+     "modes",
+     "--json",
+     "parts/modes.json"
+    ],
+    "counts": {
+     "ok": 8,
+     "regression": 0,
+     "changed": 0,
+     "info": 0
+    },
+    "seconds": 20.9,
+    "world": 8
+   },
+   {
+    "argv": [
+     "--only",
+     "disagg,backward",
+     "--json",
+     "parts/disagg.json"
+    ],
+    "counts": {
+     "ok": 28,
+     "regression": 0,
+     "changed": 0,
+     "info": 4
+    },
+    "seconds": 20.9,
+    "world": 8
+   },
+   {
+    "argv": [
+     "--only",
+     "cost",
+     "--json",
+     "parts/cost.json"
+    ],
+    "counts": {
+     "ok": 0,
+     "regression": 0,
+     "changed": 0,
+     "info": 0
+    },
+    "seconds": 20.7,
+    "world": 8
+   },
+   {
+    "argv": [
+     "--degrees",
+     "1,8,16",
+     "--only",
+     "tp,cost",
+     "--json",
+     "parts/x16.json"
+    ],
+    "counts": {
+     "ok": 8,
+     "regression": 0,
+     "changed": 0,
+     "info": 4
+    },
+    "seconds": 29.6,
+    "world": 16
+   }
+  ],
+  "topology": "\tGPU0\tGPU1\tGPU2\tGPU3\tGPU4\tGPU5\tGPU6\tGPU7\tCPU Affinity\tNUMA Affinity\tGPU NUMA ID\nGPU0\t X \tPIX\tPIX\tPIX\tNODE\tNODE\tNODE\tNODE\t0-5,24-29\t0\t\tN/A\nGPU1\tPIX\t X \tPIX\tPIX\tNODE\tNODE\tNODE\tNODE\t0-5,24-29\t0\t\tN/A\nGPU2\tPIX\tPIX\t X \tPIX\tNODE\tNODE\tNODE\tNODE\t0-5,24-29\t0\t\tN/A\nGPU3\tPIX\tPIX\tPIX\t X \tNODE\tNODE\tNODE\tNODE\t0-5,24-29\t0\t\tN/A\nGPU4\tNODE\tNODE\tNODE\tNODE\t X \tPIX\tPIX\tPIX\t0-5,24-29\t0\t\tN/A\nGPU5\tNODE\tNODE\tNODE\tNODE\tPIX\t X \tPIX\tPIX\t0-5,24-29\t0\t\tN/A\nGPU6\tNODE\tNODE\tNODE\tNODE\tPIX\tPIX\t X \tPIX\t0-5,24-29\t0\t\tN/A\nGPU7\tNODE\tNODE\tNODE\tNODE\tPIX\tPIX\tPIX\t X \t0-5,24-29\t0\t\tN/A\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks\n",
+  "config": {
+   "vocab_size": 32000,
+   "hidden": 1024,
+   "layers": 8,
+   "heads": 16,
+   "kv_heads": 4,
+   "intermediate": 3584
+  },
+  "nccl": "2.21.5",
+  "nccl_env": {},
+  "logical_tp": {
+   "C": 16,
+   "Cv": 16,
+   "chunk_tree": "pairwise",
+   "row_parallel": "o_proj, down_proj"
+  },
+  "topology_2node": "\tGPU0\tGPU1\tGPU2\tGPU3\tGPU4\tGPU5\tGPU6\tGPU7\tCPU Affinity\tNUMA Affinity\tGPU NUMA ID\nGPU0\t X \tPIX\tPIX\tPIX\tNODE\tNODE\tNODE\tNODE\t0-5,24-29\t0\t\tN/A\nGPU1\tPIX\t X \tPIX\tPIX\tNODE\tNODE\tNODE\tNODE\t0-5,24-29\t0\t\tN/A\nGPU2\tPIX\tPIX\t X \tPIX\tNODE\tNODE\tNODE\tNODE\t0-5,24-29\t0\t\tN/A\nGPU3\tPIX\tPIX\tPIX\t X \tNODE\tNODE\tNODE\tNODE\t0-5,24-29\t0\t\tN/A\nGPU4\tNODE\tNODE\tNODE\tNODE\t X \tPIX\tPIX\tPIX\t0-5,24-29\t0\t\tN/A\nGPU5\tNODE\tNODE\tNODE\tNODE\tPIX\t X \tPIX\tPIX\t0-5,24-29\t0\t\tN/A\nGPU6\tNODE\tNODE\tNODE\tNODE\tPIX\tPIX\t X \tPIX\t0-5,24-29\t0\t\tN/A\nGPU7\tNODE\tNODE\tNODE\tNODE\tPIX\tPIX\tPIX\t X \t0-5,24-29\t0\t\tN/A\n\nLegend:\n\n  X    = Self\n  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n  PIX  = Connection traversing at most a single PCIe bridge\n  NV#  = Connection traversing a bonded set of # NVLinks\n",
+  "config_2node": {
+   "vocab_size": 32000,
+   "hidden": 1024,
+   "layers": 8,
+   "heads": 16,
+   "kv_heads": 4,
+   "intermediate": 3584
+  },
+  "nccl_2node": "2.21.5",
+  "nccl_env_2node": {
+   "NCCL_SOCKET_IFNAME": "<nic>"
+  },
+  "logical_tp_2node": {
+   "C": 16,
+   "Cv": 16,
+   "chunk_tree": "pairwise",
+   "row_parallel": "o_proj, down_proj"
+  }
+ }
+}

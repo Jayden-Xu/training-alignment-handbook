@@ -1,0 +1,44 @@
+{
+ "schema": "ckpt-map-v1",
+ "doc": "Logical Llama parameters (HF names) in two layouts: hf (one tensor each) and mcore (Megatron-style, TP shards in mp_rank_XX/). Vars: i layers, r TP degree, qrows = q heads per query group x head_dim, hd head_dim. Example: python tools/ckpt_compare.py HF_DIR MCORE_DIR --map examples/ckpt_conversion/mcore_map.json --layouts hf mcore --set b:r=4",
+ "vars": {"i": 2, "qrows": 32, "hd": 16},
+ "layouts": {"hf": {}, "mcore": {"r": 2}},
+ "params": {
+  "model.embed_tokens.weight": {
+   "hf": "=",
+   "mcore": {"cat": {"over": "r", "each": "mp_rank_{r:02d}/model.embedding.word_embeddings.weight"}}},
+  "model.layers.{i}.input_layernorm.weight": {
+   "hf": "=",
+   "mcore": {"replicated": {"over": "r", "each": "mp_rank_{r:02d}/model.decoder.layers.{i}.self_attention.linear_qkv.layer_norm_weight"}}},
+  "model.layers.{i}.self_attn.q_proj.weight": {
+   "hf": "=",
+   "mcore": {"cat": {"over": "r", "each": {"part": "mp_rank_{r:02d}/model.decoder.layers.{i}.self_attention.linear_qkv.weight", "pattern": ["{qrows}", "{hd}", "{hd}"], "take": 0}}}},
+  "model.layers.{i}.self_attn.k_proj.weight": {
+   "hf": "=",
+   "mcore": {"cat": {"over": "r", "each": {"part": "mp_rank_{r:02d}/model.decoder.layers.{i}.self_attention.linear_qkv.weight", "pattern": ["{qrows}", "{hd}", "{hd}"], "take": 1}}}},
+  "model.layers.{i}.self_attn.v_proj.weight": {
+   "hf": "=",
+   "mcore": {"cat": {"over": "r", "each": {"part": "mp_rank_{r:02d}/model.decoder.layers.{i}.self_attention.linear_qkv.weight", "pattern": ["{qrows}", "{hd}", "{hd}"], "take": 2}}}},
+  "model.layers.{i}.self_attn.o_proj.weight": {
+   "hf": "=",
+   "mcore": {"cat": {"over": "r", "each": "mp_rank_{r:02d}/model.decoder.layers.{i}.self_attention.linear_proj.weight"}, "dim": -1}},
+  "model.layers.{i}.post_attention_layernorm.weight": {
+   "hf": "=",
+   "mcore": {"replicated": {"over": "r", "each": "mp_rank_{r:02d}/model.decoder.layers.{i}.mlp.linear_fc1.layer_norm_weight"}}},
+  "model.layers.{i}.mlp.gate_proj.weight": {
+   "hf": "=",
+   "mcore": {"cat": {"over": "r", "each": {"part": "mp_rank_{r:02d}/model.decoder.layers.{i}.mlp.linear_fc1.weight", "parts": 2, "take": 0}}}},
+  "model.layers.{i}.mlp.up_proj.weight": {
+   "hf": "=",
+   "mcore": {"cat": {"over": "r", "each": {"part": "mp_rank_{r:02d}/model.decoder.layers.{i}.mlp.linear_fc1.weight", "parts": 2, "take": 1}}}},
+  "model.layers.{i}.mlp.down_proj.weight": {
+   "hf": "=",
+   "mcore": {"cat": {"over": "r", "each": "mp_rank_{r:02d}/model.decoder.layers.{i}.mlp.linear_fc2.weight"}, "dim": -1}},
+  "model.norm.weight": {
+   "hf": "=",
+   "mcore": {"replicated": {"over": "r", "each": "mp_rank_{r:02d}/model.decoder.final_layernorm.weight"}}},
+  "lm_head.weight": {
+   "hf": "=",
+   "mcore": {"cat": {"over": "r", "each": "mp_rank_{r:02d}/model.output_layer.weight"}}}
+ }
+}
