@@ -23,7 +23,7 @@ add the Chinese gloss in parentheses the first time it uses one.
 | TP/DP/EP/FSDP | Tensor, data, expert and fully sharded data parallelism | kept |
 | SDC | Silent data corruption: hardware returns wrong values with no error | kept; gloss 静默数据损坏 |
 | fingerprint | A small device-side summary (XOR) of a tensor's bits | kept; gloss 指纹 |
-| OpGuard | The capture and localization tool the handbook uses | kept |
+| OpGuard | The capture and localization tool the handbook uses ([repository](https://github.com/ziming-zh/OpGuard)) | kept |
 | harness | OpGuard's agent-facing tool layer; also a test driver around an example | kept |
 
 ## Chinese term choices

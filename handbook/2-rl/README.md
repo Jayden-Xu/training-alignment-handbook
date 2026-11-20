@@ -127,5 +127,5 @@ and only a replay at the rollout's own version can measure it.
 - Skills: [alignment-pipeline](../../skills/alignment-pipeline/SKILL.md),
   [engine-parity](../../skills/engine-parity/SKILL.md),
   [batch-invariant-kernel](../../skills/batch-invariant-kernel/SKILL.md);
-  OpGuard's `rl-alignment` skill (`harness/skills/rl-alignment` in the OpGuard
+  OpGuard's [`rl-alignment` skill](https://github.com/ziming-zh/OpGuard/tree/main/harness/skills/rl-alignment) (`harness/skills/rl-alignment` in the OpGuard
   repository) and its protocol, `docs/RLAlignment.md`.

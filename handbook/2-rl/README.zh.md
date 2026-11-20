@@ -109,5 +109,5 @@ staleness = logp_trainer(v) - logp_trainer(c)   # policy lag: corrected by IS / 
 - Skill：[alignment-pipeline](../../skills/alignment-pipeline/SKILL.md)、
   [engine-parity](../../skills/engine-parity/SKILL.md)、
   [batch-invariant-kernel](../../skills/batch-invariant-kernel/SKILL.md)；
-  OpGuard 的 `rl-alignment` skill（OpGuard 仓库中的 `harness/skills/rl-alignment`）
+  OpGuard 的 [`rl-alignment` skill](https://github.com/ziming-zh/OpGuard/tree/main/harness/skills/rl-alignment)（OpGuard 仓库中的 `harness/skills/rl-alignment`）
   及其协议 `docs/RLAlignment.md`。

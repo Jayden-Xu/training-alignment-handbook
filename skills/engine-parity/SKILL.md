@@ -112,7 +112,7 @@ Hooks only fire in eager mode. For compiled or graph-captured engines, compare
 per-vector fingerprints of boundary tensors instead: OpGuard's
 `lastdim-u32le-v1` vectors, available in plain torch as
 `tools/opguard_bridge.py xor_vectors`, and OpGuard's `rl-alignment` skill
-(OpGuard repo, `harness/skills/rl-alignment/SKILL.md`), which splits a logprob
+([OpGuard repo](https://github.com/ziming-zh/OpGuard/tree/main/harness/skills/rl-alignment), `harness/skills/rl-alignment/SKILL.md`), which splits a logprob
 gap into staleness and numeric error and walks the first divergence to an
 operator and token.
 

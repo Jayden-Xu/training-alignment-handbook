@@ -22,7 +22,7 @@
 | TP/DP/EP/FSDP | 张量并行、数据并行、专家并行和全分片数据并行 | 保留 |
 | SDC | 静默数据损坏：硬件返回错误的值却不报错 | 保留；释义 静默数据损坏 |
 | fingerprint | 在设备上计算的张量比特小摘要（XOR） | 保留；释义 指纹 |
-| OpGuard | 本手册使用的捕获与定位工具 | 保留 |
+| OpGuard | 本手册使用的捕获与定位工具（[仓库](https://github.com/ziming-zh/OpGuard)） | 保留 |
 | harness | OpGuard 面向 agent 的工具层；也指包在示例外面的测试驱动 | 保留 |
 
 ## 中文术语选择

@@ -87,21 +87,22 @@ The skills are plain folders (`SKILL.md` plus `references/`). Two sets work toge
 | Set | Where | Skills |
 |---|---|---|
 | This handbook | [skills/](skills/) | alignment-pipeline, pretraining-alignment, engine-parity, batch-invariant-kernel, handbook-writing |
-| OpGuard | `harness/skills/` in the OpGuard repository | investigate-first-diff, trace-upstream, validate-hypothesis, rl-alignment |
+| OpGuard | `harness/skills/` in [OpGuard](https://github.com/ziming-zh/OpGuard) | investigate-first-diff, trace-upstream, validate-hypothesis, rl-alignment |
 
 For Claude Code, copy or link both sets into `~/.claude/skills/` (personal) or
 `.claude/skills/` (one project), with each skill in its own folder:
 
 ```bash
 git clone https://github.com/training-alignment/training-alignment-handbook
+git clone https://github.com/ziming-zh/OpGuard
 mkdir -p ~/.claude/skills
-for d in training-alignment-handbook/skills/*/ <opguard>/harness/skills/*/; do ln -s "$(realpath "$d")" ~/.claude/skills/; done
+for d in training-alignment-handbook/skills/*/ OpGuard/harness/skills/*/; do ln -s "$(realpath "$d")" ~/.claude/skills/; done
 ```
 
 Keep the repository checked out: the skills link to its tools, examples and
 pages. Start from `alignment-pipeline`, which routes a question to the others.
-The RL steps need OpGuard's harness actions (`rl.*`, `vectors.*`), so use an
-OpGuard checkout that includes them.
+The RL steps need OpGuard's harness actions (`rl.*`, `vectors.*`). They are in
+[this OpGuard repository](https://github.com/ziming-zh/OpGuard); the upstream OpGuard does not have them yet.
 
 ## Skills, tools and operations
 

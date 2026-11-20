@@ -91,7 +91,7 @@ CPU 和 GPU 的 `log_softmax` 相差约 2.5e-5）。如果不相等，说明引�
 hook 只在 eager 模式下触发。对于编译或 graph 捕获的引擎，改为比较边界张量的
 逐向量 fingerprint（指纹）：OpGuard 的 `lastdim-u32le-v1` 向量，在纯 torch 中可通过
 `tools/opguard_bridge.py xor_vectors` 获得；以及 OpGuard 的 `rl-alignment` skill
-（OpGuard 仓库，`harness/skills/rl-alignment/SKILL.md`），它把 logprob 差距拆分为
+（[OpGuard 仓库](https://github.com/ziming-zh/OpGuard/tree/main/harness/skills/rl-alignment)，`harness/skills/rl-alignment/SKILL.md`），它把 logprob 差距拆分为
 staleness（策略滞后）和数值误差，并沿首个分歧点追到一个算子和 token。
 
 ## 6. 对每个差异做决定
