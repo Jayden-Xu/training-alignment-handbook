@@ -80,6 +80,29 @@ asks the questions and routes you. The words used throughout are in the
    of which tokens share a batch.
 6. [Collectives](handbook/3-kernels/collectives.md): a pinned reduction order across GPUs.
 
+## Using the skills with an agent
+
+The skills are plain folders (`SKILL.md` plus `references/`). Two sets work together:
+
+| Set | Where | Skills |
+|---|---|---|
+| This handbook | [skills/](skills/) | alignment-pipeline, pretraining-alignment, engine-parity, batch-invariant-kernel, handbook-writing |
+| OpGuard | `harness/skills/` in the OpGuard repository | investigate-first-diff, trace-upstream, validate-hypothesis, rl-alignment |
+
+For Claude Code, copy or link both sets into `~/.claude/skills/` (personal) or
+`.claude/skills/` (one project), with each skill in its own folder:
+
+```bash
+git clone https://github.com/training-alignment/training-alignment-handbook
+mkdir -p ~/.claude/skills
+for d in training-alignment-handbook/skills/*/ <opguard>/harness/skills/*/; do ln -s "$(realpath "$d")" ~/.claude/skills/; done
+```
+
+Keep the repository checked out: the skills link to its tools, examples and
+pages. Start from `alignment-pipeline`, which routes a question to the others.
+The RL steps need OpGuard's harness actions (`rl.*`, `vectors.*`), so use an
+OpGuard checkout that includes them.
+
 ## Skills, tools and operations
 
 - **Skills** ([skills/](skills/)): [alignment-pipeline](skills/alignment-pipeline/SKILL.md),
