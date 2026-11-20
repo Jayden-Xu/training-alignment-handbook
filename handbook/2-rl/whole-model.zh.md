@@ -16,17 +16,17 @@ trainer 和引擎以不同的形状计算同样的 token。trainer 把整个序�
 <figure class="fx" data-fig="prefill-decode" aria-label="同一条序列：trainer 用 prefill 计算，引擎用 decode 计算">
 <div class="fx-stage">
 <div class="fx-rows">
-<div class="fx-row"><span class="fx-label"><b>trainer</b> prefill：一次算全部 token，batch 有 B 条序列</span><div class="fx-col is-wide"><div class="fx-batch"><span class="fx-rowbar"></span><span class="fx-rowbar"></span><div class="fx-cells" style="--n:6"><span class="fx-cell" data-hot="1">p</span><span class="fx-cell" data-hot="1">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="1">t2</span><span class="fx-cell is-mine" data-hot="1">t3</span><span class="fx-cell is-mine" data-hot="1">t4</span></div><span class="fx-rowbar"></span></div><div class="fx-cells fx-lp" style="--n:6"><span></span><span></span><span class="fx-chip" data-at="2">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="2">ℓ3</span><span class="fx-chip" data-at="2">ℓ4</span></div></div></div>
-<div class="fx-row"><span class="fx-label"><b>engine</b> decode：每步一个 token，batch 每步都在变</span><div class="fx-col is-wide"><div class="fx-batch"><span class="fx-rowbar" data-at="1" data-to="3"></span><span class="fx-rowbar" data-at="1" data-to="2"></span><div class="fx-cells" style="--n:6"><span class="fx-cell">p</span><span class="fx-cell">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="2">t2</span><span class="fx-cell is-mine" data-hot="3">t3</span><span class="fx-cell is-mine" data-hot="4">t4</span></div><span class="fx-rowbar" data-at="2" data-to="3"></span><span class="fx-rowbar" data-at="4"></span><span class="fx-rowbar" data-at="4"></span></div><div class="fx-cells fx-lp" style="--n:6"><span></span><span></span><span class="fx-chip" data-at="1">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="3">ℓ3</span><span class="fx-chip" data-at="4">ℓ4</span></div></div></div>
+<div class="fx-row"><span class="fx-label">trainer<span class="fx-note">prefill：一次算全部 token</span></span><div class="fx-lane" style="--n:6"><div class="fx-cells"><span class="fx-cell" data-hot="1">p</span><span class="fx-cell" data-hot="1">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="1">t2</span><span class="fx-cell is-mine" data-hot="1">t3</span><span class="fx-cell is-mine" data-hot="1">t4</span></div><div class="fx-cells"><span></span><span></span><span class="fx-span" style="--w:4" data-at="1">一次算完，batch 有 B 条</span></div><div class="fx-cells fx-lp"><span></span><span></span><span class="fx-chip" data-at="2">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="2">ℓ3</span><span class="fx-chip" data-at="2">ℓ4</span></div></div></div>
+<div class="fx-row"><span class="fx-label">引擎<span class="fx-note">decode：每步一个 token</span></span><div class="fx-lane" style="--n:6"><div class="fx-cells"><span class="fx-cell">p</span><span class="fx-cell">p</span><span class="fx-cell is-mine" data-hot="1">t1</span><span class="fx-cell is-mine" data-hot="2">t2</span><span class="fx-cell is-mine" data-hot="3">t3</span><span class="fx-cell is-mine" data-hot="4">t4</span></div><div class="fx-cells fx-who"><span></span><span></span><span class="fx-note" data-at="1">+ A、B</span><span class="fx-note" data-at="2">+ B、C</span><span class="fx-note" data-at="3">单独</span><span class="fx-note" data-at="4">+ D、E</span></div><div class="fx-cells fx-lp"><span></span><span></span><span class="fx-chip" data-at="1">ℓ1</span><span class="fx-chip" data-at="2">ℓ2</span><span class="fx-chip" data-at="3">ℓ3</span><span class="fx-chip" data-at="4">ℓ4</span></div></div></div>
 </div>
 <div class="fx-chain is-tight"><span class="fx-node is-decision" data-at="5">logprob ℓ1–ℓ4：逐位相等？</span></div>
 </div>
 <ol class="fx-say">
-<li>一条序列：prompt（p）和四个采样出的 token，t1 到 t4。灰条是 batch 里的其他序列。</li>
-<li data-hold="1.5">trainer：一次 prefill 同时算出所有 token，batch 有 B 条序列。引擎：decode 算出 t1，同 batch 还有两个请求。</li>
-<li data-hold="1.5">trainer：每个 token 一个 logprob。引擎：t2；一个请求离开，另一个加入。</li>
+<li>一条序列：prompt（p）和四个采样出的 token，t1 到 t4。</li>
+<li data-hold="1.5">trainer：一次 prefill 同时算出所有 token，batch 有 B 条序列。引擎：decode 算出 t1，同批还有 A 和 B。</li>
+<li data-hold="1.5">trainer：每个 token 一个 logprob。引擎：t2；A 离开，C 加入。</li>
 <li>引擎：t3，此时 batch 里只有它。</li>
-<li>引擎：t4，又来了两个新请求。</li>
+<li>引擎：t4，又来了两个新请求 D 和 E。</li>
 <li data-hold="2">同样的 token，不同的形状，不同的 batch。这一步要让 logprob 逐位相等。</li>
 </ol>
 <figcaption>图：trainer 和引擎用不同的形状计算同样的 token：一边是固定 batch 里的一次 prefill，一边是不断变化的 batch 里一次一步的 decode。</figcaption>

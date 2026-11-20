@@ -42,16 +42,18 @@ consumer until the first pair with equal input and different output.
 
 <figure class="fx" data-fig="rl-triage" aria-label="Triage of a gap in a running RL loop">
 <div class="fx-stage">
-<div class="fx-spine">
-<span class="fx-node" data-hot="0">records (online)</span><span></span>
-<span class="fx-arrow is-down" data-hot="1" aria-hidden="true"></span><span></span>
-<span class="fx-node is-decision" data-hot="1">weights match?</span><span class="fx-side" data-at="2"><span class="fx-arrow">no</span><span class="fx-node is-bad">fix the sync; stop</span></span>
-<span class="fx-arrow is-down" data-hot="3">yes</span><span></span>
-<span class="fx-node" data-hot="3 4">split each token: numeric, staleness</span><span class="fx-side"><span class="fx-swap is-block" data-at="3"><span class="fx-split" data-to="4"><span class="is-whole">gap 0.15</span></span><span class="fx-split" data-at="4" style="--a:1;--b:14"><span class="is-a">numeric 0.01</span><span class="is-b">staleness 0.14</span></span></span></span>
-<span class="fx-arrow is-down" data-hot="6">numeric ≠ 0</span><span class="fx-side" data-at="5"><span class="fx-arrow">numeric = 0</span><span class="fx-node is-ok">infrastructure exonerated</span></span>
-<span class="fx-node" data-at="6">recapture both sides, walk the data flow</span><span></span>
-<span class="fx-arrow is-down" data-at="7" aria-hidden="true"></span><span></span>
-<span class="fx-node is-key" data-at="7">classify the cause, test the smallest fix</span><span></span>
+<div class="fx-dflow">
+<span class="fx-node" data-hot="0">Records from the running loop</span>
+<span class="fx-vl" data-hot="1"></span>
+<span class="fx-node is-decision" data-hot="1">Weights match?</span><span class="fx-hl" data-hot="2">no</span><span class="fx-node to-bad" data-hot="2">Fix the sync; stop</span>
+<span class="fx-vl" data-hot="3">yes</span>
+<span class="fx-node" data-hot="3 4">Split each token's gap at the rollout's version<span class="fx-swap is-block" data-at="3"><span class="fx-split" data-to="4"><span class="is-whole">gap 0.15</span></span><span class="fx-split" data-at="4" style="--a:1;--b:14"><span class="is-a">numeric 0.01</span><span class="is-b">staleness 0.14</span></span></span></span>
+<span class="fx-vl" data-hot="5"></span>
+<span class="fx-node is-decision" data-hot="5">numeric = 0?</span><span class="fx-hl" data-hot="5">yes</span><span class="fx-node to-ok" data-hot="5">Infrastructure exonerated<span class="fx-note">policy lag only</span></span>
+<span class="fx-vl" data-hot="6">no</span>
+<span class="fx-node" data-hot="6">Recapture both sides, walk the data flow</span>
+<span class="fx-vl" data-hot="7"></span>
+<span class="fx-node is-key" data-hot="7">Classify the cause, test the smallest fix</span>
 </div>
 </div>
 <ol class="fx-say">
@@ -60,8 +62,8 @@ consumer until the first pair with equal input and different output.
 <li>If not, every comparison at that version is meaningless: fix the sync and stop.</li>
 <li>If so, take each token's gap; here 0.15.</li>
 <li data-hold="2">A replay at the rollout's own version splits it exactly: numeric 0.01 plus staleness 0.14.</li>
-<li data-hold="1.5">Had numeric been 0, the gap would be policy lag alone: the infrastructure exonerated.</li>
-<li data-hold="1.5">numeric ≠ 0: recapture both sides and walk the data flow, not the trace order.</li>
+<li data-hold="1.5">Is numeric 0? Then the gap is policy lag alone, and the infrastructure is exonerated.</li>
+<li data-hold="1.5">Here it is not (0.01): recapture both sides and walk the data flow, not the trace order.</li>
 <li data-hold="2">Classify the cause and test the smallest fix.</li>
 </ol>
 <figcaption>Figure: check the weights first, split every gap at the rollout's version, and localize only a nonzero numeric error.</figcaption>

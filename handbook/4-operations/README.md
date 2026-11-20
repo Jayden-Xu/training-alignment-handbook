@@ -14,8 +14,8 @@ time the stack changes.
 
 <figure class="fx" data-fig="ops-loop" aria-label="Re-checking the results when the stack changes" markdown>
 <div class="fx-stage" markdown>
-<div class="fx-chain" markdown="span"><span class="fx-node" data-hot="0">Stack changes</span><span class="fx-arrow" data-hot="1" aria-hidden="true"></span><span class="fx-node" data-hot="1">[Run the regression suite](regression.md)</span><span class="fx-arrow" data-hot="2" aria-hidden="true"></span><span class="fx-node is-decision" data-hot="2">Compare with this stack's baseline</span></div>
-<div class="fx-branch" markdown="span"><span class="fx-chain"><span class="fx-arrow" data-hot="3">a claim no longer holds</span><span class="fx-node to-bad" data-hot="3">Finding: report it, fix it</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="4">a stock result changed</span><span class="fx-node to-key" data-hot="4">Update the topic page, record a baseline</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="5">same as baseline</span><span class="fx-node to-ok" data-hot="5">Done</span></span></div>
+<div class="fx-seq" style="--n:3" markdown="span"><span class="fx-node" data-hot="0">Stack changes</span><span class="fx-node" data-hot="1">[Run the regression suite](regression.md)</span><span class="fx-node is-decision" data-hot="2">Compare with this stack's baseline</span></div>
+<div class="fx-fork is-end" style="--n:3" markdown="span"><span class="fx-leg" data-hot="3"><span class="fx-when">a claim no longer holds</span><span class="fx-node to-bad" data-hot="3">Finding: report it, fix it</span></span><span class="fx-leg" data-hot="4"><span class="fx-when">a stock result changed</span><span class="fx-node to-key" data-hot="4">Update the topic page, record a baseline</span></span><span class="fx-leg" data-hot="5"><span class="fx-when">same as baseline</span><span class="fx-node to-ok" data-hot="5">Done</span></span></div>
 </div>
 <ol class="fx-say">
 <li>The stack changes: a library upgrade, a driver update, new GPUs.</li>

@@ -9,8 +9,7 @@ batch-invariant（批不变）实现。它可能是新的注意力变体、MoE c
 
 <figure class="fx" data-fig="kernel-workflow" aria-label="batch-invariant kernel 工作流" markdown>
 <div class="fx-stage" markdown>
-<div class="fx-chain" markdown="span"><span class="fx-step" data-hot="0 5">[1. 找到变化的来源](#1-locate-the-variance)</span><span class="fx-arrow" data-hot="1 5" aria-hidden="true"></span><span class="fx-step" data-hot="1 5">[2. 选最便宜的策略](#2-choose-the-cheapest-strategy-that-holds)</span><span class="fx-arrow" data-hot="2 5" aria-hidden="true"></span><span class="fx-step" data-hot="2 5">[3. 保留舍入点](#3-keep-the-rounding-points)</span><span class="fx-arrow" data-hot="3 6" aria-hidden="true"></span><span class="fx-step" data-hot="3 6">[4. 验证矩阵](#4-verify-the-matrix)<span class="fx-swap"><span class="fx-note fx-fail" data-at="3" data-to="5">某一格失败</span><span class="fx-note fx-pass" data-at="6">零不一致</span></span></span><span class="fx-arrow" data-hot="7" aria-hidden="true"></span><span class="fx-step" data-hot="7">[5. 集成](#5-integrate)</span></div>
-<div class="fx-back" data-hot="4">第 4 步失败时，回到第 1 步。</div>
+<div class="fx-seq" style="--n:5" markdown="span"><span class="fx-step" data-hot="0 5">[1. 找到变化的来源](#1-locate-the-variance)</span><span class="fx-step" data-hot="1 5">[2. 选最便宜的策略](#2-choose-the-cheapest-strategy-that-holds)</span><span class="fx-step" data-hot="2 5">[3. 保留舍入点](#3-keep-the-rounding-points)</span><span class="fx-step" data-hot="3 6">[4. 验证矩阵](#4-verify-the-matrix)<span class="fx-swap"><span class="fx-note fx-fail" data-at="3" data-to="5">某一格失败</span><span class="fx-note fx-pass" data-at="6">零不一致</span></span></span><span class="fx-step" data-hot="7">[5. 集成](#5-integrate)</span><span class="fx-loop" style="grid-column: 1 / 5; --k: 4" data-hot="4">第 4 步失败时，回到第 1 步。</span></div>
 </div>
 <ol class="fx-say">
 <li>1. 找到变化的来源：算子内部哪个选择依赖于元素自身长度以外的东西。</li>
@@ -37,8 +36,8 @@ batch-invariant（批不变）实现。它可能是新的注意力变体、MoE c
 <figure class="fx" data-fig="two-groupings" aria-label="同样三个数的两种分组">
 <div class="fx-stage">
 <div class="fx-rows">
-<div class="fx-row"><span class="fx-label fx-mono">(1e8 + 1) − 1e8</span><div class="fx-chain is-tight"><span class="fx-swap" data-at="1"><span class="fx-node is-mono" data-at="1" data-to="2">1e8 + 1 = 100000001</span><span class="fx-node is-mono is-warn" data-at="2">1e8 + 1 → 1e8<span class="fx-note">舍入：下一个数相距 8</span></span></span><span class="fx-arrow" data-at="3" aria-hidden="true"></span><span class="fx-node is-mono" data-at="3">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="4" aria-hidden="true"></span><span class="fx-node is-mono is-key" data-at="4">0</span></div></div>
-<div class="fx-row"><span class="fx-label fx-mono">(1e8 − 1e8) + 1</span><div class="fx-chain is-tight"><span class="fx-node is-mono" data-at="1">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="3" aria-hidden="true"></span><span class="fx-node is-mono" data-at="3">0 + 1 = 1</span><span class="fx-arrow" data-at="4" aria-hidden="true"></span><span class="fx-node is-mono is-key" data-at="4">1</span></div></div>
+<div class="fx-row"><span class="fx-label fx-mono">(1e8 + 1) − 1e8</span><div class="fx-chain is-tight is-grid"><span class="fx-swap" data-at="1"><span class="fx-node is-mono" data-at="1" data-to="2">1e8 + 1 = 100000001</span><span class="fx-node is-mono is-warn" data-at="2">1e8 + 1 → 1e8<span class="fx-note">舍入：下一个数相距 8</span></span></span><span class="fx-arrow" data-at="3" aria-hidden="true"></span><span class="fx-node is-mono" data-at="3">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="4" aria-hidden="true"></span><span class="fx-node is-mono is-key" data-at="4">0</span></div></div>
+<div class="fx-row"><span class="fx-label fx-mono">(1e8 − 1e8) + 1</span><div class="fx-chain is-tight is-grid"><span class="fx-node is-mono" data-at="1">1e8 − 1e8 = 0</span><span class="fx-arrow" data-at="3" aria-hidden="true"></span><span class="fx-node is-mono" data-at="3">0 + 1 = 1</span><span class="fx-arrow" data-at="4" aria-hidden="true"></span><span class="fx-node is-mono is-key" data-at="4">1</span></div></div>
 </div>
 </div>
 <ol class="fx-say">

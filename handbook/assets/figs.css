@@ -69,15 +69,15 @@
 
 /* ======================= controls and description ======================= */
 
+/* the step buttons on one line, the description of the frame on its own full-width line under them */
 .md-typeset .fx-foot {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.4rem 0.8rem;
+  display: grid;
+  gap: 0.5rem;
   margin-top: 0.85rem;
   padding-top: 0.6rem;
   border-top: 1px dashed var(--md-default-fg-color--lightest);
 }
-.md-typeset .fx-ctl { display: flex; flex-wrap: wrap; gap: 0.25rem; flex: none; max-width: 55%; }
+.md-typeset .fx-ctl { display: flex; flex-wrap: wrap; gap: 0.25rem; }
 .md-typeset .fx-ctl button {
   display: inline-flex;
   align-items: center;
@@ -119,20 +119,21 @@
 }
 .md-typeset .fx-ctl .fx-play[hidden] { display: none; }
 
-/* the description of the current frame; every frame's text stays in the list for readers */
+/* the description of the current frame; every frame's text stays in the list for readers.
+   All lines share one grid cell, so the longest sets the height and the figure does not jump. */
 .md-typeset ol.fx-say {
   display: grid;
-  flex: 1;
   margin: 0;
   padding: 0;
   list-style: none;
   color: var(--md-default-fg-color);
   font-size: 0.68rem;
+  line-height: 1.45;
 }
 .md-typeset ol.fx-say > li {
   grid-area: 1 / 1;
   margin: 0;
-  padding: 0.1rem 0 0;
+  padding: 0;
   opacity: 0;
   pointer-events: none;
 }
@@ -157,7 +158,7 @@
 .md-typeset .fx-rows { display: grid; gap: 0.75rem; }
 .md-typeset .fx-row {
   display: grid;
-  grid-template-columns: minmax(5.5rem, 8.5rem) minmax(0, 1fr);
+  grid-template-columns: var(--lw, minmax(5.5rem, 8.5rem)) minmax(0, 1fr);
   gap: 0.8rem;
   align-items: center;
 }
@@ -185,6 +186,24 @@
 .md-typeset .fx-col { display: inline-flex; flex-direction: column; align-items: center; gap: 0.25rem; }
 .md-typeset .fx-col > .fx-chip { padding: 0.08rem 0.25rem; font-size: 0.58rem; }
 .md-typeset .fx-chain.is-tight { column-gap: 0.25rem; }
+/* chains in sibling rows that line up column by column (--cols: their shared columns) */
+.md-typeset .fx-chain.is-grid {
+  display: grid;
+  grid-template-columns: var(--cols, minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(2.4rem, auto));
+  align-items: center;
+}
+.md-typeset .fx-chain.is-grid > .fx-stack { align-items: stretch; }
+.md-typeset .fx-chain.is-grid > .fx-cells { justify-content: start; }
+/* an arrow across several columns: a line, then a head */
+.md-typeset .fx-arrow.is-long::after {
+  content: "";
+  align-self: stretch;
+  height: 0.5rem;
+  margin: 0 0.15rem;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 10'%3E%3Cpath d='M0 0L9 5L0 10z'/%3E%3C/svg%3E") right center / 0.42rem 0.5rem no-repeat, linear-gradient(#000, #000) left center / calc(100% - 0.3rem) 1.5px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 10'%3E%3Cpath d='M0 0L9 5L0 10z'/%3E%3C/svg%3E") right center / 0.42rem 0.5rem no-repeat, linear-gradient(#000, #000) left center / calc(100% - 0.3rem) 1.5px no-repeat;
+}
 
 /* nodes */
 .md-typeset .fx-node {
@@ -281,8 +300,6 @@
 }
 .md-typeset .fx-arrow::after { content: "\2192"; font-size: 0.95rem; line-height: 1; }
 .md-typeset .fx-chain.is-tight > .fx-arrow { min-width: 1.1rem; }
-.md-typeset .fx-arrow.is-down { flex-direction: row-reverse; gap: 0.35rem; min-width: 0; }
-.md-typeset .fx-arrow.is-down::after { content: "\2193"; }
 .md-typeset .fx-arrow::before {
   content: "";
   position: absolute;
@@ -298,7 +315,6 @@
 }
 .md-typeset .fx-arrow.is-now { color: var(--fx-accent); }
 .md-typeset .fx-arrow.is-now::before { animation: fx-hop 0.7s ease-in-out 0.1s both; }
-.md-typeset .fx-arrow.is-down.is-now::before { animation-name: fx-drop; left: auto; right: 0.25rem; bottom: auto; top: 0; }
 @keyframes fx-hop {
   0% { opacity: 0; left: 0; }
   20% { opacity: 1; }
@@ -322,27 +338,6 @@
   border-right: 2px solid var(--fx-line);
   border-radius: 0 0.4rem 0.4rem 0;
 }
-/* one node splits into several paths: a bracket on the left, one chain per path */
-.md-typeset .fx-branch {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  padding-left: 0.45rem;
-  border-left: 2px solid var(--fx-line);
-  border-radius: 0.4rem 0 0 0.4rem;
-}
-.md-typeset .fx-chain + .fx-branch { margin: 0.6rem 0 0 1.2rem; }
-/* a path back to an earlier step */
-.md-typeset .fx-back {
-  margin-top: 0.2rem;
-  padding-top: 0.35rem;
-  border-top: 1.5px dashed var(--fx-line);
-  color: var(--md-default-fg-color--light);
-  font-size: 0.62rem;
-}
-.md-typeset .fx-back::before { content: "\21BA  "; }
-.md-typeset .fx-back.is-now { border-top-color: var(--fx-accent); color: var(--fx-accent); }
-
 /* content that changes in place: the children share one cell, the tallest sets the size */
 .md-typeset .fx-swap { display: inline-grid; align-items: center; }
 .md-typeset .fx-swap.is-block { display: grid; }
@@ -388,6 +383,14 @@
 .md-typeset :is(.fx-chain, .fx-box) > .fx-cells { grid-template-columns: repeat(var(--n, 4), minmax(0, var(--cw, 2.6rem))); min-width: 0; }
 .md-typeset .fx-tree { display: grid; gap: 0.55rem; min-width: 0; }
 .md-typeset .fx-tree > .fx-swap > * { min-width: 0; }
+/* a row of a tree with its label in front; the labels form one column */
+.md-typeset .fx-lrow {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  column-gap: 0.7rem;
+  align-items: center;
+  min-width: 0;
+}
 
 .md-typeset .fx-cell {
   display: flex;
@@ -523,8 +526,10 @@
 .md-typeset .fx-pair.is-ok { color: var(--fx-ok); }
 .md-typeset .fx-pair.is-bad { color: var(--fx-bad); font-weight: 700; }
 
-/* a batch drawn beside a label, and one batch per row of a figure */
-.md-typeset .fx-col.is-wide { display: flex; align-items: stretch; width: 100%; max-width: 24rem; }
+/* one lane of aligned rows (cells, what happened under each, results); --n columns */
+.md-typeset .fx-lane { display: grid; gap: 0.3rem; width: 100%; max-width: 26rem; min-width: 0; }
+.md-typeset .fx-who > .fx-note { text-align: center; line-height: 1.2; }
+/* one batch per row of a figure */
 .md-typeset .fx-batch.fx-mini { display: grid; width: 3.2rem; margin-top: 0.3rem; gap: 2px; }
 .md-typeset .fx-batch.fx-mini .fx-rowbar { height: 0.3rem; }
 .md-typeset .fx-rowbar.is-mine { background: var(--fx-accent); }
@@ -591,16 +596,257 @@
 .md-typeset .fx.is-live .fx-step.is-seen:not(.is-now) { background: color-mix(in srgb, var(--fx-accent) 5%, var(--md-default-bg-color)); }
 .md-typeset .fx-step.is-now { background: var(--fx-tint); }
 
-/* a main path that runs down, with exits to the side */
-.md-typeset .fx-spine {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.3rem 0.4rem;
-  align-items: center;
-  justify-items: start;
+/* ============================ connected flows ============================ */
+/* Boxes on a fixed grid, joined by lines drawn in the gaps between them, so an arrow always
+   touches both boxes and a condition sits on its own line. --fx-ln is the colour of the line
+   into an element; it turns to the accent on that element's beat. Heads are 0.38rem long. */
+.md-typeset .fx {
+  --fx-wire: color-mix(in srgb, var(--md-default-fg-color) 36%, var(--md-default-bg-color));
+  --fx-ln: var(--fx-wire);
 }
-.md-typeset .fx-spine > .fx-arrow.is-down { grid-column: 1; margin-left: 1rem; }
-.md-typeset .fx-spine > .fx-side { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; max-width: 100%; }
+.md-typeset :is(.fx-seq > *, .fx-leg, .fx-vl, .fx-hl, .fx-loop).is-now { --fx-ln: var(--fx-accent); }
+
+/* a sequence of --n equal cells in one row, an arrow across each gap; .is-col: one column,
+   an arrow down each gap (also every sequence on a narrow screen) */
+.md-typeset .fx-seq {
+  --g: 1.4rem;
+  display: grid;
+  grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr));
+  gap: 0 var(--g);
+  align-items: stretch;
+}
+.md-typeset .fx-seq.is-col { grid-template-columns: minmax(0, 1fr); gap: 0.8rem 0; }
+.md-typeset .fx-seq > * { position: relative; min-width: 0; }
+.md-typeset .fx-seq > .fx-node { width: auto; }
+.md-typeset :is(.fx-seq, .fx-leg) > .fx-step {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 2.5rem;
+  text-align: center;
+}
+/* the node a fork starts from, centred over it */
+.md-typeset .fx-seq > .fx-root { justify-self: center; min-width: 8rem; }
+.md-typeset .fx-seq > :not(.fx-fork, .fx-loop) + :not(.fx-fork, .fx-loop)::before,
+.md-typeset .fx-seq > :not(.fx-fork, .fx-loop) + :not(.fx-fork, .fx-loop)::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.md-typeset .fx-seq:not(.is-col) > :not(.fx-fork, .fx-loop) + :not(.fx-fork, .fx-loop)::before {
+  top: 50%;
+  right: 100%;
+  width: var(--g);
+  margin-top: -0.75px;
+  border-top: 1.5px solid var(--fx-ln);
+}
+.md-typeset .fx-seq:not(.is-col) > :not(.fx-fork, .fx-loop) + :not(.fx-fork, .fx-loop)::after {
+  top: 50%;
+  right: 100%;
+  margin-top: -0.24rem;
+  border-left: 0.38rem solid var(--fx-ln);
+  border-top: 0.24rem solid transparent;
+  border-bottom: 0.24rem solid transparent;
+}
+.md-typeset .fx-seq.is-col > :not(.fx-fork, .fx-loop) + :not(.fx-fork, .fx-loop)::before {
+  left: 50%;
+  bottom: 100%;
+  height: 0.8rem;
+  margin-left: -0.75px;
+  border-left: 1.5px solid var(--fx-ln);
+}
+.md-typeset .fx-seq.is-col > :not(.fx-fork, .fx-loop) + :not(.fx-fork, .fx-loop)::after {
+  left: 50%;
+  bottom: 100%;
+  margin-left: -0.24rem;
+  border-top: 0.38rem solid var(--fx-ln);
+  border-left: 0.24rem solid transparent;
+  border-right: 0.24rem solid transparent;
+}
+
+/* a path back from the last of --k cells of the row above to the first: a U under them, its
+   head pointing up into the first; set grid-column to those cells */
+.md-typeset .fx-loop {
+  --k: 2;
+  position: relative;
+  margin: 0 calc(100% / (2 * var(--k)) - (var(--k) - 1) * var(--g) / (2 * var(--k)));
+  padding-top: 1rem;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.6rem;
+  text-align: center;
+}
+.md-typeset .fx-loop::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.75rem;
+  border: 1.5px solid var(--fx-ln);
+  border-top: 0;
+  border-radius: 0 0 0.45rem 0.45rem;
+}
+.md-typeset .fx-loop::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin-left: calc(0.75px - 0.24rem);
+  border-bottom: 0.38rem solid var(--fx-ln);
+  border-left: 0.24rem solid transparent;
+  border-right: 0.24rem solid transparent;
+}
+.md-typeset .fx-loop.is-now { color: var(--fx-accent); font-weight: 600; }
+
+/* phases side by side (--cols: their widths), each a column of steps under a heading; an arrow
+   leads from one phase to the next */
+.md-typeset .fx-phases {
+  --pg: 1.6rem;
+  display: grid;
+  grid-template-columns: var(--cols, repeat(3, minmax(0, 1fr)));
+  gap: 1.2rem var(--pg);
+}
+.md-typeset .fx-phase {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.45rem 0.55rem 0.6rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.55rem;
+}
+.md-typeset .fx-phase > .fx-label { text-align: center; }
+.md-typeset .fx-phase > .fx-seq { flex: 1; align-content: center; }
+.md-typeset .fx-phase + .fx-phase::before,
+.md-typeset .fx-phase + .fx-phase::after { content: ""; position: absolute; pointer-events: none; }
+.md-typeset .fx-phase + .fx-phase::before {
+  top: 50%;
+  right: 100%;
+  width: var(--pg);
+  margin: -0.75px 1px 0 0;
+  border-top: 1.5px solid var(--fx-wire);
+}
+.md-typeset .fx-phase + .fx-phase::after {
+  top: 50%;
+  right: 100%;
+  margin: -0.24rem 1px 0 0;
+  border-left: 0.38rem solid var(--fx-wire);
+  border-top: 0.24rem solid transparent;
+  border-bottom: 0.24rem solid transparent;
+}
+
+/* one node splits into --n paths: a stem down from the node above (over the middle, or over
+   the last leg with .is-end), a bar, then one leg per path with its condition on the line and
+   an arrow into its node. Narrow screens stack the legs off a rail, except .is-pair. */
+.md-typeset .fx-fork {
+  --g: 1.4rem;
+  --fx-edge: calc((100% - (var(--n, 2) - 1) * var(--g)) / (2 * var(--n, 2)));
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr));
+  column-gap: var(--g);
+  align-items: stretch;
+}
+.md-typeset .fx-fork.is-pair { --g: 0.6rem; }
+.md-typeset .fx-fork::before,
+.md-typeset .fx-fork::after { content: ""; position: absolute; pointer-events: none; }
+.md-typeset .fx-fork::before {
+  bottom: 100%;
+  left: 50%;
+  height: 0.8rem;
+  margin-left: -0.75px;
+  border-left: 1.5px solid var(--fx-wire);
+}
+.md-typeset .fx-fork.is-end::before { left: auto; right: var(--fx-edge); margin: 0 -0.75px 0 0; }
+.md-typeset .fx-fork::after {
+  top: 0;
+  left: var(--fx-edge);
+  right: var(--fx-edge);
+  margin: -0.75px -0.75px 0;
+  border-top: 1.5px solid var(--fx-wire);
+}
+/* each leg spans two rows shared by all legs: the conditions, then the nodes, so the nodes
+   line up and come out the same height */
+.md-typeset .fx-leg {
+  position: relative;
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  min-width: 0;
+}
+.md-typeset .fx-when {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.6rem;
+  line-height: 1.25;
+  text-align: center;
+}
+.md-typeset .fx-when::before,
+.md-typeset .fx-when::after { content: ""; width: 0; border-left: 1.5px solid var(--fx-ln); }
+.md-typeset .fx-when::before { flex: none; height: 0.35rem; margin-bottom: 0.15rem; }
+.md-typeset .fx-when::after { flex: 1 0 0.45rem; margin: 0.15rem 0 0.38rem; }
+.md-typeset .fx-leg > :last-child { position: relative; }
+.md-typeset .fx-leg > :last-child::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -0.24rem;
+  border-top: 0.38rem solid var(--fx-ln);
+  border-left: 0.24rem solid transparent;
+  border-right: 0.24rem solid transparent;
+}
+.md-typeset .fx-leg.is-now > .fx-when { color: var(--fx-accent); font-weight: 600; }
+.md-typeset .fx-leg > .fx-node { min-height: 2.2rem; }
+.md-typeset .fx-leg > .fx-step { padding: 0.3rem 0.3rem; font-size: 0.62rem; }
+
+/* a decision flow: the main path runs down the first column; the other answer of a decision
+   leaves along a labelled arrow (.fx-hl) to a node in the third column. .fx-vl: an arrow down. */
+.md-typeset .fx-dflow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(3.4rem, 0.45fr) minmax(0, 1fr);
+  align-items: center;
+}
+.md-typeset .fx-dflow > * { grid-column: 1; min-width: 0; }
+.md-typeset .fx-dflow > .fx-hl { grid-column: 2; align-self: stretch; }
+.md-typeset .fx-dflow > .fx-hl + * { grid-column: 3; }
+.md-typeset .fx-dflow > .fx-node { width: 100%; min-height: 2.1rem; }
+.md-typeset :is(.fx-vl, .fx-hl) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.6rem;
+  line-height: 1.2;
+}
+.md-typeset :is(.fx-vl, .fx-hl)::before,
+.md-typeset :is(.fx-vl, .fx-hl)::after { content: ""; position: absolute; pointer-events: none; }
+.md-typeset .fx-vl { min-height: 1.6rem; padding-left: calc(50% + 0.45rem); }
+.md-typeset .fx-vl::before { left: 50%; top: 0; bottom: 0.3rem; margin-left: -0.75px; border-left: 1.5px solid var(--fx-ln); }
+.md-typeset .fx-vl::after {
+  left: 50%;
+  bottom: 0;
+  margin-left: -0.24rem;
+  border-top: 0.38rem solid var(--fx-ln);
+  border-left: 0.24rem solid transparent;
+  border-right: 0.24rem solid transparent;
+}
+.md-typeset .fx-hl { justify-content: center; padding: 0 0.5rem 1.7em 0.2rem; text-align: center; }
+.md-typeset .fx-hl::before { left: 0; right: 0.3rem; top: 50%; margin-top: -0.75px; border-top: 1.5px solid var(--fx-ln); }
+.md-typeset .fx-hl::after {
+  right: 0;
+  top: 50%;
+  margin-top: -0.24rem;
+  border-left: 0.38rem solid var(--fx-ln);
+  border-top: 0.24rem solid transparent;
+  border-bottom: 0.24rem solid transparent;
+}
+.md-typeset :is(.fx-vl, .fx-hl).is-now { color: var(--fx-accent); font-weight: 600; }
+.md-typeset .fx-dflow .fx-node > .fx-swap { align-self: stretch; margin-top: 0.35rem; }
+.md-typeset .fx-dflow .fx-split { width: 100%; }
 
 /* a bar split into parts (--a, --b as fractions of the whole) */
 .md-typeset .fx-split {
@@ -633,18 +879,132 @@
   .md-typeset .fx-chain:not(.is-tight) > .fx-arrow { flex-direction: row-reverse; gap: 0.35rem; margin-left: 0.8rem; min-width: 0; }
   .md-typeset .fx-chain:not(.is-tight) > .fx-arrow::after { content: "\2193"; }
   .md-typeset .fx-chain:not(.is-tight) > .fx-arrow::before { animation-name: fx-drop; left: auto; right: 0.25rem; bottom: auto; top: 0; }
-  .md-typeset .fx-chain + .fx-branch { margin-left: 0.8rem; }
-  .md-typeset .fx-branch > .fx-chain > .fx-arrow:first-child { margin-left: 0; }
-  .md-typeset .fx-spine { grid-template-columns: minmax(0, 1fr); }
-  .md-typeset .fx-spine > .fx-side { margin: 0 0 0.2rem 0.8rem; }
-  .md-typeset .fx-foot { flex-direction: column; }
-  .md-typeset .fx-ctl { max-width: none; }
   .md-typeset .fx-steps { grid-template-columns: minmax(0, 1fr); gap: 0.3rem; }
   .md-typeset .fx-step { min-height: 0; }
   .md-typeset .fx-cell { font-size: 0.52rem; }
+  .md-typeset .fx-lrow { grid-template-columns: 4.4rem minmax(0, 1fr); column-gap: 0.4rem; }
+  /* aligned chains stay on their grid (--cols-narrow), or wrap like a plain chain (--narrow: flex) */
+  .md-typeset .fx-chain.is-grid {
+    display: var(--narrow, grid);
+    grid-template-columns: var(--cols-narrow, minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(1.8rem, auto));
+  }
+  .md-typeset .fx-chain.is-grid .fx-node { padding: 0.25rem 0.35rem; }
+  .md-typeset .fx-chain.is-grid > .fx-cells { grid-column: 1 / -1; margin-bottom: 0.15rem; }
   .md-typeset .fx-span, .md-typeset .fx-band { font-size: 0.54rem; }
   .md-typeset .fx-verdict { flex-basis: 100%; }
   .md-typeset .fx-chain:not(.is-tight) > .fx-step { flex: none; width: 100%; }
+
+  /* a sequence turns into a column */
+  .md-typeset .fx-seq:not(.is-col) { grid-template-columns: minmax(0, 1fr); gap: 0.8rem 0; }
+  .md-typeset .fx-seq:not(.is-col) > :not(.fx-fork, .fx-loop) + :not(.fx-fork, .fx-loop)::before {
+    top: auto;
+    right: auto;
+    left: 50%;
+    bottom: 100%;
+    width: 0;
+    height: 0.8rem;
+    margin: 0 0 0 -0.75px;
+    border-top: 0;
+    border-left: 1.5px solid var(--fx-ln);
+  }
+  .md-typeset .fx-seq:not(.is-col) > :not(.fx-fork, .fx-loop) + :not(.fx-fork, .fx-loop)::after {
+    top: auto;
+    right: auto;
+    left: 50%;
+    bottom: 100%;
+    margin: 0 0 0 -0.24rem;
+    border-top: 0.38rem solid var(--fx-ln);
+    border-left: 0.24rem solid transparent;
+    border-right: 0.24rem solid transparent;
+    border-bottom: 0;
+  }
+  /* the path back becomes a line of text */
+  .md-typeset .fx-seq .fx-loop { grid-column: 1 / -1 !important; margin: -0.3rem 0 0; padding: 0; text-align: left; }
+  .md-typeset .fx-seq .fx-loop::before { content: "\21BA\00a0"; position: static; border: 0; }
+  .md-typeset .fx-seq .fx-loop::after { display: none; }
+
+  /* the legs of a fork stack off a rail on the left */
+  .md-typeset .fx-seq > .fx-root { justify-self: start; }
+  .md-typeset .fx-fork:not(.is-pair) {
+    --bx: 1.1rem;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.5rem;
+    padding-left: calc(var(--bx) + 0.9rem);
+  }
+  .md-typeset .fx-fork:not(.is-pair)::before { left: var(--bx); right: auto; margin: 0 0 0 -0.75px; }
+  .md-typeset .fx-fork:not(.is-pair)::after { display: none; }
+  .md-typeset .fx-fork:not(.is-pair) > .fx-leg::before,
+  .md-typeset .fx-fork:not(.is-pair) > .fx-leg:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: calc(-0.9rem - 0.75px);
+    border-left: 1.5px solid var(--fx-ln);
+  }
+  .md-typeset .fx-fork:not(.is-pair) > .fx-leg:not(:last-child)::after { top: 0; bottom: -0.5rem; border-color: var(--fx-wire); }
+  .md-typeset .fx-fork:not(.is-pair) > .fx-leg:not(:last-child)::before {
+    top: calc(0.375rem - 0.75px);
+    left: calc(-0.9rem + 0.75px);
+    width: calc(0.75rem - 0.75px);
+    border-left: 0;
+    border-top: 1.5px solid var(--fx-ln);
+  }
+  .md-typeset .fx-fork:not(.is-pair) > .fx-leg:last-child::before {
+    top: 0;
+    width: 0.75rem;
+    height: calc(0.375rem + 0.75px);
+    border-bottom: 1.5px solid var(--fx-ln);
+    border-bottom-left-radius: 0.3rem;
+  }
+  .md-typeset .fx-fork:not(.is-pair) > .fx-leg { display: flex; flex-direction: column; grid-row: auto; }
+  .md-typeset .fx-fork:not(.is-pair) .fx-when { display: block; text-align: left; }
+  .md-typeset .fx-fork:not(.is-pair) .fx-when::before,
+  .md-typeset .fx-fork:not(.is-pair) .fx-when::after,
+  .md-typeset .fx-fork:not(.is-pair) .fx-leg > :last-child::before { display: none; }
+  .md-typeset .fx-fork:not(.is-pair) .fx-leg > :last-child { margin-top: 0.25rem; }
+  .md-typeset .fx-fork:not(.is-pair) .fx-leg > .fx-node { min-height: 0; align-items: flex-start; text-align: left; }
+
+  /* a decision flow keeps its main path on a rail at the left; the other answer of a
+     decision branches off it to a node on the next line */
+  .md-typeset .fx-dflow { --rx: 1.3rem; grid-template-columns: 2.9rem minmax(0, 1fr); }
+  .md-typeset .fx-dflow > * { grid-column: 1 / -1; }
+  .md-typeset .fx-dflow > .fx-hl {
+    grid-column: 1;
+    justify-content: flex-start;
+    padding: 0 0.45rem 1.7em calc(var(--rx) + 0.25rem);
+    background: linear-gradient(var(--fx-wire), var(--fx-wire)) no-repeat calc(var(--rx) - 0.75px) 0 / 1.5px 100%;
+  }
+  .md-typeset .fx-dflow > .fx-hl::before { left: var(--rx); }
+  .md-typeset .fx-dflow > .fx-hl + * { grid-column: 2; margin: 0.4rem 0; }
+  .md-typeset .fx-dflow > .fx-vl { padding-left: calc(var(--rx) + 0.45rem); }
+  .md-typeset .fx-dflow > .fx-vl::before,
+  .md-typeset .fx-dflow > .fx-vl::after { left: var(--rx); }
+}
+
+/* phases stack, one under the other, below 30rem */
+@container fx (max-width: 30rem) {
+  .md-typeset .fx-phases { grid-template-columns: minmax(0, 1fr); }
+  .md-typeset .fx-phase + .fx-phase::before {
+    top: auto;
+    right: auto;
+    left: 50%;
+    bottom: 100%;
+    width: 0;
+    height: 1.2rem;
+    margin: 0 0 1px -0.75px;
+    border-top: 0;
+    border-left: 1.5px solid var(--fx-wire);
+  }
+  .md-typeset .fx-phase + .fx-phase::after {
+    top: auto;
+    right: auto;
+    left: 50%;
+    bottom: 100%;
+    margin: 0 0 1px -0.24rem;
+    border-top: 0.38rem solid var(--fx-wire);
+    border-left: 0.24rem solid transparent;
+    border-right: 0.24rem solid transparent;
+    border-bottom: 0;
+  }
 }
 
 /* ============================== reduced motion ============================== */

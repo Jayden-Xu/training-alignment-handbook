@@ -35,15 +35,14 @@ form of the batch-invariance principle, shown for one GEMM in
 
 <figure class="fx" data-fig="tp-tree" aria-label="One fixed reduction tree at TP 1, 2 and 4">
 <div class="fx-stage">
-<div class="fx-head"><span class="fx-label">K in C = 4 chunks; tensor-parallel degree</span><span class="fx-swap"><span class="fx-chip" data-to="3">TP 1</span><span class="fx-chip is-key" data-at="3" data-to="5">TP 2</span><span class="fx-chip is-key" data-at="5">TP 4</span></span></div>
 <div class="fx-tree" style="--n:4">
-<div class="fx-swap is-block"><div class="fx-level" data-to="3"><span class="fx-band" data-c="0" style="--w:4">rank 0</span></div><div class="fx-level" data-at="3" data-to="5"><span class="fx-band" data-c="0" style="--w:2">rank 0</span><span class="fx-band" data-c="1" style="--w:2">rank 1</span></div><div class="fx-level" data-at="5"><span class="fx-band" data-c="0" style="--w:1">rank 0</span><span class="fx-band" data-c="1" style="--w:1">rank 1</span><span class="fx-band" data-c="2" style="--w:1">rank 2</span><span class="fx-band" data-c="3" style="--w:1">rank 3</span></div></div>
-<div class="fx-level"><span class="fx-cell">c0</span><span class="fx-cell">c1</span><span class="fx-cell">c2</span><span class="fx-cell">c3</span></div>
-<div class="fx-level" data-at="1" data-hot="3 5"><span class="fx-j" style="--w:2"><span class="fx-node is-mono">c0 + c1</span></span><span class="fx-j" style="--w:2"><span class="fx-node is-mono">c2 + c3</span></span></div>
-<div class="fx-level" data-at="2" data-hot="4 6"><span class="fx-j" style="--w:4"><span class="fx-node is-mono">same tree, fp32</span></span></div>
-<div class="fx-level" data-at="2" data-hot="4 6"><span class="fx-j" style="--w:4;--k:1"><span class="fx-node is-key">one cast to bf16: y</span></span></div>
+<div class="fx-lrow"><span class="fx-label">TP degree</span><div class="fx-chain is-tight"><span class="fx-chip" data-hot="0-2 6">TP 1<span class="fx-pass" data-at="2">&nbsp;→ y</span></span><span class="fx-chip" data-hot="3 4 6">TP 2<span class="fx-pass" data-at="4">&nbsp;→ y</span></span><span class="fx-chip" data-hot="5 6">TP 4<span class="fx-pass" data-at="6">&nbsp;→ y</span></span></div></div>
+<div class="fx-lrow"><span class="fx-label">ranks</span><div class="fx-swap is-block"><div class="fx-level" data-to="3"><span class="fx-band" data-c="0" style="--w:4">rank 0</span></div><div class="fx-level" data-at="3" data-to="5"><span class="fx-band" data-c="0" style="--w:2">rank 0</span><span class="fx-band" data-c="1" style="--w:2">rank 1</span></div><div class="fx-level" data-at="5"><span class="fx-band" data-c="0">rank 0</span><span class="fx-band" data-c="1">rank 1</span><span class="fx-band" data-c="2">rank 2</span><span class="fx-band" data-c="3">rank 3</span></div></div></div>
+<div class="fx-lrow"><span class="fx-label">K in 4 chunks</span><div class="fx-level fx-sweep" data-hot="0 5"><span class="fx-cell">c0</span><span class="fx-cell">c1</span><span class="fx-cell">c2</span><span class="fx-cell">c3</span></div></div>
+<div class="fx-lrow"><span class="fx-label">fixed tree, fp32</span><div class="fx-level" data-at="1"><span class="fx-j" style="--w:2" data-hot="1 3 5"><span class="fx-node is-mono">c0 + c1</span></span><span class="fx-j" style="--w:2" data-hot="1 3 5"><span class="fx-node is-mono">c2 + c3</span></span></div></div>
+<div class="fx-lrow"><span></span><div class="fx-level" data-at="2"><span class="fx-j" style="--w:4" data-hot="2 4 5"><span class="fx-node is-mono">(c0 + c1) + (c2 + c3)</span></span></div></div>
+<div class="fx-lrow"><span class="fx-label">one rounding</span><div class="fx-level" data-at="2"><span class="fx-j" style="--w:4;--k:1" data-hot="2 4 6"><span class="fx-node is-key">bf16: y</span></span></div></div>
 </div>
-<div class="fx-chain is-tight"><span class="fx-label">result</span><span class="fx-chip is-ok" data-at="2">TP 1: y</span><span class="fx-chip is-ok" data-at="4">TP 2: y</span><span class="fx-chip is-ok" data-at="6">TP 4: y</span></div>
 </div>
 <ol class="fx-say">
 <li>K is cut into C = 4 chunks, whatever the degree. TP 1: one GPU holds all four.</li>
@@ -52,12 +51,13 @@ form of the batch-invariance principle, shown for one GEMM in
 <li data-hold="1.5">TP 2: each rank sums its aligned subtree, in fp32.</li>
 <li data-hold="1.5">The ranks exchange subtrees, finish the same tree and round once: y again.</li>
 <li data-hold="1.5">TP 4: one chunk per rank. The ranks exchange chunks and add them in the same tree.</li>
-<li data-hold="2">Same tree, one rounding: TP 1, TP 2 and TP 4 give the same bits.</li>
+<li data-hold="2">Same chunks, same tree, one rounding: TP 1, TP 2 and TP 4 give the same bits.</li>
 </ol>
-<figcaption>Figure: each rank sums an aligned subtree; the ranks finish the same tree and round once, so TP 1 and TP 2 give the same bits.</figcaption>
+<figcaption>Figure: the chunks and the tree are the same at every degree; only the split across ranks changes. Each rank sums an aligned subtree and the result is rounded once, so TP 1, TP 2 and TP 4 give the same bits.</figcaption>
 </figure>
 
 Three more places sum across ranks and need the same treatment:
+
 - the vocab-parallel log_softmax, whose sum of exponentials is split by
   vocabulary shard;
 - the backward of a column-parallel layer, whose input gradient sums over

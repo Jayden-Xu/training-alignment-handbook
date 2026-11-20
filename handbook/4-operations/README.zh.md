@@ -10,8 +10,8 @@
 
 <figure class="fx" data-fig="ops-loop" aria-label="软件栈变化时重新检查结果" markdown>
 <div class="fx-stage" markdown>
-<div class="fx-chain" markdown="span"><span class="fx-node" data-hot="0">软件栈变化</span><span class="fx-arrow" data-hot="1" aria-hidden="true"></span><span class="fx-node" data-hot="1">[运行回归套件](regression.md)</span><span class="fx-arrow" data-hot="2" aria-hidden="true"></span><span class="fx-node is-decision" data-hot="2">与这个软件栈的基线比较</span></div>
-<div class="fx-branch" markdown="span"><span class="fx-chain"><span class="fx-arrow" data-hot="3">某条结论不再成立</span><span class="fx-node to-bad" data-hot="3">发现：报告并修复</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="4">某个原生结果变了</span><span class="fx-node to-key" data-hot="4">更新主题页，记录基线</span></span><span class="fx-chain"><span class="fx-arrow" data-hot="5">与基线相同</span><span class="fx-node to-ok" data-hot="5">完成</span></span></div>
+<div class="fx-seq" style="--n:3" markdown="span"><span class="fx-node" data-hot="0">软件栈变化</span><span class="fx-node" data-hot="1">[运行回归套件](regression.md)</span><span class="fx-node is-decision" data-hot="2">与这个软件栈的基线比较</span></div>
+<div class="fx-fork is-end" style="--n:3" markdown="span"><span class="fx-leg" data-hot="3"><span class="fx-when">某条结论不再成立</span><span class="fx-node to-bad" data-hot="3">发现：报告并修复</span></span><span class="fx-leg" data-hot="4"><span class="fx-when">某个原生结果变了</span><span class="fx-node to-key" data-hot="4">更新主题页，记录基线</span></span><span class="fx-leg" data-hot="5"><span class="fx-when">与基线相同</span><span class="fx-node to-ok" data-hot="5">完成</span></span></div>
 </div>
 <ol class="fx-say">
 <li>软件栈变了：库升级、驱动更新、新的 GPU。</li>

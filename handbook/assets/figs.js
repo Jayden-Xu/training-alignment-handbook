@@ -67,7 +67,7 @@
       Array.prototype.forEach.call(sw.children, function (c, i) { c.style.setProperty("--i", i); });
     });
 
-    // controls: a pause button and one button per frame, next to the description
+    // controls: a pause button and one button per frame, on a line above the description
     var bar = document.createElement("div");
     bar.className = "fx-foot";
     var ctl = document.createElement("div");
