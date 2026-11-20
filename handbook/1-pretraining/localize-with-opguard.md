@@ -14,6 +14,84 @@ points to: [the training step](training-step.md),
 [the gradient collectives](data-parallel.md),
 [compiled code](capture-compiled-code.md) and [the hardware](sdc.md).
 
+## Why this workflow uses OpGuard {#why-opguard}
+
+There are cheaper-looking ways to compare two runs: plot their loss curves,
+or dump some tensors and diff them under a tolerance. A loss curve mixes
+millions of operations into one number, so it tells you that the runs differ
+but not where. A tolerance has the opposite problem: it is wide enough to
+hide the few wrong elements a real bug leaves behind. OpGuard was built to
+avoid both, and that is why this part of the handbook is organized around it.
+
+- **It compares exact bits, so a mismatch means something.** It first
+  removes the nondeterminism that can be avoided, then demands that every
+  recorded tensor agree bit for bit. In its authors' evaluation on real
+  production bugs, swapping this for a tolerance found far fewer of the bugs
+  exactly.
+- **It is light enough to run on the real job.** Dumping every tensor would
+  slow a training job by orders of magnitude, so OpGuard keeps only a small
+  fingerprint of each tensor. The job keeps its optimizations on, and nobody
+  rewrites the model code by hand to instrument it.
+- **It compares runs that do not share code.** It records at model-level
+  operators (a norm, an attention, a projection), which any faithful
+  implementation of the model computes. The reference can therefore be an
+  older commit, another framework, other kernels or other hardware, and the
+  suspect run does not have to be deterministic.
+- **It hands you one fact instead of a log.** It reports the first
+  difference after a stretch it has checked to be identical. You, or your
+  agent, read one event rather than thousands of lines, and its agent harness
+  serves these facts through tools and leaves the judgment to skills.
+- **It is made for large multi-node jobs, and it has run on them.** It
+  captures every rank, orders the records without adding clock
+  synchronization or barriers to the job, and writes through node-local disks
+  that sync to shared storage in the background (next section). Its authors
+  report using it in production LLM training on large GPU clusters, where it
+  found the root cause of more than twenty issues, kernel races and silent
+  data corruption among them, and cut investigations from days to minutes
+  ([OSDI '26 paper](https://www.usenix.org/conference/osdi26/presentation/zhou-ziming)).
+
+### Large jobs: stage traces on local disks and sync them periodically {#periodic-sync}
+
+A large job runs thousands of ranks. If each of them wrote its trace files
+straight to shared storage, the storage would get a flood of small writes at
+the same moment, and the job would wait on it. OpGuard's local staging avoids
+this. Each rank writes to a disk on its own node at local speed, and one
+uploader per node packs whatever is new into one file, a bundle, and copies
+it to shared storage at a fixed interval.
+
+<figure class="fx" data-fig="periodic-sync" aria-label="Traces staged on node-local disks and synced to shared storage at intervals">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">without staging</span><div class="fx-chain is-tight"><span class="fx-node is-bad" data-hot="0">every rank<span class="fx-note">many small files</span></span><span class="fx-arrow" data-hot="0">all at once</span><span class="fx-node is-bad" data-hot="0">shared storage<span class="fx-note">the job waits on it</span></span></div></div>
+<div class="fx-row" data-at="1"><span class="fx-label">during the job</span><div class="fx-chain is-tight"><div class="fx-stack"><span class="fx-node to-key" data-hot="1 2">node 0's local disk<span class="fx-note">its ranks write here</span></span><span class="fx-node to-key" data-hot="1 3">node 1's local disk<span class="fx-note">its ranks write here</span></span></div><span class="fx-arrow" data-at="2" data-hot="3"><span class="fx-swap"><span data-to="3">node 0's bundle</span><span data-at="3">node 1's, a little later</span></span></span><span class="fx-node to-ok" data-hot="2 3">shared storage<span class="fx-note">one bundle at a time, capped</span></span></div></div>
+<div class="fx-row" data-at="4"><span class="fx-label">after the job</span><div class="fx-chain is-tight"><span class="fx-node" data-hot="4">final sync<span class="fx-note">uploads the rest</span></span><span class="fx-arrow" data-at="5"></span><span class="fx-node to-ok" data-hot="5">comparison<span class="fx-note">restores the bundles locally</span></span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li data-hold="1.5">Without staging, every rank writes its small trace files straight to shared storage, all at the same time.</li>
+<li>With staging, each rank writes to a disk on its own node, at local speed.</li>
+<li data-hold="1.5">At each interval, node 0's uploader packs what is new into one bundle and publishes it to shared storage, under a bandwidth cap.</li>
+<li data-hold="1.5">Node 1 does the same a little later: the intervals are slightly randomized, so the nodes do not upload together.</li>
+<li>When the job exits, a final sync uploads whatever is left.</li>
+<li data-hold="2">To compare two runs, OpGuard restores the bundles to a local directory and checks them first.</li>
+</ol>
+<figcaption>Figure: ranks write to their node's local disk; each node uploads one bundle per interval, at staggered times and under a bandwidth cap; a final sync at exit uploads the rest.</figcaption>
+</figure>
+
+Two properties make this safe to leave on for a whole run. A bundle appears
+on shared storage all at once or not at all, and a failed upload is kept and
+retried, so nobody ever reads half a bundle. Each node also uploads under its
+own bandwidth cap, so the sync never takes more of the network than you allow.
+
+Turning it on takes a few settings in the job's launch script: a directory on
+each node's local disk, the shared directory to sync to, the interval and the
+bandwidth cap per node. The one real choice is the interval: a shorter one
+loses less if a node dies, but uploads more often. The settings and their
+defaults are in OpGuard's [capture guide](https://github.com/ziming-zh/OpGuard/blob/main/docs/Capture.md).
+
+Not yet shown in this handbook: its own examples ran on at most two nodes and
+wrote their traces directly, so local staging was not exercised here.
+
 ## The idea: the first difference tells you where to start, not what the cause is
 
 OpGuard records a fingerprint at every model-level boundary in both runs,
@@ -79,7 +157,8 @@ capture.
 [opguard_bridge.py](../../tools/opguard_bridge.py) runs both sides through
 OpGuard's harness, which discovers the boundaries, plans the
 instrumentation, captures and compares. Discovery and capture each launch both
-sides once. If the production job runs `torch.compile` or CUDA graphs, this
+sides once. On a multi-node job, turn on [local staging](#periodic-sync)
+before you capture. If the production job runs `torch.compile` or CUDA graphs, this
 capture runs it in eager mode instead, and it may not show the bits that
 production computes; see
 [When the job runs compiled code](capture-compiled-code.md).

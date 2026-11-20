@@ -4,6 +4,45 @@
 
 这一页是[预训练流程](README.md)的核心循环，涵盖第 3、4、6、7 步：采集两次运行，找到首个分歧点，修复原因，再确认修复有效。你手上有一次参考运行和一次 suspect 运行，它们只在声明过的那一点上不同（[预检](determinism-and-preflight.md)），读到的 batch 也完全相同（[数据对齐](data-alignment.md)）。现在还不知道的是：两次运行从哪里开始分开，以及为什么。判断原因属于哪一类（第 5 步）放在[流程总览页](README.md#step-5-classify)里讲；这一页后面的几页，分别讲首个分歧点最常指向的几类原因：[训练 step](training-step.md)、[梯度的集合通信](data-parallel.md)、[torch.compile 与 CUDA graph](capture-compiled-code.md) 和[硬件](sdc.md)。
 
+## 为什么这条流程用 OpGuard {#why-opguard}
+
+比较两次运行，有看起来更省事的办法：画出两条 loss 曲线，或者 dump 一些张量，在容差范围内比一比。loss 曲线把上百万次运算压成一个数，只能告诉你两次运行不一样，说不出是在哪里不一样。容差的问题正好相反：它宽到足以盖住真实 bug 留下的那几个错误元素。OpGuard 就是为了避开这两种情况而设计的，这也是本部分围绕它来组织的原因。
+
+- **它比较的是精确的 bit，所以一旦不一致，就说明真有问题。** 它先去掉能够避免的不确定性，再要求每个记录下来的张量逐 bit 一致。作者在真实的生产 bug 上做过评估：把逐 bit 比较换成容差以后，能精确定位的 bug 少了很多。
+- **它足够轻，可以直接跑在真实的训练任务上。** 把每个张量都 dump 下来，会让训练任务慢上几个数量级，所以 OpGuard 只给每个张量记一个很小的 fingerprint。训练任务的各项优化照常开着，也不用有人手工改模型代码来插桩。
+- **代码不同的两次运行也能比。** 它在模型级的算子上记录（norm、attention、投影），只要忠实地实现了这个模型，任何代码都会算这些算子。所以参考运行可以是旧的 commit、另一个框架、另一套 kernel 或另一种硬件，suspect 运行本身也不需要是确定性的。
+- **它交给你的是一条事实，而不是一份日志。** 它先确认前面一段完全相同，再报告这之后的第一个差异。你或你的 agent 只需要读一个事件，而不是几千行日志；它的 agent harness 通过工具提供这些事实，判断则留给 skill。
+- **它是为多节点的大规模训练任务做的，也确实在上面用过。** 它采集每一个 rank，给记录排序时不往训练任务里加时钟同步或 barrier，而且先写到节点本地的磁盘，再在后台同步到共享存储（见下一节）。据作者报告，它已经用在大规模 GPU 集群上的生产 LLM 训练中，找到了二十多个问题的根因，其中有 kernel 里的竞态，也有静默数据损坏（SDC），把排查时间从几天缩短到了几分钟（[OSDI '26 论文](https://www.usenix.org/conference/osdi26/presentation/zhou-ziming)）。
+
+### 大规模训练任务：先写本地磁盘，再定期同步 {#periodic-sync}
+
+一个大规模训练任务有几千个 rank。如果每个 rank 都把自己的 trace 文件直接写到共享存储上，共享存储会在同一时刻收到大量的小文件写入，训练任务也只能等着它。OpGuard 的本地暂存（local staging）就是为了避免这种情况：每个 rank 以本地磁盘的速度写到自己所在的节点上，每个节点再由一个上传进程按固定间隔，把新增的数据打成一个包（bundle），拷到共享存储上。
+
+<figure class="fx" data-fig="periodic-sync" aria-label="trace 先写到节点本地磁盘，再定期同步到共享存储">
+<div class="fx-stage">
+<div class="fx-rows">
+<div class="fx-row"><span class="fx-label">不做暂存</span><div class="fx-chain is-tight"><span class="fx-node is-bad" data-hot="0">每个 rank<span class="fx-note">大量小文件</span></span><span class="fx-arrow" data-hot="0">同时写</span><span class="fx-node is-bad" data-hot="0">共享存储<span class="fx-note">训练任务要等它</span></span></div></div>
+<div class="fx-row" data-at="1"><span class="fx-label">训练过程中</span><div class="fx-chain is-tight"><div class="fx-stack"><span class="fx-node to-key" data-hot="1 2">节点 0 的本地磁盘<span class="fx-note">本节点的 rank 写在这里</span></span><span class="fx-node to-key" data-hot="1 3">节点 1 的本地磁盘<span class="fx-note">本节点的 rank 写在这里</span></span></div><span class="fx-arrow" data-at="2" data-hot="3"><span class="fx-swap"><span data-to="3">节点 0 的包</span><span data-at="3">节点 1 的包，稍晚一点</span></span></span><span class="fx-node to-ok" data-hot="2 3">共享存储<span class="fx-note">每次一个包，限速</span></span></div></div>
+<div class="fx-row" data-at="4"><span class="fx-label">训练结束后</span><div class="fx-chain is-tight"><span class="fx-node" data-hot="4">最后一次同步<span class="fx-note">传完剩下的数据</span></span><span class="fx-arrow" data-at="5"></span><span class="fx-node to-ok" data-hot="5">比较<span class="fx-note">先把包恢复到本地</span></span></div></div>
+</div>
+</div>
+<ol class="fx-say">
+<li data-hold="1.5">不做暂存时，每个 rank 都把自己的小 trace 文件直接写到共享存储，而且是同时写。</li>
+<li>做了暂存，每个 rank 以本地速度写到自己节点的磁盘上。</li>
+<li data-hold="1.5">每到一个间隔，节点 0 的上传进程把新增的数据打成一个包，在限速下发布到共享存储。</li>
+<li data-hold="1.5">节点 1 稍晚一点做同样的事：间隔带一点随机，各个节点不会同时上传。</li>
+<li>训练任务退出时，最后一次同步把剩下的数据传上去。</li>
+<li data-hold="2">比较两次运行之前，OpGuard 先把这些包恢复到本地目录，并做校验。</li>
+</ol>
+<figcaption>图：rank 写到所在节点的本地磁盘；每个节点每个间隔上传一个包，各节点错开时间、各自限速；训练任务退出时，最后一次同步把剩下的传完。</figcaption>
+</figure>
+
+有两点让它可以在整个训练过程中一直开着。一个包在共享存储上要么完整出现，要么根本不出现，上传失败的包会留下来重试，所以谁也不会读到半个包。每个节点的上传也各有带宽上限，同步占用的网络不会超过你允许的量。
+
+打开它只需要在训练任务的启动脚本里设几项：每个节点本地磁盘上的目录、要同步到的共享目录、同步间隔，以及每个节点的带宽上限。真正需要权衡的只有间隔：间隔越短，节点挂掉时丢的数据越少，但上传也越频繁。具体的设置项和默认值见 OpGuard 的[采集说明](https://github.com/ziming-zh/OpGuard/blob/main/docs/Capture.md)。
+
+本 handbook 尚未证明：它自己的例子最多只跑了两个节点，trace 是直接写的，所以这里没有实际用过本地暂存。
+
 ## 思路：第一个差异只告诉你从哪里查起，不等于原因
 
 OpGuard 在两次运行的每个模型级边界上记录 fingerprint，把两份 trace 配对，然后报告第一对不相等的事件。这一对事件叫 **pivot**。
@@ -47,7 +86,7 @@ OpGuard 在两次运行的每个模型级边界上记录 fingerprint，把两份
 
 **目标：** 两次运行在每个计划好的边界上都有 fingerprint。
 
-**做法：** 调用 [opguard_bridge.py](../../tools/opguard_bridge.py) 里的 `opguard_bridge.run_pair(reference, suspect, ...)`，让两次运行都经过 OpGuard 的 harness：发现边界，规划插桩，采集，然后比较。发现和采集两个阶段，各自会把两次运行都启动一遍。如果生产环境的训练任务用了 `torch.compile` 或 CUDA graph，这次采集会改用 eager 模式运行它，于是可能看不到生产环境实际算出的结果，见[用了 torch.compile 或 CUDA graph 时怎样采集](capture-compiled-code.md)。
+**做法：** 调用 [opguard_bridge.py](../../tools/opguard_bridge.py) 里的 `opguard_bridge.run_pair(reference, suspect, ...)`，让两次运行都经过 OpGuard 的 harness：发现边界，规划插桩，采集，然后比较。发现和采集两个阶段，各自会把两次运行都启动一遍。在多节点的训练任务上，采集之前先打开[本地暂存](#periodic-sync)。如果生产环境的训练任务用了 `torch.compile` 或 CUDA graph，这次采集会改用 eager 模式运行它，于是可能看不到生产环境实际算出的结果，见[用了 torch.compile 或 CUDA graph 时怎样采集](capture-compiled-code.md)。
 
 **成功标准：** 两份 trace 都已生成，摘要里统计了相等和不相等的事件各有多少。
 
