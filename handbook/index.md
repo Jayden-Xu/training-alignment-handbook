@@ -145,7 +145,8 @@ The same method also works for other pairs of runs. See the
   [batch-invariant-kernel](../skills/batch-invariant-kernel/SKILL.md) and
   [handbook-writing](../skills/handbook-writing/SKILL.md).
 - Reference pages: [Open items](open-items.md) · [References](references.md) ·
-  [Glossary](glossary.md) · [Audit](../AUDIT.md) · [Tools](../tools/)
+  [Glossary](glossary.md) · [Audit](../AUDIT.md) · [Tools](../tools/) ·
+  [Authors](authors.md)
 
 Every claim on a page links to the report that holds its measurements and
 names the stack it was measured on.
