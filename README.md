@@ -71,7 +71,8 @@ method for other pairs of runs.
   [Offline post-training](handbook/5-scenarios/offline-post-training.md)
 
 Reference: [Glossary](handbook/glossary.md) · [Open items](handbook/open-items.md) ·
-[References](handbook/references.md) · [Audit](AUDIT.md)
+[References](handbook/references.md) · [Audit](AUDIT.md) ·
+[Acknowledgments](handbook/acknowledgments.md)
 
 ## Use it with an agent
 
