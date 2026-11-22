@@ -58,13 +58,13 @@ LLM 训练。还没做的，是本手册自己在这些平台上的测量，包�
 
 - 在 vLLM、SGLang、verl 和 OpenRLHF 里加上写记录的 hook（`RecordWriter.forward`、`rollout_batch`、
   `rows`）。目前只有 `examples/rl_loop/rl_core.py` 里的玩具引擎写出过记录。
-- 与 vLLM 匹配的 trainer 反向：vLLM 的 Triton GEMM、RMSNorm、`log_softmax` 和它自己构建的
-  FlashAttention 在这里都没有反向，所以匹配 vLLM 的 trainer 只有前向。
-- 与编译后的 vLLM 对齐：用了 torch.compile 和 CUDA graph 的 vLLM（这是它的默认设置）还没有对齐。
+- 与编译后的 vLLM 对齐：使用 CUDA graph、关闭编译器的 rollout 已经对齐
+  （[报告](../examples/verl_fsdp2_vllm/REPORT.md)），但用 torch.compile 编译的 vLLM（这是它的
+  默认设置）还没有对齐。
   要在那里定位差异，需要在编译后的图里用 OpGuard 的逐向量 fingerprint，这还没有在任何引擎上
   演示过。
-- 超出已测案例的 vLLM L4：prefix caching、speculative decoding、带温度的采样、batch-invariant 模式
-  下的 CUDA graph、TP、MoE 和 LoRA。
+- 超出已测案例的 vLLM L4：prefix caching、speculative decoding、带温度的采样、TP、
+  带 EP 的 MoE 和 LoRA。
 - kernel 案例与 trainer 之间的 L4：MoE（combine 和 EP）、MLA 和稀疏注意力、线性注意力，以及
   注意力 kernel。
 - DeepSpeed ZeRO-1/2/3、Megatron 的 kernel 和它自定义的 all-reduce。

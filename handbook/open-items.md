@@ -85,15 +85,13 @@ engine-parity setup.
 - Record hooks (`RecordWriter.forward`, `rollout_batch`, `rows`) for vLLM,
   SGLang, verl and OpenRLHF. So far, records have only been written from the
   toy engine in `examples/rl_loop/rl_core.py`.
-- A trainer backward that matches vLLM: vLLM's Triton GEMM, RMSNorm,
-  `log_softmax` and its FlashAttention build have no backward here, so the
-  matched trainer runs the forward pass only.
-- Parity with compiled vLLM: vLLM with torch.compile and CUDA graphs (its
-  default) was not matched. Localizing a difference there needs OpGuard
-  per-vector fingerprints inside compiled graphs, which has not yet been shown
-  on any engine.
+- Parity with compiled vLLM: a rollout with CUDA graphs and the compiler off
+  has been matched ([report](../examples/verl_fsdp2_vllm/REPORT.md)), but vLLM
+  compiled by torch.compile (its default) has not. Localizing a difference
+  there needs OpGuard per-vector fingerprints inside compiled graphs, which has
+  not yet been shown on any engine.
 - vLLM at L4 beyond the tested case: prefix caching, speculative decoding,
-  temperature sampling, CUDA graphs in batch-invariant mode, TP, MoE and LoRA.
+  temperature sampling, TP, MoE with EP and LoRA.
 - L4 against a trainer for the kernel cases: MoE (combine and EP), MLA and
   sparse attention, linear attention, and the attention kernels.
 - DeepSpeed ZeRO-1/2/3, Megatron's kernels and its custom all-reduce.

@@ -91,7 +91,7 @@ actions as a workflow.
    values of the engine's kernels. You are done when every parameter gradient
    passes relative L2 ≤ 1e-3 against an independent fp32 reference; the
    [report](../../examples/verl_fsdp2_vllm/REPORT.md#gradient-check) is a
-   worked example. The engine-parity skill does not cover this step yet.
+   worked example.
 
 | Approach | What it does | Cost class | When to choose it |
 |---|---|---|---|

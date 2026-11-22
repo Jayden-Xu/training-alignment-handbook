@@ -61,7 +61,7 @@ logits 上游的每一个点都对上之后，才会有哪怕一个 logprob 相�
    前向 kernel 逐 bit 一致。小算子手写 fp32 导数；注意力和 MoE 的梯度，则用保存下来的输入在
    PyTorch 里重算得到，而前向仍然用引擎 kernel 算出的值。每个参数的梯度与一个独立的 fp32 参考
    相比，相对 L2 误差都不超过 1e-3，就完成了；[报告](../../examples/verl_fsdp2_vllm/REPORT.md#gradient-check)
-   是一个完整的例子。engine-parity skill 目前还不包含这一步。
+   是一个完整的例子。
 
 | 途径 | 做什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
