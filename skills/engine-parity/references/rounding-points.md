@@ -101,3 +101,8 @@ For a new model or engine, check each of these:
   or after.
 - The compile path: which ops a compiler fuses, and whether it keeps the
   intermediate casts.
+- Vocabulary: whether the lm_head has more columns than the tokenizer has
+  tokens, and whether the engine masks the extra columns before the
+  log_softmax.
+- The trainer's framework: whether a sharding or mixed-precision wrapper casts
+  fp32 buffers, such as the RoPE table, at module boundaries.

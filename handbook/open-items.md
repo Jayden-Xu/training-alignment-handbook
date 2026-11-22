@@ -29,13 +29,18 @@ engine-parity setup.
   All of the handbook's multi-GPU results ran over PCIe inside a node and over
   plain Ethernet sockets between two nodes.
 - Other torch, Triton, NCCL and CUDA versions for the handbook's kernels. So
-  far there is one stack, plus vLLM's own stack for the cross-engine case.
+  far there is one stack, plus vLLM's own stack for the cross-engine case and
+  the stack of the verl × FSDP2 × vLLM case
+  ([report](../examples/verl_fsdp2_vllm/REPORT.md)).
 - SGLang at L4: the engine environment here lacks CUDA libraries that SGLang
   needs.
-- Real pretrained or MoE checkpoints in an engine (L4 with TP or EP, prefix
-  caching, speculative decoding): this needs weight downloads. One real
+- Real pretrained or MoE checkpoints in an engine: a real MoE checkpoint has
+  reached L4 at TP 1 inside a full RL loop
+  ([report](../examples/verl_fsdp2_vllm/REPORT.md)). L4 with TP or EP, prefix
+  caching and speculative decoding remain open: this needs weight downloads.
+  In the [whole-model case](../examples/whole_model/REPORT.md), one real
   architecture was checked only with random weights, and only for a few of its
-  layers ([whole-model report](../examples/whole_model/REPORT.md)).
+  layers.
 - `fla` (flash-linear-attention) as a production baseline for the GDN
   kernels: it is not installed.
 

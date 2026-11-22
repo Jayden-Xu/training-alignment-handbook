@@ -20,11 +20,13 @@ LLM 训练。还没做的，是本手册自己在这些平台上的测量，包�
 - NVLink、NVSwitch 和 NVLS；RDMA、InfiniBand 和 RoCE；两个以上的节点。本手册所有多 GPU 的结果，
   节点内走的都是 PCIe，两个节点之间走的是普通以太网 socket。
 - 手册里的 kernel 在其他版本的 torch、Triton、NCCL 和 CUDA 上的表现。目前只测了一套软件栈，
-  跨引擎案例另外用了 vLLM 自带的软件栈。
+  跨引擎案例另外用了 vLLM 自带的软件栈，verl × FSDP2 × vLLM 案例也有自己的一套软件栈
+  （[报告](../examples/verl_fsdp2_vllm/REPORT.md)）。
 - L4 下的 SGLang：这里的引擎环境缺少 SGLang 需要的 CUDA 库。
-- 在引擎里使用真实的预训练 checkpoint 或 MoE checkpoint（带 TP 或 EP 的 L4、prefix caching、
-  speculative decoding）：这需要下载权重。目前只用随机权重检查过一个真实架构，而且只检查了其中几层
-  （[整模型报告](../examples/whole_model/REPORT.md)）。
+- 在引擎里使用真实的预训练 checkpoint 或 MoE checkpoint：一个真实的 MoE checkpoint 已经在完整的
+  RL 循环里、TP 1 下达到 L4（[报告](../examples/verl_fsdp2_vllm/REPORT.md)）。带 TP 或 EP 的 L4、
+  prefix caching 和 speculative decoding 还没有验证：这需要下载权重。
+  在[整模型案例](../examples/whole_model/REPORT.md)里，只用随机权重检查过一个真实架构，而且只检查了其中几层。
 - 把 `fla`（flash-linear-attention）作为 GDN kernel 的生产基线：还没有安装。
 
 ## 需要在现有机器上花 GPU 时间

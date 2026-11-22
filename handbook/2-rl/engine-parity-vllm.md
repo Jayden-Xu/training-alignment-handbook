@@ -83,10 +83,19 @@ actions as a workflow.
    compiled engine, use fingerprints at operator boundaries instead of hooks
    ([RL loop](rl-loop.md)). The result is a named operator, with evidence from
    both sides.
+6. **Give the matched forward a correct backward.** Logprobs must match bit
+   for bit, but gradients only need to be correct, so the backward does not
+   have to reproduce the bits of the forward kernels. Give small operators
+   hand-written fp32 derivatives, and recompute attention and MoE in PyTorch
+   on the saved inputs to get their gradients, while the forward keeps the
+   values of the engine's kernels. You are done when every parameter gradient
+   passes relative L2 ≤ 1e-3 against an independent fp32 reference; the
+   [report](../../examples/verl_fsdp2_vllm/REPORT.md#gradient-check) is a
+   worked example. The engine-parity skill does not cover this step yet.
 
 | Approach | What it does | Cost class | When to choose it |
 |---|---|---|---|
-| Move the trainer onto the engine's kernels | The trainer calls the engine's own GEMM, norm, attention and log_softmax | moderate (under 2x) to large on the engine side, from its invariant mode; free for the trainer's forward | The engine is fixed and the trainer is yours; the trainer also needs backward kernels that match the forward bits |
+| Move the trainer onto the engine's kernels | The trainer calls the engine's own GEMM, norm, attention and log_softmax | moderate (under 2x) to large on the engine side, from its invariant mode; free for the trainer's forward | The engine is fixed and the trainer is yours; the trainer also needs a correct backward for these kernels, which does not have to reproduce the forward's bits |
 | Move the engine onto the trainer's rounding | Unfuse and reorder the engine's operators so that its casts follow the trainer; use invariant operators on both sides | moderate (under 2x) to large on rollout throughput (reported) | The trainer is fixed and you can patch the engine |
 | One model definition for both sides | The engine keeps only cache management and shares the forward, so only the kernels remain to be aligned | large (2x or more) on trainer throughput for some architectures (reported) | You can change both frameworks |
 | An execution contract | Pin every choice that affects rounding on both sides, check it with a hash, and use parallel-invariant kernels | moderate (under 2x) (reported) | Several frameworks must stay aligned over time |
@@ -94,11 +103,18 @@ actions as a workflow.
 What has been shown: a trainer that calls the engine's own kernels matched a
 real engine's logprobs for the sampled tokens bit for bit, across batch sizes.
 This was shown on one model and one GPU type, in eager mode, for the forward
-only ([report](../../examples/cross_engine/REPORT.md#results)). Results that
-others reported for the other approaches are collected in the
+only ([report](../../examples/cross_engine/REPORT.md#results)). Inside a full
+RL loop in a real framework, a sharded trainer that calls the engine's kernels
+also matched a rollout running with CUDA graphs and the compiler off, bit for
+bit over a short synchronous run, on a real MoE checkpoint with attention sinks
+and sliding windows, with a backward that passes the gradient check on a
+shortened version of the model; this was shown on one model and one GPU type,
+in bf16, with each rollout replica on one GPU
+([report](../../examples/verl_fsdp2_vllm/REPORT.md)). Results that others
+reported for the other approaches are collected in the
 [report](../../examples/cross_engine/REPORT.md#three-ways-to-reach-parity). Not
-yet shown: a compiled engine, tensor parallelism at L4, and a training step with
-matching backward kernels.
+yet shown: an engine compiled by its compiler, tensor parallelism at L4, and
+quantized weights.
 
 ## What can go wrong
 
@@ -133,6 +149,19 @@ matching backward kernels.
     can differ only beyond a certain position. Write "not shown to matter
     here", not "irrelevant".
 
+!!! warning "A sharding wrapper can cast fp32 buffers"
+    A mixed-precision or sharding wrapper may cast an fp32 table, such as the
+    RoPE cos/sin table, to bf16 when the table crosses the boundary of a
+    sharded module. Almost every logprob then differs, although each kernel
+    is right. Pass positions across the boundary and build the table
+    inside the layer, or check the dtypes of buffers at each boundary.
+
+!!! warning "Padded vocabulary columns"
+    The lm_head can have more columns than the tokenizer has tokens, and the
+    engine may mask the extra columns before the log_softmax while the trainer
+    does not, or the reverse. Most logprobs then differ. Normalize over the
+    same columns as the engine.
+
 ## Summary
 
 - Two sides that are each invariant can still disagree; they must also round
@@ -142,6 +171,8 @@ matching backward kernels.
 - Write down both rounding sequences, align one point at a time, and track the
   first layer that differs.
 - Have the trainer call the engine's own kernels rather than rewriting them.
+- Logprobs must match bit for bit, while the backward only needs correct
+  gradients.
 
 ## Go deeper
 
@@ -149,6 +180,9 @@ matching backward kernels.
   model, the table of steps, the leave-one-out pass, the engine's variation
   against itself, which operators its invariant mode covers on which GPU, the
   cost, and results reported by other groups.
+- [Full RL loop report](../../examples/verl_fsdp2_vllm/REPORT.md): a full RL
+  loop with a sharded trainer, an MoE checkpoint, a CUDA-graph rollout and a
+  gradient check.
 - Skill: [engine-parity](../../skills/engine-parity/SKILL.md) and
   [rounding points](../../skills/engine-parity/references/rounding-points.md).
 - Code: [examples/cross_engine/](../../examples/cross_engine/).

@@ -1,0 +1,951 @@
+diff --git a/docs/advance/determinism.md b/docs/advance/determinism.md
+index c7668ff..8c1ee28 100644
+--- a/docs/advance/determinism.md
++++ b/docs/advance/determinism.md
+@@ -2,7 +2,7 @@
+ 
+ **Authors**: Haichuan Hu, Yongxiang Huang, Jiawei Zhang, Nguyen Long
+ 
+-Last updated: 11/12/2026.
++Last updated: 11/17/2026.
+ 
+ The end-to-end reproducibility workflow requires the legacy V0 trainer, which has
+ been removed from mainline. For its configuration and validation commands, use
+@@ -21,6 +21,6 @@ vary across runs.
+ 
+ It works in two places:
+ - The entrypoint (`main_ppo`) exports, when any FSDP engine config (actor, ref or critic) sets `batch_invariant`, `VLLM_BATCH_INVARIANT=1`, `CUBLAS_WORKSPACE_CONFIG=:16:8`, `CUBLASLT_WORKSPACE_SIZE=1` and vLLM's two compile switches before `ray.init()`, and forwards them to all Ray actors. cuBLAS reads its workspace config when it initializes, so it cannot be set from inside the worker. On SM90/SM100 vLLM registers no matmul override: matmul invariance comes only from this cuBLAS workspace setting and cuBLASLt selection, which is why the env must be exported this early. Because `VLLM_BATCH_INVARIANT=1` reaches every worker, the rollout also runs batch-invariant, and the rollout process applies vLLM's NCCL profile itself; that profile is not forwarded to the FSDP workers, where it would throttle the training collectives.
+-- The FSDP engine calls `init_batch_invariance()` in the worker to install the aten overrides (softmax, log_softmax, mean, bmm, and on SM80 matmul) and the TF32/cuBLASLt settings, fails if vLLM skipped the install, then reverts the environment vLLM wrote and writes the entrypoint's values back: the training communicators are created after this point, and vLLM's NCCL profile would throttle every FSDP collective and the weight sync. vLLM 0.29-0.31 also replace `torch.bmm` itself with a kernel launch that drops autograd; the engine restores it, and bmm stays batch-invariant through the aten override. The install is process-global: actor and ref share a worker, so the ref forward, the backward and the optimizer step all run on the overrides. On SM80 that routes every GEMM through Triton, which costs step time; on SM90/SM100 the overrides cover softmax, log_softmax, mean and bmm only.
++- The FSDP engine calls `init_batch_invariance()` in the worker to install the aten overrides (softmax, log_softmax, mean, bmm, and on SM80 mm/addmm) and the TF32/cuBLASLt settings, fails if vLLM skipped the install, then reverts the environment vLLM wrote and writes the entrypoint's values back: the training communicators are created after this point, and vLLM's NCCL profile would throttle every FSDP collective and the weight sync. vLLM's `aten::linear`/`aten::matmul` overrides (SM80 family) are skipped: with a backend kernel those ops are differentiated through `aten::linear_backward`/`aten::matmul_backward`, which have no CUDA kernel, so backward would fail; without them linear and matmul decompose into the overridden mm/addmm/bmm. For contiguous inputs a linear with bias becomes one addmm with the bias fused, as in vLLM's override; a non-contiguous input with bias gets a separate bias add, which can round differently from the rollout. The Triton GEMM has TF32-level accuracy for fp32 inputs, and the backward now runs on it too. vLLM 0.29-0.31 also replace `torch.bmm` itself with a kernel launch that drops autograd; the engine restores it, and bmm stays batch-invariant through the aten override. The install is process-global: actor and ref share a worker, so the ref forward, the backward and the optimizer step all run on the overrides. On SM80 that routes every GEMM through Triton, which costs step time; on SM90/SM100 the overrides cover softmax, log_softmax, mean and bmm only.
+ 
+ `batch_invariant` does not touch the NCCL settings; `full_determinism` keeps owning them. `CUBLAS_WORKSPACE_CONFIG=:16:8` is the same under both.
+diff --git a/tests/workers/test_engine_batch_invariant_on_cpu.py b/tests/workers/test_engine_batch_invariant_on_cpu.py
+index dda42db..b8ef17d 100644
+--- a/tests/workers/test_engine_batch_invariant_on_cpu.py
++++ b/tests/workers/test_engine_batch_invariant_on_cpu.py
+@@ -91,6 +91,47 @@ def test_enable_batch_invariance_keeps_autograd_torch_bmm(monkeypatch):
+     assert torch.bmm is original_bmm
+ 
+ 
++def test_enable_batch_invariance_keeps_backward_through_linear(monkeypatch):
++    # On SM80 vLLM also overrides aten::linear/aten::matmul; a backend kernel for those composite ops makes
++    # backward need aten::linear_backward, which no backend implements. The mm override must still apply.
++    mm_calls = []
++    lib = torch.library.Library("aten", "IMPL")
++
++    def mm(a, b):
++        mm_calls.append(a.shape)
++        return (a.unsqueeze(-1) * b.unsqueeze(0)).sum(1)
++
++    def install():
++        lib.impl("aten::mm", mm, "CPU")
++        lib.impl("aten::matmul", lambda a, b: mm(a, b), "CPU")
++        lib.impl("aten::linear", lambda x, w, b=None: mm(x, w.t()), "CPU")
++
++    _fake_vllm_batch_invariant(monkeypatch, install)
++    try:
++        enable_batch_invariance()
++        layer = torch.nn.Linear(4, 3, bias=False)
++        x = torch.randn(2, 4, requires_grad=True)
++        layer(x).sum().backward()
++        torch.matmul(x, layer.weight.t()).sum().backward()
++    finally:
++        lib._destroy()
++
++    assert layer.weight.grad is not None and x.grad is not None
++    assert len(mm_calls) >= 2
++
++
++def test_enable_batch_invariance_rejects_a_linear_override_installed_earlier(monkeypatch):
++    # If vLLM's install already ran in this process, its aten::linear kernel is in place and backward would fail.
++    lib = torch.library.Library("aten", "IMPL")
++    lib.impl("aten::linear", lambda x, w, b=None: x @ w.t(), "CPU")
++    _fake_vllm_batch_invariant(monkeypatch, lambda: None)
++    try:
++        with pytest.raises(RuntimeError, match="aten::linear"):
++            enable_batch_invariance()
++    finally:
++        lib._destroy()
++
++
+ def test_enable_batch_invariance_rejects_a_skipped_install(monkeypatch):
+     # vLLM skips the install when its cached envs read VLLM_BATCH_INVARIANT as unset.
+     _fake_vllm_batch_invariant(monkeypatch, lambda: False)
+diff --git a/verl/workers/engine/fsdp/transformer_impl.py b/verl/workers/engine/fsdp/transformer_impl.py
+index 04a3307..28e71dd 100644
+--- a/verl/workers/engine/fsdp/transformer_impl.py
++++ b/verl/workers/engine/fsdp/transformer_impl.py
+@@ -19,6 +19,7 @@ import logging
+ import os
+ import warnings
+ from contextlib import contextmanager, nullcontext
++from functools import partial
+ from inspect import signature
+ from typing import Callable, ContextManager, Optional
+ 
+@@ -346,6 +347,22 @@ class FSDPEngine(BaseEngine):
+             # some parameters may not in torch_dtype
+             module.to(torch_dtype)
+ 
++            # Case 2 aligned GPT-OSS. This changes neither native baseline dispatch
++            # nor the other FSDP2 batch-invariant models.
++            self._gpt_oss_case2 = (
++                self.engine_config.batch_invariant
++                and self.engine_config.strategy == "fsdp2"
++                and getattr(module.config, "model_type", None) == "gpt_oss"
++                and self.model_config.model_type == "language_model"
++            )
++            if self._gpt_oss_case2:
++                if not self.use_remove_padding or self.ulysses_sequence_parallel_size != 1:
++                    raise ValueError("Case 2 requires unpadded tokens and sequence parallel size 1")
++                from verl.models.transformers.gpt_oss_case2 import install_gpt_oss_tic
++
++                self._gpt_oss_case2_vocab_size = len(self.model_config.tokenizer)
++                install_gpt_oss_tic(module)
++
+             if self.model_config.enable_gradient_checkpointing:
+                 module.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+         return module
+@@ -556,6 +573,8 @@ class FSDPEngine(BaseEngine):
+             self.pass_packed_cu_seqlens = "cu_seqlens" in signature(module.forward).parameters
+         except (TypeError, ValueError):
+             self.pass_packed_cu_seqlens = False
++        if getattr(self, "_gpt_oss_case2", False):
++            self.pass_packed_cu_seqlens = True
+         # Apply LoRA adapters if low-rank adaptation is enabled
+         if self._is_lora:
+             module = self._build_lora_module(module)
+@@ -1312,6 +1331,12 @@ class FSDPEngineWithLMHead(FSDPEngine):
+         temperature_is_one = output_args.get("temperature_is_one", False)
+         batch_invariant = self.engine_config.batch_invariant
+ 
++        score_logprobs = logprobs_from_logits
++        if getattr(self, "_gpt_oss_case2", False):
++            from verl.models.transformers.gpt_oss_case2 import selected_logprobs
++
++            score_logprobs = partial(selected_logprobs, vocab_size=self._gpt_oss_case2_vocab_size)
++
+         input_ids = micro_batch["input_ids"]
+ 
+         if use_remove_padding:
+@@ -1389,7 +1414,7 @@ class FSDPEngineWithLMHead(FSDPEngine):
+                     # if use_sp: ((total_nnz / sp) + pad) ; if not use_sp: (batch, seqlen)
+                     # entropy and the score centering hook reuse the logits in their backward
+                     inplace_backward = not (calculate_entropy or score_centering)
+-                    log_probs = logprobs_from_logits(
++                    log_probs = score_logprobs(
+                         logits=unscaled_logits_rmpad if batch_invariant else logits_rmpad,
+                         labels=input_ids_rmpad_rolled,
+                         inplace_backward=inplace_backward,
+@@ -1510,7 +1535,7 @@ class FSDPEngineWithLMHead(FSDPEngine):
+ 
+                     log_probs = None
+                     if not distillation_only:
+-                        log_probs = logprobs_from_logits(
++                        log_probs = score_logprobs(
+                             logits=unscaled_logits_rmpad if batch_invariant else logits_rmpad,
+                             labels=input_ids_rmpad_rolled,
+                             inplace_backward=not score_centering,
+diff --git a/verl/workers/engine/utils.py b/verl/workers/engine/utils.py
+index 288e357..f2b7f9c 100644
+--- a/verl/workers/engine/utils.py
++++ b/verl/workers/engine/utils.py
+@@ -64,13 +64,23 @@ def enable_full_determinism(seed: int):
+     torch.backends.cudnn.enabled = False
+ 
+ 
++# vLLM registers backend kernels for these on SM80-family GPUs and ROCm. Without a backend kernel autograd
++# differentiates their composite decomposition; with one it uses their own formulas, which call
++# aten::linear_backward / aten::matmul_backward, and those have no CUDA kernel, so backward fails.
++_SKIPPED_VLLM_OVERRIDES = ("aten::linear", "aten::matmul")
++
++
+ def enable_batch_invariance():
+     """Install vLLM's batch-invariant kernel overrides in this process.
+ 
+-    ``init_batch_invariance()`` replaces softmax, log_softmax, mean, bmm (and matmul on SM80) with the
++    ``init_batch_invariance()`` replaces softmax, log_softmax, mean, bmm (and mm/addmm on SM80) with the
+     batch-invariant kernels a rollout under ``VLLM_BATCH_INVARIANT=1`` uses and pins TF32 and cuBLASLt
+-    the same way. It also writes vLLM's NCCL profile into ``os.environ``; the training communicators are
+-    created after this call and that profile would throttle them, so every env change is reverted and
++    the same way. Its ``aten::linear``/``aten::matmul`` overrides are skipped: they break backward
++    (``aten::linear_backward``/``aten::matmul_backward`` have no CUDA kernel). Without them linear and
++    matmul decompose into the overridden mm/addmm/bmm, so forward and backward stay on the invariant kernels.
++
++    It also writes vLLM's NCCL profile into ``os.environ``; the training communicators are created after
++    this call and that profile would throttle them, so every env change is reverted and
+     ``BATCH_INVARIANT_ENV`` (which main_ppo already exports) is written back. vLLM 0.29-0.31 also assign
+     ``torch.bmm`` to a kernel launch without autograd; the ``aten::bmm`` override keeps the invariant
+     kernel, so the original ``torch.bmm`` is restored.
+@@ -87,13 +97,30 @@ def enable_batch_invariance():
+     os.environ["VLLM_BATCH_INVARIANT"] = "1"
+     before = dict(os.environ)
+     bmm = torch.bmm
+-    batch_invariant.init_batch_invariance()
++    impl = torch.library.Library.impl
++
++    def impl_with_autograd(lib, op_name, *args, **kwargs):
++        if lib.ns != "aten" or op_name not in _SKIPPED_VLLM_OVERRIDES:
++            return impl(lib, op_name, *args, **kwargs)
++
++    torch.library.Library.impl = impl_with_autograd
++    try:
++        batch_invariant.init_batch_invariance()
++    finally:
++        torch.library.Library.impl = impl
+     torch.bmm = bmm
+     if not batch_invariant._batch_invariant_MODE:
+         raise RuntimeError(
+             "vLLM did not install its batch-invariant kernels: its cached envs read VLLM_BATCH_INVARIANT as unset; "
+             "export it before vLLM is first imported in this process"
+         )
++    for op in _SKIPPED_VLLM_OVERRIDES:
++        for key in ("CPU", "CUDA", "XPU"):
++            if torch._C._dispatch_has_kernel_for_dispatch_key(op, key):
++                raise RuntimeError(
++                    f"{op} has a {key} kernel (vLLM's batch-invariant install ran before verl's), so backward would "
++                    "fail; call enable_batch_invariance() before anything else initializes vLLM batch invariance"
++                )
+     for key in set(before) | set(os.environ):
+         if os.environ.get(key) != before.get(key):
+             if key in before:
+diff --git a/verl/models/transformers/gpt_oss_case2/__init__.py b/verl/models/transformers/gpt_oss_case2/__init__.py
+new file mode 100644
+index 0000000..ec2ba07
+--- /dev/null
++++ b/verl/models/transformers/gpt_oss_case2/__init__.py
+@@ -0,0 +1,375 @@
++"""GPT-OSS BF16/TP1 forward matching the Case 2 vLLM rollout."""
++
++from types import MethodType
++
++import torch
++import torch.nn.functional as F
++from transformers.modeling_outputs import MoeModelOutputWithPast
++from vllm import _custom_ops as ops
++from vllm.config import CompilationConfig, VllmConfig, set_current_vllm_config
++from vllm.model_executor.determinism.batch_invariant import linear_batch_invariant, rms_norm_batch_invariant
++from vllm.model_executor.layers.fused_moe.activation import MoEActivation
++from vllm.model_executor.layers.fused_moe.config import (
++    FusedMoEConfig,
++    FusedMoEParallelConfig,
++    RoutingMethodType,
++    biased_moe_quant_config,
++)
++from vllm.model_executor.layers.fused_moe.experts.triton_moe import TritonExperts
++from vllm.model_executor.layers.fused_moe.router.fused_topk_router import fused_topk
++from vllm.model_executor.layers.rotary_embedding import get_rope
++from vllm.v1.attention.ops.triton_unified_attention import unified_attention
++
++
++class Linear(torch.autograd.Function):
++    @staticmethod
++    def forward(ctx, x, weight, bias):
++        ctx.save_for_backward(x, weight)
++        ctx.has_bias = bias is not None
++        return linear_batch_invariant(x, weight, bias)
++
++    @staticmethod
++    def backward(ctx, grad):
++        x, w = ctx.saved_tensors
++        g = grad.reshape(-1, grad.shape[-1]).float()
++        inp = x.reshape(-1, x.shape[-1]).float()
++        dx = (g @ w.float()).reshape_as(x).to(x.dtype) if ctx.needs_input_grad[0] else None
++        dw = (g.T @ inp).to(w.dtype) if ctx.needs_input_grad[1] else None
++        db = g.sum(dim=0).to(w.dtype) if ctx.has_bias and ctx.needs_input_grad[2] else None
++        return dx, dw, db
++
++
++class SelectedLogprob(torch.autograd.Function):
++    @staticmethod
++    def forward(ctx, logits, labels):
++        from vllm.v1.worker.gpu.sample.logprob import compute_token_logprobs
++
++        ctx.save_for_backward(logits, labels)
++        return compute_token_logprobs(logits.contiguous(), labels.unsqueeze(-1)).squeeze(-1)
++
++    @staticmethod
++    def backward(ctx, upstream):
++        logits, labels = ctx.saved_tensors
++        gradient = torch.empty_like(logits)
++        with torch.autocast("cuda", enabled=False):
++            for lo in range(0, logits.shape[0], 128):
++                hi = lo + 128
++                dy = upstream[lo:hi].float().unsqueeze(-1)
++                grad = logits[lo:hi].float().softmax(dim=-1).mul_(-dy)
++                grad.scatter_add_(1, labels[lo:hi].unsqueeze(-1), dy)
++                gradient[lo:hi].copy_(grad)
++        return gradient, None
++
++
++def selected_logprobs(
++    logits, labels, *, temperature=None, inplace_backward=True, batch_invariant=True, vocab_size=None
++):
++    if temperature is not None:
++        raise ValueError("GPT-OSS Case 2 validated sampling temperature=1")
++    if vocab_size is not None and vocab_size < logits.shape[-1]:
++        # Match the online vLLM OOV mask while keeping the logprob kernel's reduction width.
++        logits = logits.clone(memory_format=torch.contiguous_format)
++        logits[..., vocab_size:] = float("-inf")
++    return SelectedLogprob.apply(logits, labels.long())
++
++
++def linear_forward(self, x):
++    return Linear.apply(x, self.weight, self.bias)
++
++
++def norm_vjp(x, weight, grad, eps):
++    inv = torch.rsqrt(x.square().mean(dim=-1, keepdim=True) + eps)
++    normalized = x * inv
++    dw = (grad * normalized).sum(dim=0)
++    gw = grad * weight.float()
++    dx = inv * (gw - normalized * (normalized * gw).mean(dim=-1, keepdim=True))
++    return dx, dw
++
++
++class Norm(torch.autograd.Function):
++    @staticmethod
++    def forward(ctx, x, weight, eps):
++        ctx.save_for_backward(x, weight)
++        ctx.eps = eps
++        return rms_norm_batch_invariant(x, weight, eps)
++
++    @staticmethod
++    def backward(ctx, grad):
++        x, w = ctx.saved_tensors
++        dx, dw = norm_vjp(x.float(), w, grad.float(), ctx.eps)
++        return dx.to(x.dtype), dw.to(w.dtype), None
++
++
++class AddNorm(torch.autograd.Function):
++    @staticmethod
++    def forward(ctx, x, residual, weight, eps):
++        x_out = x.clone()
++        residual_out = residual.clone()
++        output, carried = rms_norm_batch_invariant(x_out, weight, eps, residual=residual_out)
++        ctx.save_for_backward(carried, weight)
++        ctx.eps = eps
++        return output, carried
++
++    @staticmethod
++    def backward(ctx, grad, residual_grad):
++        carried, weight = ctx.saved_tensors
++        dx, dw = norm_vjp(carried.float(), weight, grad.float(), ctx.eps)
++        if residual_grad is not None:
++            dx = dx + residual_grad.float()
++        dx = dx.to(carried.dtype)
++        return dx, dx, dw.to(weight.dtype), None
++
++
++def make_rope_cache(config):
++    # Build YaRN coefficients on CUDA in FP32, then explicitly match the
++    # eager rotary kernel's BF16 cache before any FSDP forward input cast.
++    with set_current_vllm_config(VllmConfig(compilation_config=CompilationConfig(custom_ops=["none"]))), torch.device("cuda"):
++        rope = get_rope(config.head_dim, max_position=config.max_position_embeddings,
++                        dtype=torch.float32, rope_parameters=dict(config.rope_parameters),
++                        is_neox_style=True)
++    return rope.cos_sin_cache.detach().to(torch.bfloat16)
++
++
++class Rotate(torch.autograd.Function):
++    @staticmethod
++    def forward(ctx, q, k, positions, cache):
++        ctx.save_for_backward(cache.index_select(0, positions))
++        # The vLLM CUDA op updates Q/K in place. Preserve the projection views.
++        q, k = q.clone(memory_format=torch.contiguous_format), k.clone(memory_format=torch.contiguous_format)
++        ops.rotary_embedding(positions, q.flatten(1), k.flatten(1), q.shape[-1], cache, True)
++        return q, k
++
++    @staticmethod
++    def backward(ctx, grad_q, grad_k):
++        (rows,) = ctx.saved_tensors
++        cos, sin = rows.chunk(2, dim=-1)
++        c, s = cos[:, None].float(), sin[:, None].float()
++
++        def vjp(g):
++            ga, gb = g.float().chunk(2, dim=-1)
++            return torch.cat((ga * c + gb * s, gb * c - ga * s), dim=-1).to(g.dtype)
++
++        return vjp(grad_q), vjp(grad_k), None, None
++
++
++class PackedAttention:
++    def __init__(self, positions, cu_seqlens=None):
++        # With the recipe's one example per micro-batch this has one sequence.
++        # Packed replays can provide explicit offsets or use resets to position zero.
++        device = positions.device
++        if cu_seqlens is None:
++            starts = (positions == 0).nonzero().flatten()
++            cu_seqlens = torch.cat((starts, starts.new_tensor([positions.numel()])))
++        offsets = cu_seqlens.tolist()
++        if offsets[0] != 0 or offsets[-1] != positions.numel():
++            raise ValueError("GPT-OSS TIC expects zero-based unpadded sequences")
++        self.lengths = [b - a for a, b in zip(offsets[:-1], offsets[1:], strict=True)]
++        if min(self.lengths) < 1:
++            raise ValueError("GPT-OSS TIC received an empty packed sequence")
++
++        self.block_size = 16
++        pages = [(length + self.block_size - 1) // self.block_size for length in self.lengths]
++        rows, slots = [], []
++        block = 0
++        for length, count in zip(self.lengths, pages, strict=True):
++            rows.append(list(range(block, block + count)) + [0] * (max(pages) - count))
++            slots.extend(range(block * self.block_size, block * self.block_size + length))
++            block += count
++        self.blocks = block
++        self.cu_seqlens = cu_seqlens.to(device=device, dtype=torch.int32)
++        self.seq_lens = torch.tensor(self.lengths, device=device, dtype=torch.int32)
++        self.block_table = torch.tensor(rows, device=device, dtype=torch.int32)
++        self.slot_mapping = torch.tensor(slots, device=device, dtype=torch.long)
++
++    def forward(self, q, k, v, sinks, window):
++        hd = k.shape[-1]
++        nh = k.shape[-2]
++        cache = torch.zeros((self.blocks, self.block_size, nh, 2 * hd),
++                            dtype=k.dtype, device=k.device)
++        slots = cache.view(-1, nh, 2 * hd)
++        slots[..., :hd].index_copy_(0, self.slot_mapping, k)
++        slots[..., hd:].index_copy_(0, self.slot_mapping, v)
++        k_pages, v_pages = cache.split(hd, dim=-1)
++        out = torch.empty(q.shape, dtype=q.dtype, device=q.device)
++        unified_attention(
++            q=q, k=k_pages, v=v_pages, out=out,
++            cu_seqlens_q=self.cu_seqlens, max_seqlen_q=max(self.lengths),
++            seqused_k=self.seq_lens, max_seqlen_k=max(self.lengths),
++            softmax_scale=hd ** -0.5, causal=True,
++            window_size=(window - 1, 0) if window else (-1, -1),
++            block_table=self.block_table, softcap=0,
++            q_descale=None, k_descale=None, v_descale=None, sinks=sinks,
++        )
++        return out
++
++
++class Attention(torch.autograd.Function):
++    @staticmethod
++    def forward(ctx, q, k, v, sinks, metadata, window):
++        ctx.save_for_backward(q, k, v, sinks)
++        ctx.packed_attention, ctx.window = metadata, window
++        return metadata.forward(q, k, v, sinks, window)
++
++    @staticmethod
++    def backward(ctx, grad):
++        saved = ctx.saved_tensors
++        with torch.enable_grad(), torch.autocast("cuda", enabled=False):
++            q, k, v, sinks = [t.detach().float().requires_grad_() for t in saved]
++            groups = q.shape[-2] // k.shape[-2]
++            outputs = []
++            lengths = ctx.packed_attention.lengths
++            for qs, ks, vs in zip(q.split(lengths), k.split(lengths), v.split(lengths), strict=True):
++                keys = ks.repeat_interleave(groups, dim=1).transpose(0, 1)
++                values = vs.repeat_interleave(groups, dim=1).transpose(0, 1)
++                pos = torch.arange(len(qs), device=qs.device)
++                delta = pos[:, None] - pos[None, :]
++                illegal = delta < 0
++                if ctx.window:
++                    illegal = illegal | (delta >= ctx.window)
++                logits = (qs.transpose(0, 1) @ keys.transpose(1, 2)) * q.shape[-1] ** -0.5
++                logits = logits.masked_fill(illegal, -torch.inf)
++                sink_logits = sinks[:, None, None].expand(-1, qs.shape[0], 1)
++                probs = torch.cat((logits, sink_logits), dim=-1).softmax(dim=-1)[..., :-1]
++                outputs.append((probs @ values).transpose(0, 1))
++            grads = torch.autograd.grad(torch.cat(outputs), (q, k, v, sinks), grad.float())
++        return *(g.to(t.dtype) for g, t in zip(grads, saved, strict=True)), None, None
++
++
++class Route(torch.autograd.Function):
++    @staticmethod
++    def forward(ctx, x, logits, top_k):
++        scores, ids, _ = fused_topk(x, logits, top_k, renormalize=True)
++        ctx.save_for_backward(logits, ids)
++        return scores, ids
++
++    @staticmethod
++    def backward(ctx, grad, ignored):
++        logits, ids = ctx.saved_tensors
++        indices = ids.long()
++        p = logits.float().gather(1, indices).softmax(dim=-1)
++        top_grad = p * (grad - (grad * p).sum(dim=-1, keepdim=True))
++        result = torch.zeros_like(logits, dtype=torch.float32).scatter_(1, indices, top_grad)
++        return None, result.to(logits.dtype), None
++
++
++def expert_forward(x, w1, w2, b1, b2, scores, ids, cfg):
++    up = w1.transpose(1, 2).contiguous()
++    down = w2.transpose(1, 2).contiguous()
++    quant = biased_moe_quant_config(b1, b2)
++    experts = TritonExperts(cfg, quant)
++    m, k = x.shape
++    e, n, _ = up.shape
++    work1, work2, output = experts.workspace_shapes(
++        m, n, k, ids.shape[1], e, e, None, MoEActivation.SWIGLUOAI,
++    )
++    work1, work2, output = [x.new_empty(shape) for shape in (work1, work2, output)]
++    experts.apply(output, x, up, down, scores, ids, MoEActivation.SWIGLUOAI,
++                  e, None, None, None, work1, work2, None, False)
++    return output
++
++
++class Experts(torch.autograd.Function):
++    @staticmethod
++    def forward(ctx, x, w1, w2, b1, b2, scores, ids, cfg):
++        ctx.save_for_backward(x, w1, w2, b1, b2, scores, ids)
++        return expert_forward(x, w1, w2, b1, b2, scores, ids, cfg)
++
++    @staticmethod
++    def backward(ctx, grad):
++        x, w1, w2, b1, b2, scores, ids = ctx.saved_tensors
++        saved = x, w1, w2, b1, b2, scores
++        # Differentiate one active expert at a time to bound FP32 workspace.
++        dx = torch.zeros_like(x, dtype=torch.float32)
++        ds = torch.zeros_like(scores, dtype=torch.float32)
++        dw1, dw2, db1, db2 = [torch.zeros_like(t) for t in (w1, w2, b1, b2)]
++        with torch.enable_grad(), torch.autocast("cuda", enabled=False):
++            for expert in ids.unique().tolist():
++                row, slot = (ids == expert).nonzero(as_tuple=True)
++                values = (x[row], w1[expert], w2[expert], b1[expert], b2[expert], scores[row, slot])
++                xd, u, d, ub, db, route = [t.detach().float().requires_grad_() for t in values]
++                gate_up = xd @ u + ub
++                gate = gate_up[..., ::2].clamp(max=7.0)
++                up = gate_up[..., 1::2].clamp(-7.0, 7.0)
++                hidden = gate * torch.sigmoid(1.702 * gate) * (up + 1)
++                combined = (hidden @ d + db) * route[:, None]
++                grads = torch.autograd.grad(combined, (xd, u, d, ub, db, route), grad[row].float())
++                dx.index_add_(0, row, grads[0])
++                for target, value in zip((dw1, dw2, db1, db2), grads[1:5], strict=True):
++                    target[expert].copy_(value)
++                ds[row, slot] = grads[5]
++        return *(g.to(t.dtype) for g, t in zip((dx, dw1, dw2, db1, db2, ds), saved, strict=True)), None, None
++
++
++def decoder_forward(self, hidden, residual, positions, metadata):
++    # FSDP2 casts floating-point forward inputs to the parameter dtype.
++    # Keep the coefficient lookup on the inside of that input boundary.
++    n1 = self.input_layernorm
++    if residual is None:
++        residual = hidden
++        x = Norm.apply(hidden, n1.weight, n1.variance_epsilon)
++    else:
++        x, residual = AddNorm.apply(hidden, residual, n1.weight, n1.variance_epsilon)
++
++    attn = self.self_attn
++    projections = (attn.q_proj, attn.k_proj, attn.v_proj)
++    qkv = Linear.apply(x, torch.cat([p.weight for p in projections]),
++                       torch.cat([p.bias for p in projections]))
++    hd = attn.head_dim
++    q, k, v = [p.reshape(x.shape[0], -1, hd) for p in
++               qkv.split([p.weight.shape[0] for p in projections], dim=-1)]
++    q, k = Rotate.apply(q, k, positions, self._tic_rope_cache)
++    attended = Attention.apply(q, k, v, attn.sinks, metadata, attn.sliding_window or 0)
++    projected = Linear.apply(attended.flatten(1), attn.o_proj.weight, attn.o_proj.bias)
++    n2 = self.post_attention_layernorm
++    post, residual = AddNorm.apply(projected, residual, n2.weight, n2.variance_epsilon)
++
++    router, experts = self.mlp.router, self.mlp.experts
++    logits = Linear.apply(post, router.weight, router.bias)
++    scores, ids = Route.apply(post, logits, router.top_k)
++    cfg = self._tic_moe_cfg
++    cfg.device = post.device
++    out = Experts.apply(post, experts.gate_up_proj, experts.down_proj,
++                        experts.gate_up_proj_bias, experts.down_proj_bias, scores, ids, cfg)
++    return out, residual
++
++
++def backbone_forward(self, input_ids=None, attention_mask=None, position_ids=None,
++                     past_key_values=None, inputs_embeds=None, use_cache=None,
++                     cu_seqlens=None, **kwargs):
++    if past_key_values is not None or use_cache or attention_mask is not None:
++        raise ValueError("GPT-OSS TIC supports unpadded full-sequence scoring without a KV history")
++    if kwargs.get("output_router_logits", False):
++        raise ValueError("GPT-OSS TIC does not implement aux router loss")
++    hidden = self.embed_tokens(input_ids) if inputs_embeds is None else inputs_embeds
++    batch, length, width = hidden.shape
++    if position_ids is None:
++        position_ids = torch.arange(length, device=hidden.device).expand(batch, -1)
++    positions = position_ids.expand(batch, -1).reshape(-1).long()
++    metadata = PackedAttention(positions, cu_seqlens)
++    hidden = hidden.reshape(-1, width)
++    residual = None
++    for layer in self.layers:
++        hidden, residual = layer(hidden, residual, positions, metadata)
++    normalized, _ = AddNorm.apply(hidden, residual, self.norm.weight, self.norm.variance_epsilon)
++    return MoeModelOutputWithPast(last_hidden_state=normalized.reshape(batch, length, width))
++
++
++def install_gpt_oss_tic(module):
++    """Called only for the configured FSDP2 batch-invariant GPT-OSS instance."""
++    cfg = module.config
++    rope_cache = make_rope_cache(cfg)
++    module.model.forward = MethodType(backbone_forward, module.model)
++    module.lm_head.forward = MethodType(linear_forward, module.lm_head)
++    moe = FusedMoEConfig(
++        num_experts=cfg.num_local_experts, experts_per_token=cfg.num_experts_per_tok,
++        hidden_dim=cfg.hidden_size, intermediate_size=cfg.intermediate_size,
++        num_local_experts=cfg.num_local_experts, num_logical_experts=cfg.num_local_experts,
++        activation=MoEActivation.SWIGLUOAI, device="cuda",
++        routing_method=RoutingMethodType.Renormalize,
++        moe_parallel_config=FusedMoEParallelConfig.make_no_parallel(),
++        in_dtype=torch.bfloat16, has_bias=True,
++    )
++    for layer in module.model.layers:
++        layer._tic_rope_cache = rope_cache
++        layer._tic_moe_cfg = moe
++        layer.forward = MethodType(decoder_forward, layer)
+diff --git a/verl/models/transformers/gpt_oss_case2/norm-runtime-map.json b/verl/models/transformers/gpt_oss_case2/norm-runtime-map.json
+new file mode 100644
+index 0000000..56dac66
+--- /dev/null
++++ b/verl/models/transformers/gpt_oss_case2/norm-runtime-map.json
+@@ -0,0 +1,119 @@
++{
++  "l0.post": {
++    "name": "triton_red_fused_fused_add_rms_norm_t_0",
++    "callable": "triton_red_fused_fused_add_rms_norm_t_0",
++    "config": {
++      "XBLOCK": 1,
++      "R0_BLOCK": 4096
++    },
++    "warps": 16,
++    "stages": 1,
++    "outputs": [
++      "out_ptr1",
++      "out_ptr2"
++    ],
++    "source_sha256": "dbc071cea62335a97d3655b28c5d0124c174cd8a723ea8bdec4ddae306d6fc92"
++  },
++  "l1.input": {
++    "name": "triton_red_fused_fused_add_rms_norm_t_1",
++    "callable": "triton_red_fused_fused_add_rms_norm_t_1",
++    "config": {
++      "XBLOCK": 1,
++      "R0_BLOCK": 4096
++    },
++    "warps": 16,
++    "stages": 1,
++    "outputs": [
++      "out_ptr1",
++      "out_ptr2"
++    ],
++    "source_sha256": "d109adfd4fe5b9c206149555d463c727e3a0457325e758360a5380a05157e00a"
++  },
++  "l1.post": {
++    "name": "triton_red_fused_fused_add_rms_norm_0",
++    "callable": "triton_red_fused_fused_add_rms_norm_0",
++    "config": {
++      "XBLOCK": 1,
++      "R0_BLOCK": 2048
++    },
++    "warps": 16,
++    "stages": 1,
++    "outputs": [
++      "out_ptr1"
++    ],
++    "source_sha256": "7b140de72dcf785329d854cbe6fb627744344afd839cacebe12d79e3f4e0abfb"
++  },
++  "l2.input": {
++    "name": "triton_red_fused_fused_add_rms_norm_t_1",
++    "callable": "triton_red_fused_fused_add_rms_norm_t_1",
++    "config": {
++      "XBLOCK": 1,
++      "R0_BLOCK": 4096
++    },
++    "warps": 16,
++    "stages": 1,
++    "outputs": [
++      "out_ptr1",
++      "out_ptr2"
++    ],
++    "source_sha256": "d109adfd4fe5b9c206149555d463c727e3a0457325e758360a5380a05157e00a"
++  },
++  "l2.post": {
++    "name": "triton_red_fused_fused_add_rms_norm_0",
++    "callable": "triton_red_fused_fused_add_rms_norm_0",
++    "config": {
++      "XBLOCK": 1,
++      "R0_BLOCK": 2048
++    },
++    "warps": 16,
++    "stages": 1,
++    "outputs": [
++      "out_ptr1"
++    ],
++    "source_sha256": "7b140de72dcf785329d854cbe6fb627744344afd839cacebe12d79e3f4e0abfb"
++  },
++  "l3.input": {
++    "name": "triton_red_fused_fused_add_rms_norm_t_1",
++    "callable": "triton_red_fused_fused_add_rms_norm_t_1",
++    "config": {
++      "XBLOCK": 1,
++      "R0_BLOCK": 4096
++    },
++    "warps": 16,
++    "stages": 1,
++    "outputs": [
++      "out_ptr1",
++      "out_ptr2"
++    ],
++    "source_sha256": "d109adfd4fe5b9c206149555d463c727e3a0457325e758360a5380a05157e00a"
++  },
++  "l3.post": {
++    "name": "triton_red_fused_fused_add_rms_norm_t_0",
++    "callable": "triton_red_fused_fused_add_rms_norm_t_0",
++    "config": {
++      "XBLOCK": 1,
++      "R0_BLOCK": 4096
++    },
++    "warps": 16,
++    "stages": 1,
++    "outputs": [
++      "out_ptr1",
++      "out_ptr2"
++    ],
++    "source_sha256": "dbc071cea62335a97d3655b28c5d0124c174cd8a723ea8bdec4ddae306d6fc92"
++  },
++  "final": {
++    "name": "triton_red_fused_fused_add_rms_norm_1",
++    "callable": "triton_red_fused_fused_add_rms_norm_1",
++    "config": {
++      "XBLOCK": 1,
++      "R0_BLOCK": 4096
++    },
++    "warps": 16,
++    "stages": 1,
++    "outputs": [
++      "in_out_ptr0"
++    ],
++    "source_sha256": "2f8305a221eefaefc59b22d6fca717e57149586b84dc1a4182a7e092d63ba40c"
++  }
++}
+diff --git a/verl/models/transformers/gpt_oss_case2/rms_kernels.py b/verl/models/transformers/gpt_oss_case2/rms_kernels.py
+new file mode 100644
+index 0000000..a870844
+--- /dev/null
++++ b/verl/models/transformers/gpt_oss_case2/rms_kernels.py
+@@ -0,0 +1,228 @@
++"""Triton functions extracted from the runtime C5 GPT-OSS proxy captures."""
++import triton
++import triton.language as tl
++from torch._inductor.runtime.triton_helpers import libdevice
++
++@triton.jit
++def triton_red_fused_fused_add_rms_norm_t_0(in_ptr0, in_ptr1, in_ptr2, out_ptr1, out_ptr2, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr):
++    r0_numel = 2880
++    rnumel = r0_numel
++    RBLOCK: tl.constexpr = R0_BLOCK
++    xoffset = tl.program_id(0) * XBLOCK
++    xindex = xoffset + tl.arange(0, XBLOCK)[:, None]
++    xmask = xindex < xnumel
++    r0_base = tl.arange(0, R0_BLOCK)[None, :]
++    rbase = r0_base
++    x0 = xindex
++    _tmp7 = tl.full([XBLOCK, R0_BLOCK], 0, tl.float32)
++    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):
++        r0_index = r0_offset + r0_base
++        r0_mask = r0_index < r0_numel
++        roffset = r0_offset
++        rindex = r0_index
++        r0_1 = r0_index
++        tmp0 = tl.load(in_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp2 = tl.load(in_ptr1 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp1 = tmp0.to(tl.float32)
++        tmp3 = tmp2.to(tl.float32)
++        tmp4 = tmp1 + tmp3
++        tmp5 = tmp4 * tmp4
++        tmp6 = tl.broadcast_to(tmp5, [XBLOCK, R0_BLOCK])
++        tmp8 = _tmp7 + tmp6
++        _tmp7 = tl.where(r0_mask & xmask, tmp8, _tmp7)
++    tmp7 = tl.sum(_tmp7, 1)[:, None]
++    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):
++        r0_index = r0_offset + r0_base
++        r0_mask = r0_index < r0_numel
++        roffset = r0_offset
++        rindex = r0_index
++        r0_1 = r0_index
++        tmp9 = tl.load(in_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp11 = tl.load(in_ptr1 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp21 = tl.load(in_ptr2 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp10 = tmp9.to(tl.float32)
++        tmp12 = tmp11.to(tl.float32)
++        tmp13 = tmp10 + tmp12
++        tmp14 = tl.full([1, 1], 2880.0, tl.float32)
++        tmp15 = (tmp7 / tmp14)
++        tmp16 = tl.full([1, 1], 1e-05, tl.float32)
++        tmp17 = tmp15 + tmp16
++        tmp18 = libdevice.rsqrt(tmp17)
++        tmp19 = tmp13 * tmp18
++        tmp20 = tmp19.to(tl.float32)
++        tmp22 = tmp20 * tmp21
++        tl.store(out_ptr1 + (r0_1 + 2880*x0), tmp22, r0_mask & xmask)
++        tl.store(out_ptr2 + (r0_1 + 2880*x0), tmp22, r0_mask & xmask)
++
++@triton.jit
++def triton_red_fused_fused_add_rms_norm_t_1(in_ptr0, in_ptr1, in_ptr2, in_ptr3, out_ptr1, out_ptr2, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr):
++    r0_numel = 2880
++    rnumel = r0_numel
++    RBLOCK: tl.constexpr = R0_BLOCK
++    xoffset = tl.program_id(0) * XBLOCK
++    xindex = xoffset + tl.arange(0, XBLOCK)[:, None]
++    xmask = xindex < xnumel
++    r0_base = tl.arange(0, R0_BLOCK)[None, :]
++    rbase = r0_base
++    x0 = xindex
++    _tmp12 = tl.full([XBLOCK, R0_BLOCK], 0, tl.float32)
++    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):
++        r0_index = r0_offset + r0_base
++        r0_mask = r0_index < r0_numel
++        roffset = r0_offset
++        rindex = r0_index
++        r0_1 = r0_index
++        tmp0 = tl.load(in_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp2 = tl.load(in_ptr1 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp4 = tl.load(in_ptr2 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp1 = tmp0.to(tl.float32)
++        tmp3 = tmp2.to(tl.float32)
++        tmp5 = tmp4.to(tl.float32)
++        tmp6 = tmp3 + tmp5
++        tmp7 = tmp6.to(tl.float32)
++        tmp8 = tmp7.to(tl.float32)
++        tmp9 = tmp1 + tmp8
++        tmp10 = tmp9 * tmp9
++        tmp11 = tl.broadcast_to(tmp10, [XBLOCK, R0_BLOCK])
++        tmp13 = _tmp12 + tmp11
++        _tmp12 = tl.where(r0_mask & xmask, tmp13, _tmp12)
++        tmp14 = tmp9.to(tl.float32)
++        tl.store(out_ptr1 + (r0_1 + 2880*x0), tmp14, r0_mask & xmask)
++    tmp12 = tl.sum(_tmp12, 1)[:, None]
++    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):
++        r0_index = r0_offset + r0_base
++        r0_mask = r0_index < r0_numel
++        roffset = r0_offset
++        rindex = r0_index
++        r0_1 = r0_index
++        tmp15 = tl.load(in_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp17 = tl.load(in_ptr1 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp19 = tl.load(in_ptr2 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp32 = tl.load(in_ptr3 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp16 = tmp15.to(tl.float32)
++        tmp18 = tmp17.to(tl.float32)
++        tmp20 = tmp19.to(tl.float32)
++        tmp21 = tmp18 + tmp20
++        tmp22 = tmp21.to(tl.float32)
++        tmp23 = tmp22.to(tl.float32)
++        tmp24 = tmp16 + tmp23
++        tmp25 = tl.full([1, 1], 2880.0, tl.float32)
++        tmp26 = (tmp12 / tmp25)
++        tmp27 = tl.full([1, 1], 1e-05, tl.float32)
++        tmp28 = tmp26 + tmp27
++        tmp29 = libdevice.rsqrt(tmp28)
++        tmp30 = tmp24 * tmp29
++        tmp31 = tmp30.to(tl.float32)
++        tmp33 = tmp31 * tmp32
++        tl.store(out_ptr2 + (r0_1 + 2880*x0), tmp33, r0_mask & xmask)
++
++@triton.jit
++def triton_red_fused_fused_add_rms_norm_0(in_ptr0, in_ptr1, in_ptr2, out_ptr1, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr):
++    r0_numel = 2880
++    rnumel = r0_numel
++    RBLOCK: tl.constexpr = R0_BLOCK
++    xoffset = tl.program_id(0) * XBLOCK
++    xindex = xoffset + tl.arange(0, XBLOCK)[:, None]
++    xmask = xindex < xnumel
++    r0_base = tl.arange(0, R0_BLOCK)[None, :]
++    rbase = r0_base
++    x0 = xindex
++    _tmp7 = tl.full([XBLOCK, R0_BLOCK], 0, tl.float32)
++    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):
++        r0_index = r0_offset + r0_base
++        r0_mask = r0_index < r0_numel
++        roffset = r0_offset
++        rindex = r0_index
++        r0_1 = r0_index
++        tmp0 = tl.load(in_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp2 = tl.load(in_ptr1 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp1 = tmp0.to(tl.float32)
++        tmp3 = tmp2.to(tl.float32)
++        tmp4 = tmp1 + tmp3
++        tmp5 = tmp4 * tmp4
++        tmp6 = tl.broadcast_to(tmp5, [XBLOCK, R0_BLOCK])
++        tmp8 = _tmp7 + tmp6
++        _tmp7 = tl.where(r0_mask & xmask, tmp8, _tmp7)
++    tmp7 = tl.sum(_tmp7, 1)[:, None]
++    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):
++        r0_index = r0_offset + r0_base
++        r0_mask = r0_index < r0_numel
++        roffset = r0_offset
++        rindex = r0_index
++        r0_1 = r0_index
++        tmp9 = tl.load(in_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp11 = tl.load(in_ptr1 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp21 = tl.load(in_ptr2 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp10 = tmp9.to(tl.float32)
++        tmp12 = tmp11.to(tl.float32)
++        tmp13 = tmp10 + tmp12
++        tmp14 = tl.full([1, 1], 2880.0, tl.float32)
++        tmp15 = (tmp7 / tmp14)
++        tmp16 = tl.full([1, 1], 1e-05, tl.float32)
++        tmp17 = tmp15 + tmp16
++        tmp18 = libdevice.rsqrt(tmp17)
++        tmp19 = tmp13 * tmp18
++        tmp20 = tmp19.to(tl.float32)
++        tmp22 = tmp20 * tmp21
++        tl.store(out_ptr1 + (r0_1 + 2880*x0), tmp22, r0_mask & xmask)
++
++@triton.jit
++def triton_red_fused_fused_add_rms_norm_1(in_out_ptr0, in_ptr0, in_ptr1, in_ptr2, xnumel, r0_numel, XBLOCK : tl.constexpr, R0_BLOCK : tl.constexpr):
++    r0_numel = 2880
++    rnumel = r0_numel
++    RBLOCK: tl.constexpr = R0_BLOCK
++    xoffset = tl.program_id(0) * XBLOCK
++    xindex = xoffset + tl.arange(0, XBLOCK)[:, None]
++    xmask = xindex < xnumel
++    r0_base = tl.arange(0, R0_BLOCK)[None, :]
++    rbase = r0_base
++    x0 = xindex
++    _tmp12 = tl.full([XBLOCK, R0_BLOCK], 0, tl.float32)
++    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):
++        r0_index = r0_offset + r0_base
++        r0_mask = r0_index < r0_numel
++        roffset = r0_offset
++        rindex = r0_index
++        r0_1 = r0_index
++        tmp0 = tl.load(in_out_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp2 = tl.load(in_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp4 = tl.load(in_ptr1 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp1 = tmp0.to(tl.float32)
++        tmp3 = tmp2.to(tl.float32)
++        tmp5 = tmp4.to(tl.float32)
++        tmp6 = tmp3 + tmp5
++        tmp7 = tmp6.to(tl.float32)
++        tmp8 = tmp7.to(tl.float32)
++        tmp9 = tmp1 + tmp8
++        tmp10 = tmp9 * tmp9
++        tmp11 = tl.broadcast_to(tmp10, [XBLOCK, R0_BLOCK])
++        tmp13 = _tmp12 + tmp11
++        _tmp12 = tl.where(r0_mask & xmask, tmp13, _tmp12)
++    tmp12 = tl.sum(_tmp12, 1)[:, None]
++    for r0_offset in tl.range(0, r0_numel, R0_BLOCK):
++        r0_index = r0_offset + r0_base
++        r0_mask = r0_index < r0_numel
++        roffset = r0_offset
++        rindex = r0_index
++        r0_1 = r0_index
++        tmp14 = tl.load(in_out_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp16 = tl.load(in_ptr0 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp18 = tl.load(in_ptr1 + (r0_1 + 2880*x0), r0_mask & xmask, eviction_policy='evict_first', other=0.0).to(tl.float32)
++        tmp31 = tl.load(in_ptr2 + (r0_1), r0_mask, eviction_policy='evict_last', other=0.0).to(tl.float32)
++        tmp15 = tmp14.to(tl.float32)
++        tmp17 = tmp16.to(tl.float32)
++        tmp19 = tmp18.to(tl.float32)
++        tmp20 = tmp17 + tmp19
++        tmp21 = tmp20.to(tl.float32)
++        tmp22 = tmp21.to(tl.float32)
++        tmp23 = tmp15 + tmp22
++        tmp24 = tl.full([1, 1], 2880.0, tl.float32)
++        tmp25 = (tmp12 / tmp24)
++        tmp26 = tl.full([1, 1], 1e-05, tl.float32)
++        tmp27 = tmp25 + tmp26
++        tmp28 = libdevice.rsqrt(tmp27)
++        tmp29 = tmp23 * tmp28
++        tmp30 = tmp29.to(tl.float32)
++        tmp32 = tmp30 * tmp31
++        tl.store(in_out_ptr0 + (r0_1 + 2880*x0), tmp32, r0_mask & xmask)
++

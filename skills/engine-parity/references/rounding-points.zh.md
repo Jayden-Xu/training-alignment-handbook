@@ -92,3 +92,7 @@ trainer 端使用相同的权重，并做下面这些选择（`trainer.forward_m
 - 算 logprob 时 logits 的 dtype、log_softmax kernel、计算设备、logprobs 模式
   （raw 还是 processed），以及 temperature 是在之前还是之后应用。
 - 走编译路径时，编译器融合了哪些算子，有没有保留中间的类型转换。
+- 词表方面，lm_head 的列数是否比 tokenizer 的 token 数多，以及引擎有没有在 log_softmax
+  之前把多出来的列屏蔽掉。
+- trainer 所用的框架里，sharding 或混合精度包装层会不会在模块边界上转换 fp32 buffer
+  （例如 RoPE 表）的类型。
