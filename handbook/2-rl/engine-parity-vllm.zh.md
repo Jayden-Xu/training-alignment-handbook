@@ -57,19 +57,29 @@ logits 上游的每一个点都对上之后，才会有哪怕一个 logprob 相�
 5. **定位剩下的差异**，找到第一个仍然不同的算子。做算子重放（把采集到的每个引擎输入，分别喂给 trainer
    的每个候选实现），并逐层比较残差流；如果引擎经过了编译，就在算子边界上取 fingerprint，代替 hook
    （[RL 循环](rl-loop.md)）。结果是一个具体的算子，并有来自两端的证据。
+6. **给对齐后的前向配一个正确的反向。** logprob 必须逐 bit 一致，梯度只需要正确，所以反向不必和
+   前向 kernel 逐 bit 一致。小算子手写 fp32 导数；注意力和 MoE 的梯度，则用保存下来的输入在
+   PyTorch 里重算得到，而前向仍然用引擎 kernel 算出的值。每个参数的梯度与一个独立的 fp32 参考
+   相比，相对 L2 误差都不超过 1e-3，就完成了；[报告](../../examples/verl_fsdp2_vllm/REPORT.md#gradient-check)
+   是一个完整的例子。engine-parity skill 目前还不包含这一步。
 
 | 途径 | 做什么 | 代价等级 | 什么时候选 |
 |---|---|---|---|
-| 让 trainer 改用引擎的 kernel | trainer 直接调用引擎自己的 GEMM、norm、注意力和 log_softmax | 引擎端因为要开不变模式，代价为中等（不到 2 倍）到大；trainer 端的前向免费 | 引擎不能改，trainer 由你掌控；trainer 还需要一套和这些前向 kernel 逐 bit 匹配的反向 kernel |
+| 让 trainer 改用引擎的 kernel | trainer 直接调用引擎自己的 GEMM、norm、注意力和 log_softmax | 引擎端因为要开不变模式，代价为中等（不到 2 倍）到大；trainer 端的前向免费 | 引擎不能改，trainer 由你掌控；trainer 还需要为这些 kernel 配一个正确的反向，但反向不必和前向逐 bit 一致 |
 | 让引擎改用 trainer 的舍入方式 | 拆开并重排引擎的算子，让类型转换的位置跟 trainer 一样；两端都用不变的算子 | rollout 吞吐量的代价为中等（不到 2 倍）到大（报告值） | trainer 不能改，而你可以给引擎打补丁 |
 | 两端共用一份模型定义 | 引擎只保留缓存管理，前向由两端共用，剩下要对齐的只有 kernel | 某些架构上 trainer 吞吐量的代价为大（2 倍或更多）（报告值） | 两个框架你都能改 |
 | 制定一份执行契约 | 把两端所有影响舍入的选择都固定下来，用哈希检查；使用不受并行方式影响的 kernel | 中等（不到 2 倍）（报告值） | 多个框架需要长期保持对齐 |
 
 已证明：trainer 调用引擎自己的 kernel 后，在不同的 batch size 下，它算出的采样 token
 logprob 与一个真实引擎逐 bit 一致。这是在一个模型、一种 GPU 型号、eager 模式下得到的，
-只验证了前向（[报告](../../examples/cross_engine/REPORT.md#results)）。其他途径的结果来自
+只验证了前向（[报告](../../examples/cross_engine/REPORT.md#results)）。在一个真实框架的完整
+RL 循环里，参数切成 shard 的 trainer 调用引擎的 kernel 后，在一次较短的同步训练中也与 rollout
+逐 bit 一致。这里的 rollout 使用 CUDA graph 并关闭了编译器，模型是一个带 attention sink 和
+滑动窗口的真实 MoE checkpoint，反向也在缩短版的模型上通过了梯度检查。这同样只在一个模型、
+一种 GPU 型号上验证过，精度为 bf16，每个 rollout 副本只用一张 GPU
+（[报告](../../examples/verl_fsdp2_vllm/REPORT.md)）。其他途径的结果来自
 别的团队，汇总在[报告](../../examples/cross_engine/REPORT.md#three-ways-to-reach-parity)里。
-尚未证明：经过编译的引擎、L4 下的 TP，以及反向 kernel 也对齐之后的训练 step。
+尚未证明：用自带编译器编译过的引擎、L4 下的 TP，以及量化权重。
 
 ## 可能出错的地方
 
@@ -97,18 +107,31 @@ logprob 与一个真实引擎逐 bit 一致。这是在一个模型、一种 GPU
     或者在更靠后的位置上有影响（RoPE 表可能只在某个位置之后才不同）。要说“这里没有
     显示出影响”，不要说“无关”。
 
+!!! warning "sharding 包装层可能转换 fp32 buffer"
+    一张 fp32 的表（例如 RoPE 的 cos/sin 表）跨过 shard 模块的边界时，混合精度或 sharding
+    包装层可能把它转成 bf16。这时虽然每个 kernel 都没错，几乎每个 logprob 仍然都不同。
+    要么把位置传过边界，在层内部再构造这张表；要么在每个边界上检查 buffer 的 dtype。
+
+!!! warning "词表的填充列"
+    lm_head 的列数可能比 tokenizer 的 token 数多；引擎可能在 log_softmax 之前把多出来的列
+    屏蔽掉，而 trainer 没有，或者反过来。这时大多数 logprob 都会不同。做归一化时，要和引擎
+    用同样的列。
+
 ## 小结
 
 - 两端即使各自不变，结果也可能不同；它们还必须在相同的地方舍入。
 - 先拿引擎和它自己比较，因为达不到 L2 的引擎根本无法对齐。
 - 写下两端的舍入序列，一次对齐一个点，并跟踪第一个出现差异的层。
 - 在 trainer 里直接调用引擎自己的 kernel，不要自己重写。
+- logprob 必须逐 bit 一致，而反向只需要梯度正确。
 
 ## 深入阅读
 
 - [实验报告](../../examples/cross_engine/REPORT.md)：一个真实的引擎和模型、各步骤的
   结果表、逐一回退的结果、引擎自身的波动、它的不变模式在哪种 GPU 上覆盖哪些算子、代价，
   以及其他团队报告的结果。
+- [完整 RL 循环的实验报告](../../examples/verl_fsdp2_vllm/REPORT.md)：一个完整的 RL 循环，
+  其中有参数切成 shard 的 trainer、MoE checkpoint、使用 CUDA graph 的 rollout，以及梯度检查。
 - Skill：[engine-parity](../../skills/engine-parity/SKILL.md) 和
   [舍入点](../../skills/engine-parity/references/rounding-points.md)。
 - 代码：[examples/cross_engine/](../../examples/cross_engine/)。
