@@ -1,0 +1,5 @@
+{
+  "mode": 0,
+  "cudagraph_mode": "FULL",
+  "custom_ops": ["none", "+rms_norm", "+rotary_embedding"]
+}
