@@ -77,7 +77,11 @@ production LLM training on the platforms below, as its authors report
 **This handbook's own measurements** (the batch-invariant kernels and fixes,
 the fixed collective trees and the engine-parity setup) come from one GPU
 generation, connected over PCIe inside a node and over plain Ethernet between
-two nodes. They have not yet been shown on these platforms:
+two nodes. The engine-parity setup has also been shown on another GPU
+generation, with the engine's own kernels, in the verl × FSDP2 × vLLM case
+([report](../../examples/verl_fsdp2_vllm/REPORT.md)); the handbook's own
+kernels have still been measured on one generation only. These measurements
+have not yet been shown on these platforms:
 
 | Area | OpGuard | This handbook's kernels, fixes and setups |
 |---|---|---|
@@ -86,7 +90,7 @@ two nodes. They have not yet been shown on these platforms:
 | Newer attention kernels (FlashAttention 3, FlashMLA, FlashInfer) on other GPU architectures | used in production (reported) | untested |
 | NVLink, NVSwitch, NVLS; RDMA, InfiniBand, RoCE | used in production (reported) | untested; the fixed collective trees were shown over PCIe and Ethernet only |
 | More than two nodes | used in production (reported) | untested; a pinned Tree that held on two nodes may not hold on three |
-| Other torch, Triton, NCCL and CUDA versions | used in production (reported) | untested, except vLLM's own stack in the cross-engine case |
+| Other torch, Triton, NCCL and CUDA versions | used in production (reported) | untested, except vLLM's own stack in the cross-engine case and the verl and vLLM stack in the verl × FSDP2 × vLLM case |
 
 So on such a platform, localize with OpGuard as usual, but re-verify every
 invariance claim of this handbook with the suite before you rely on it. The

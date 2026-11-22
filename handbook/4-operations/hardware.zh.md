@@ -61,7 +61,10 @@
 **OpGuard 本身**（采集、fingerprint、找首个分歧点的比较）已经在下面这些平台上用于生产环境的
 LLM 训练。
 **本手册自己的测量**（batch-invariant kernel 和各种修复、固定的集合通信树、引擎一致性的搭建）
-都来自同一代 GPU，节点内走 PCIe，两个节点之间走普通以太网，在这些平台上尚未证明：
+都来自同一代 GPU，节点内走 PCIe，两个节点之间走普通以太网。引擎一致性的搭建还在另一代 GPU 上
+用引擎自己的 kernel 证明过，见 verl × FSDP2 × vLLM 案例
+（[报告](../../examples/verl_fsdp2_vllm/REPORT.md)）；本手册自己的 kernel 仍然只在一代 GPU 上
+测过。这些测量在下面这些平台上尚未证明：
 
 | 范围 | OpGuard | 本手册的 kernel、修复和搭建 |
 |---|---|---|
@@ -70,7 +73,7 @@ LLM 训练。
 | 其他 GPU 架构上较新的注意力 kernel（FlashAttention 3、FlashMLA、FlashInfer） | 已用于生产（据报告） | 未测试 |
 | NVLink、NVSwitch、NVLS；RDMA、InfiniBand、RoCE | 已用于生产（据报告） | 未测试；固定的集合通信树只在 PCIe 和以太网上证明过 |
 | 两个以上的节点 | 已用于生产（据报告） | 未测试；在两个节点上成立的固定 Tree，在三个节点上未必成立 |
-| 其他版本的 torch、Triton、NCCL 和 CUDA | 已用于生产（据报告） | 未测试，跨引擎案例里 vLLM 自带的软件栈除外 |
+| 其他版本的 torch、Triton、NCCL 和 CUDA | 已用于生产（据报告） | 未测试，跨引擎案例里 vLLM 自带的软件栈，以及 verl × FSDP2 × vLLM 案例里 verl 和 vLLM 的软件栈除外 |
 
 所以在这样的平台上，照常用 OpGuard 定位问题；但在依赖本手册的任何不变性结论之前，先用套件重新
 验证。每个结果文件对应的具体软件栈见[测得的覆盖范围](../../suite/COVERAGE.md)；完整的待办列表见

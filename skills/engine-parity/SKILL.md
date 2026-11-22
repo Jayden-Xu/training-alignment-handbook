@@ -1,6 +1,6 @@
 ---
 name: engine-parity
-description: Make a trainer's forward pass and an inference engine (vLLM, SGLang, a custom server) produce bit-identical results on a real model (cross-engine invariance, L4). List what each forward actually runs, write down where each side rounds, check first that the engine agrees with itself (L1/L2/L3), then move the trainer's rounding points to the engine's one at a time and count the differing tokens after each change, localize what remains operator by operator and layer by layer, and decide for each remaining difference whether to change the trainer, change the engine, or accept and document it. Use when RL rollout logprobs and trainer logprobs disagree, or before claiming that the trainer and the engine compute the same policy.
+description: Make a trainer's forward pass and an inference engine (vLLM, SGLang, a custom server) produce bit-identical results on a real model (cross-engine invariance, L4). List what each forward actually runs, write down where each side rounds, check first that the engine agrees with itself (L1/L2/L3), then move the trainer's rounding points to the engine's one at a time and count the differing tokens after each change, localize what remains operator by operator and layer by layer, decide for each remaining difference whether to change the trainer, change the engine, or accept and document it, and give the matched forward a correct backward whose gradients are checked against an fp32 reference. Use when RL rollout logprobs and trainer logprobs disagree, or before claiming that the trainer and the engine compute the same policy.
 ---
 
 # Engine parity
@@ -16,7 +16,8 @@ difference. Return:
 - the rounding sequence of each side;
 - the step table;
 - the decision taken for each difference;
-- the throughput cost of the engine configuration you end with.
+- the throughput cost of the engine configuration you end with;
+- the gradient check result of the backward.
 
 For background and the definition of the levels, see
 [skills/batch-invariant-kernel/SKILL.md](../batch-invariant-kernel/SKILL.md).
@@ -143,14 +144,28 @@ error, and locates the first divergence at a specific operator and token.
 
 | Choice | When to choose it | Cost to state |
 |---|---|---|
-| Change the trainer | The engine's op is batch-invariant and the trainer can call it (a Triton kernel, a custom op) | Trainer throughput. For training, note that the engine's kernel may have no backward |
+| Change the trainer | The engine's op is batch-invariant and the trainer can call it (a Triton kernel, a custom op) | Trainer throughput. For training, note that the engine's kernel may have no backward; give it one as in section 7 |
 | Change the engine | The engine's op is not batch-invariant, or the trainer cannot call it (a closed kernel, compiler output) | Engine throughput, measured at decode batch sizes |
 | Accept and document | The two sides use algorithmically different forms (compiler fusion, a different attention algorithm) and neither side can move | The measured gap: the fraction of tokens that differ, the max \|Δlogp\| and the KL |
 
 Write each decision next to its rounding point, together with its measured
 effect.
 
-## 7. Report
+## 7. Give the matched forward a correct backward
+
+Logprobs must match bit for bit, but gradients only need to be correct, so the
+backward does not have to reproduce the bits of the forward kernels. Give small
+operators hand-written fp32 derivatives. For attention and MoE, keep the
+values of the engine's kernels in the forward, and get the gradients by
+recomputing the operator in PyTorch on the saved inputs.
+
+Check every parameter gradient against an independent fp32 reference. The
+check passes when the relative L2 error is at most 1e-3 for every tensor. Run
+it first on a shortened model, with a few layers that cover each layer type.
+A worked example is
+[examples/verl_fsdp2_vllm/REPORT.md](../../examples/verl_fsdp2_vllm/REPORT.md).
+
+## 8. Report
 
 The report contains:
 
@@ -162,9 +177,10 @@ The report contains:
 - the op replay table;
 - the final L4 result: tokens compared, tokens that differ, max |Δlogp| and KL;
 - the throughput of the final engine configuration compared with the default;
-- known limits: the prompts and lengths not tested, the modes not covered
-  (prefix caching, speculative decoding, TP), and the backward pass, which is
-  not covered.
+- the gradient check: the tensors checked, the largest relative L2 and the
+  model it ran on;
+- known limits: the prompts and lengths not tested and the modes not covered
+  (prefix caching, speculative decoding, TP).
 
 ## Guardrails
 

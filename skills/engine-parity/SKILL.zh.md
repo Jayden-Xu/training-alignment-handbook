@@ -1,6 +1,6 @@
 ---
 name: engine-parity
-description: 在真实模型上，让 trainer 的前向和推理引擎（vLLM、SGLang、自研的推理服务）算出逐 bit 一致的结果（跨引擎一致，L4）。做法是：先弄清两端的前向实际跑了什么，写下两端各自在哪里舍入，再确认引擎自己和自己一致（L1/L2/L3）；然后每次把 trainer 的一个舍入点改成引擎的做法，每改一次就数一遍有多少 token 不同；接着逐算子、逐层定位剩下的差异；最后对每个差异决定是改 trainer、改引擎，还是接受并记录下来。当强化学习的 rollout logprob 和 trainer 的 logprob 对不上，或者在声称 trainer 和引擎算的是同一个策略之前，使用这个 skill。
+description: 在真实模型上，让 trainer 的前向和推理引擎（vLLM、SGLang、自研的推理服务）算出逐 bit 一致的结果（跨引擎一致，L4）。做法是：先弄清两端的前向实际跑了什么，写下两端各自在哪里舍入，再确认引擎自己和自己一致（L1/L2/L3）；然后每次把 trainer 的一个舍入点改成引擎的做法，每改一次就数一遍有多少 token 不同；接着逐算子、逐层定位剩下的差异；再对每个差异决定是改 trainer、改引擎，还是接受并记录下来；最后给对齐后的前向配一个正确的反向，并用 fp32 参考检查梯度。当强化学习的 rollout logprob 和 trainer 的 logprob 对不上，或者在声称 trainer 和引擎算的是同一个策略之前，使用这个 skill。
 ---
 
 # 引擎对齐
@@ -14,7 +14,8 @@ prompt 集和 batch size 范围内，每个实际出现的 token，其 logprob �
 - 两端各自的舍入序列；
 - 步骤表；
 - 对每个差异做出的决定；
-- 最终采用的引擎配置的吞吐代价。
+- 最终采用的引擎配置的吞吐代价；
+- 反向的梯度检查结果。
 
 背景知识和各级不变性的定义见
 [skills/batch-invariant-kernel/SKILL.md](../batch-invariant-kernel/SKILL.md)。
@@ -120,13 +121,23 @@ hook 只在 eager 模式下才会触发。如果引擎经过编译，或者跑�
 
 | 选择 | 什么时候选 | 需要说明的代价 |
 |---|---|---|
-| 改 trainer | 引擎的算子是 batch-invariant 的，而且 trainer 能调用它（Triton kernel、自定义算子） | trainer 的吞吐。如果用于训练，要注意引擎的 kernel 可能没有反向实现 |
+| 改 trainer | 引擎的算子是 batch-invariant 的，而且 trainer 能调用它（Triton kernel、自定义算子） | trainer 的吞吐。如果用于训练，要注意引擎的 kernel 可能没有反向实现，这时按第 7 节给它配一个反向 |
 | 改引擎 | 引擎的算子不是 batch-invariant 的，或者 trainer 调用不了它（闭源 kernel、编译器生成的代码） | 引擎的吞吐，在 decode 常用的 batch size 下测量 |
 | 接受并记录 | 两端用的是算法上不同的形式（编译器融合、不同的注意力算法），而且哪一端都改不了 | 测得的差距：不同 token 的比例、最大 \|Δlogp\| 和 KL |
 
 把每个决定和测得的效果一起写在对应的舍入点旁边。
 
-## 7. 报告
+## 7. 给对齐后的前向配一个正确的反向
+
+logprob 必须逐 bit 一致，梯度只需要正确，所以反向不必复现前向 kernel 的 bit。
+小算子手写 fp32 导数。注意力和 MoE 在前向里保留引擎 kernel 算出的值，梯度则用保存下来的
+输入在 PyTorch 里重算得到。
+
+把每个参数的梯度和一个独立的 fp32 参考比较，每个张量的相对 L2 误差都不超过 1e-3，
+检查才算通过。先在缩短版的模型上跑这项检查：保留几层，覆盖每种层类型。完整的例子见
+[examples/verl_fsdp2_vllm/REPORT.md](../../examples/verl_fsdp2_vllm/REPORT.md)。
+
+## 8. 报告
 
 报告包含：
 
@@ -137,8 +148,9 @@ hook 只在 eager 模式下才会触发。如果引擎经过编译，或者跑�
 - 算子重放表；
 - 最终的 L4 结果，即比较了多少 token、有多少不同、最大 |Δlogp| 和 KL；
 - 最终引擎配置和默认配置的吞吐对比；
-- 已知限制，包括没有测过的 prompt 和长度，没有覆盖的模式（prefix caching、
-  speculative decoding、TP），以及没有覆盖的反向。
+- 梯度检查，包括检查了哪些张量、最大的相对 L2，以及在哪个模型上跑的；
+- 已知限制，包括没有测过的 prompt 和长度，以及没有覆盖的模式（prefix caching、
+  speculative decoding、TP）。
 
 ## 约束
 
