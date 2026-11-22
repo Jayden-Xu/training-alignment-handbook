@@ -146,7 +146,7 @@ The same method also works for other pairs of runs. See the
   [handbook-writing](../skills/handbook-writing/SKILL.md).
 - Reference pages: [Open items](open-items.md) · [References](references.md) ·
   [Glossary](glossary.md) · [Audit](../AUDIT.md) · [Tools](../tools/) ·
-  [Authors](authors.md)
+  [Acknowledgments](acknowledgments.md)
 
 Every claim on a page links to the report that holds its measurements and
 names the stack it was measured on.

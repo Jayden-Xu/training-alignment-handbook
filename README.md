@@ -72,7 +72,7 @@ method for other pairs of runs.
 
 Reference: [Glossary](handbook/glossary.md) · [Open items](handbook/open-items.md) ·
 [References](handbook/references.md) · [Audit](AUDIT.md) ·
-[Authors](handbook/authors.md)
+[Acknowledgments](handbook/acknowledgments.md)
 
 ## Use it with an agent
 

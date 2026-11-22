@@ -109,6 +109,6 @@ hide:
   [handbook-writing](../skills/handbook-writing/SKILL.md)。
 - 参考资料：[待办事项](open-items.md) · [参考文献](references.md) ·
   [术语表](glossary.md) · [审计](../AUDIT.md) · [工具](../tools/) ·
-  [作者](authors.md)
+  [致谢](acknowledgments.md)
 
 每一页上的结论都链接到对应的报告。报告里有测量结果，也写明了测量所用的软件栈。
